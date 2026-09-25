@@ -9,8 +9,10 @@ import { Header } from '@/components/layout/Header';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { RoleProvider, useRole, type Role } from '@/context/RoleContext';
 import { activity, documentCategories, documents, initialStates, type DocumentCategory, type LandDocument } from '@/data/mockData';
+import GroundedAssistantPage from '@/pages/assistant-page';
 import CentralRepositoryPage from '@/pages/repository-page';
 import NotFound from '@/pages/not-found';
+import SynthesisPage from '@/pages/synthesis-page';
 
 const queryClient = new QueryClient();
 
@@ -221,7 +223,7 @@ function RoutedErrorBoundary({ children }: { children: ReactNode }) {
 }
 
 function Shell() {
-  return <div className="min-h-[100dvh] bg-[#f4f6f8]"><Header /><div className="mx-auto flex max-w-[1600px] flex-col md:flex-row"><Sidebar /><main className="min-w-0 flex-1"><RoutedErrorBoundary><Switch><Route path="/" component={HomeRedirect} /><Route path="/repository"><Guard allowed={allRoles} name="Repository"><CentralRepositoryPage /></Guard></Route><Route path="/map"><Guard allowed={allRoles} name="GIS Map"><MapPage /></Guard></Route><Route path="/innovation"><Guard allowed={allRoles} name="Innovation Portal"><InnovationPage /></Guard></Route><Route path="/assistant"><Guard allowed={researchRoles} name="AI Assistant"><AssistantPage /></Guard></Route><Route path="/workspaces"><Guard allowed={researchRoles} name="Workspaces"><WorkspacesPage /></Guard></Route><Route path="/analytics"><Guard allowed={governanceRoles} name="Analytics Hub"><AnalyticsPage /></Guard></Route><Route path="/simulate"><Guard allowed={governanceRoles} name="Policy Simulator"><SimulatePage /></Guard></Route><Route path="/admin"><Guard allowed={governanceRoles} name="Admin Console"><AdminPage /></Guard></Route><Route path="/developers"><Guard allowed={governanceRoles} name="Developer API"><DevelopersPage /></Guard></Route><Route component={NotFound} /></Switch></RoutedErrorBoundary></main></div></div>;
+  return <div className="min-h-[100dvh] bg-[#f4f6f8]"><Header /><div className="mx-auto flex max-w-[1600px] flex-col md:flex-row"><Sidebar /><main className="min-w-0 flex-1"><RoutedErrorBoundary><Switch><Route path="/" component={HomeRedirect} /><Route path="/repository"><Guard allowed={allRoles} name="Repository"><CentralRepositoryPage /></Guard></Route><Route path="/map"><Guard allowed={allRoles} name="GIS Map"><MapPage /></Guard></Route><Route path="/innovation"><Guard allowed={allRoles} name="Innovation Portal"><InnovationPage /></Guard></Route><Route path="/assistant"><Guard allowed={researchRoles} name="AI Assistant"><GroundedAssistantPage /></Guard></Route><Route path="/synthesis"><Guard allowed={researchRoles} name="Research Synthesis"><SynthesisPage /></Guard></Route><Route path="/workspaces"><Guard allowed={researchRoles} name="Workspaces"><WorkspacesPage /></Guard></Route><Route path="/analytics"><Guard allowed={governanceRoles} name="Analytics Hub"><AnalyticsPage /></Guard></Route><Route path="/simulate"><Guard allowed={governanceRoles} name="Policy Simulator"><SimulatePage /></Guard></Route><Route path="/admin"><Guard allowed={governanceRoles} name="Admin Console"><AdminPage /></Guard></Route><Route path="/developers"><Guard allowed={governanceRoles} name="Developer API"><DevelopersPage /></Guard></Route><Route component={NotFound} /></Switch></RoutedErrorBoundary></main></div></div>;
 }
 
 function HomeRedirect() {

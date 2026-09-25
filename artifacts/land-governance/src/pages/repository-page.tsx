@@ -378,6 +378,11 @@ export default function RepositoryPage() {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [downloadNotice, setDownloadNotice] = useState('');
 
+  useEffect(() => {
+    const search = new URLSearchParams(window.location.search).get('search');
+    if (search) setQuery(search);
+  }, []);
+
   const filtered = useMemo(() => documents.filter((document) => {
     const normalizedQuery = query.trim().toLowerCase();
     const searchText = `${document.refId} ${document.title} ${document.department} ${document.stateRegion} ${document.theme}`.toLowerCase();

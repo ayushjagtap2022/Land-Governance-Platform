@@ -10,7 +10,7 @@ const navItems: NavItem[] = [
   { label: 'Innovation Portal', href: '/innovation', icon: Lightbulb, roles: baseRoles },
   { label: 'Workspaces', href: '/workspaces', icon: Home, roles: ['Researcher'] },
   { label: 'AI Assistant', href: '/assistant', icon: MessageSquareText, roles: ['Researcher'] },
-  { label: 'Synthesis', href: '/workspaces', icon: Sparkles, roles: ['Researcher'] },
+  { label: 'Synthesis', href: '/synthesis', icon: Sparkles, roles: ['Researcher'] },
   { label: 'Policy Simulator', href: '/simulate', icon: SlidersHorizontal, roles: ['Official', 'Institution Admin', 'Super Admin'] },
   { label: 'Analytics Hub', href: '/analytics', icon: BarChart3, roles: ['Official', 'Institution Admin', 'Super Admin'] },
   { label: 'Admin Console', href: '/admin', icon: Settings2, roles: ['Official', 'Institution Admin', 'Super Admin'] },
@@ -32,7 +32,7 @@ export function Sidebar() {
       </div>
       <nav aria-label="Primary navigation" className="flex gap-1 overflow-x-auto p-2 md:block md:space-y-0.5">
         {visible.map(({ label, href, icon: Icon }) => {
-          const isActive = location === href || (href === '/workspaces' && location.startsWith('/workspaces'));
+           const isActive = location === href || (href === '/workspaces' && location.startsWith('/workspaces')) || (href === '/synthesis' && location.startsWith('/synthesis'));
           return (
             <Link
               className={`focus-ring group flex min-w-max items-center gap-3 border-l-2 px-3 py-2.5 text-xs font-semibold transition-colors md:min-w-0 ${isActive ? 'border-[#f2b134] bg-[#294b68] text-white' : 'border-transparent text-slate-300 hover:bg-[#234562] hover:text-white'}`}

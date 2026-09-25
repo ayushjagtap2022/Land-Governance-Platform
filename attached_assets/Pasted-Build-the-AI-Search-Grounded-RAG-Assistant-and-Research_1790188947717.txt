@@ -1,0 +1,33 @@
+Build the "AI Search, Grounded RAG Assistant, and Research Synthesis" module for the Land Governance Platform using React, Tailwind CSS, and Lucide icons.
+
+DESIGN SPECIFICATIONS:
+- Structured like an authentic government decision-support system, not an informal chatbot.
+- Include a formal statutory banner: "AI Decision Support Engine — Grounded exclusively on indexed DoLR Gazette notifications, SVAMITVA guidelines, and verified land-governance studies."
+- High-contrast, clean 1px borders (#CBD5E1), no floating or glowing bubble chat windows.
+
+FUNCTIONAL REQUIREMENTS:
+1. Grounded "Ask the Platform" Assistant (/assistant or Slide-Over Drawer):
+   - Search/Query box for policy questions (e.g., "What are the ceiling limits under the Land Reforms Act in Maharashtra?").
+   - Response Card Format:
+     * Executive Summary: 2-3 structured bullet points addressing the query.
+     * Mandatory "Cited Source References" container below every answer:
+       - Displays Document Title, Official Gazette No., Page Number, and the verbatim excerpt snippet.
+       - "View Source Document" action button linking directly to the repository entry.
+     * "Copy Brief with Formal Citations" action button.
+   - Quick Query Chips for evaluation:
+     * "Ceiling limits across MP vs Maharashtra"
+     * "SVAMITVA property card distribution guidelines"
+     * "Procedures for agricultural land conversion to industrial use"
+
+2. Cross-Document Policy Synthesis Tool:
+   - UI section at the top of the repository or as a tab:
+   - Checkbox selector allowing a researcher to choose 2 or 3 documents from the catalog.
+   - "Synthesize Selected Documents" button that generates a structured comparative table:
+     * Core Objective
+     * Consensus Points
+     * Conflicting Guidelines or Policy Gaps
+     * Recommended Next Steps for DoLR
+
+3. High-Frequency Policy Trend Radar:
+   - Grid widget displaying high-velocity keywords (e.g., "Drone Cadastral Survey", "Digital Title Registry", "Forest Rights Act", "Land Resurvey Disputes").
+   - Displays 90-day trajectory indicators (+24% mentions, -8% mentions) that filter repository records upon click.
