@@ -1,0 +1,38 @@
+Build the "Central Knowledge Repository & Document Ingestion Pipeline" (/repository) using React 18, Tailwind CSS, and Lucide icons inside the existing government-style layout.
+
+DESIGN SPECIFICATIONS:
+- High data-density layout using tabular views and bordered cards.
+- Official color indicators: Muted Saffron for Policy Drafts, Forest Green for Research Studies, Navy Blue for Acts/Gazettes, Slate for Datasets.
+
+FUNCTIONAL REQUIREMENTS:
+1. Left Filter Sidebar:
+   - Dropdown selectors:
+     * State/UT (All India, Maharashtra, Madhya Pradesh, Uttar Pradesh, Karnataka, Gujarat).
+     * Administrative Level (National, State, District, Tehsil/Taluk).
+     * Sector / Theme (Cadastral Mapping, Land Dispute Resolution, SVAMITVA Scheme, Climate Resilience, Tenancy Rights).
+     * Document Type (Policy Paper, Legal Act, Research Study, Geodata File).
+     * Publication Year Range (2010 to 2026).
+   - Search input supporting an "Exact Match" vs "AI Semantic Search" toggle, plus an English/Hindi toggle.
+
+2. Repository Data Table:
+   - Render a table showing:
+     * Gazette/Document Ref ID (e.g., DoLR-2024-DOC-108)
+     * Title & Issuing Authority
+     * State / Region
+     * Category Tag
+     * Date Published
+     * Version Badge (e.g., v1.3)
+     * Action Buttons: "Inline Preview", "Version History", and "Download".
+   - Role Permission Guard: If the current role in RoleContext is 'Public', the "Download" button must be disabled with a padlock badge for any document marked 'Confidential / Intra-Ministry'.
+
+3. Policy Versioning Drawer:
+   - Clicking "Version History" opens a side-drawer showing a vertical chronological timeline of previous drafts, amendments, and gazette notifications.
+
+4. Ingestion & Simulated OCR Upload Modal:
+   - "Upload Document / Dataset" button (hidden from 'Public' users).
+   - Modal with a drag-and-drop file zone for PDF, CSV, GeoJSON, and Shapefiles.
+   - Live simulated OCR progress bar:
+     1. "Uploading to staging server..."
+     2. "Running Tesseract OCR on scanned land record..."
+     3. "Auto-extracting metadata via NLP (Title, Issuing Authority, Year)..."
+   - Review Form: Displays auto-extracted metadata fields in editable inputs, allowing an official to confirm and click "Commit to National Registry".
