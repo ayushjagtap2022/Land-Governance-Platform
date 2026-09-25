@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "National Land Governance Platform"
+description = "A government-grade digital platform for the Department of Land Resources to browse land policy documents, explore GIS data, and access role-based research and administrative tools."
+version = "1.0.0"
+id = "artifacts/land-governance"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24891
+
+[services.development]
+run = "pnpm --filter @workspace/land-governance run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/land-governance", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/land-governance/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24891"
+BASE_PATH = "/"

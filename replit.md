@@ -1,10 +1,11 @@
-# [Project name]
+# National Land Governance Platform
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A government-grade digital platform for the Department of Land Resources to browse land policy documents, explore GIS data, and access role-based research and administrative tools.
 
 ## Run & Operate
 
 - `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/land-governance run dev` — run the web app
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
 - `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
@@ -22,23 +23,29 @@ _Replace the heading above with the project's name, and this line with one sente
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/land-governance/src/App.tsx` — shared shell, routes, route access states, and page content
+- `artifacts/land-governance/src/components/layout/` — bilingual header and role-aware sidebar
+- `artifacts/land-governance/src/context/RoleContext.tsx` — active demo persona state
+- `artifacts/land-governance/src/data/mockData.ts` — typed repository, category, state, and activity data
+- `artifacts/land-governance/src/index.css` — NIC-style theme tokens and global layout styles
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- The first build is frontend-only and uses typed local mock data so judges can exercise all roles and routes without a backend dependency.
+- The active persona defaults to Researcher and controls both sidebar visibility and route access states.
+- The visual language intentionally follows a strict Indian government / NIC portal aesthetic: navy, saffron-white-green accent, square utility controls, and dense bordered data surfaces.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+Users can browse and filter a land-governance repository, open document details, inspect GIS layers, try a policy assistant, manage research workspaces, review analytics, simulate policy changes, submit innovation ideas, inspect admin actions, and view developer API examples. The demo persona switcher makes role-specific navigation and access behavior visible.
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Keep the product in the strict Indian government / NIC aesthetic described in the build brief; do not introduce consumer SaaS styling or dark mode.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Artifact workflows provide `PORT` and `BASE_PATH`; use the managed web workflow for previews.
 
 ## Pointers
 

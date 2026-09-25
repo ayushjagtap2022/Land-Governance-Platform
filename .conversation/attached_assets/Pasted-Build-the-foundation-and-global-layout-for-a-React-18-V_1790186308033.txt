@@ -1,0 +1,45 @@
+Build the foundation and global layout for a React 18 + Vite + Tailwind CSS application: "National Digital Platform for Land Governance" (SIH PS 26019) for the Department of Land Resources (DoLR), Ministry of Rural Development, Government of India.
+
+TECH STACK:
+- React 18 (Vite)
+- react-router-dom
+- Tailwind CSS
+- lucide-react
+
+DESIGN RULES (STRICT INDIAN GOVERNMENT / NIC AESTHETIC):
+- Do NOT use modern consumer SaaS styles: no purple/indigo neon gradients, no glassmorphism or backdrop-blur, no rounded-2xl or rounded-full buttons (use rounded-none or rounded-sm), and no dark mode.
+- Base Theme:
+  * Top utility bar: Light gray (#F1F5F9) accessibility strip with font-size controls (A- / A / A+), Language selector (English | हिन्दी), Screen Reader link, and a small Indian flag icon.
+  * Primary Header: Deep Navy (#0F2C59 or #1E293B) with white text, containing the State Emblem of India placeholder, bilingual ministry text ("भू-संसाधन विभाग / Department of Land Resources | ग्रामीण विकास मंत्रालय / Ministry of Rural Development"), search bar, and user profile badge.
+  * National Accent: A crisp 3px horizontal border below the header representing the Indian Tricolor (Saffron #FF9933, White #FFFFFF, Green #138808).
+  * Page Background: Neutral off-white (#F8FAFC) with crisp 1px solid slate borders (#CBD5E1) around all tables and containers.
+
+FILE STRUCTURE & CORE MODULES TO SCAFFOLD:
+1. /src/context/RoleContext.tsx:
+   - React Context storing the active role: 'Researcher' | 'Official' | 'Institution Admin' | 'Public' | 'Super Admin'.
+   - Default role: 'Researcher'.
+   - Header must feature a prominent, utilitarian "Demo Persona Switcher" select dropdown so judges can instantly flip roles.
+
+2. /src/components/layout/Header.tsx & Sidebar.tsx:
+   - Utilitarian vertical sidebar or tabbed top-nav that dynamically hides/shows routes based on active role:
+     * Public: Repository, GIS Map, Innovation Portal.
+     * Researcher: Adds Workspaces, AI Assistant, Synthesis.
+     * Official / Admin: Adds Policy Simulator, Analytics Hub, Admin Console, Developer API.
+
+3. /src/data/mockData.ts:
+   - Create typed dummy data for initial states, categories, and documents.
+   - Include realistic names like "SVAMITVA Scheme Resurvey Guidelines", "Maharashtra Land Revenue Code Amendment", and "Cadastral Geo-referencing Pilot".
+
+4. /src/App.tsx:
+   - Wrap in BrowserRouter with Routes for:
+     * `/` (Redirects to /repository)
+     * `/repository`
+     * `/assistant`
+     * `/map`
+     * `/simulate`
+     * `/analytics`
+     * `/workspaces`
+     * `/innovation`
+     * `/developers`
+     * `/admin`
+   - Render placeholder headers inside each route verifying that the layout and role switching work.
