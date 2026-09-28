@@ -1,0 +1,11 @@
+{
+  "name": "@land-governance/api-spec",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "codegen": "orval --config ./orval.config.ts && npm run typecheck --workspace=."
+  },
+  "devDependencies": {
+    "orval": "^8.30.0"
+  }
+}

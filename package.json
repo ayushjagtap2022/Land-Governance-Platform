@@ -1,0 +1,22 @@
+{
+  "name": "land-governance-platform",
+  "version": "0.0.0",
+  "license": "MIT",
+  "private": true,
+  "packageManager": "npm@11.6.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*",
+    "scripts"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "typecheck": "tsc --build"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.6",
+    "turbo": "^2.11.3",
+    "typescript": "~5.9.3"
+  }
+}
