@@ -101,11 +101,38 @@ export default function SimulatePage() {
   const [projected, setProjected] = useState<ScenarioResult | null>(null);
   const [scenarioA, setScenarioA] = useState<ScenarioResult | null>(null);
   const [showComparison, setShowComparison] = useState(false);
+  const [trajectoryData, setTrajectoryData] = useState<any[] | null>(null);
+  const [explainDrivers, setExplainDrivers] = useState<string[] | null>(null);
+  const [sensitivityList, setSensitivityList] = useState<any[] | null>(null);
 
-  const runSimulation = () => {
+  const runSimulation = async () => {
     setIsSimulating(true);
+    try {
+      const res = await fetch('/api/v1/simulate/evaluate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ state, ...params }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setProjected({
+          disputeRate: data.metrics.disputeRate.projected,
+          urbanPace: data.metrics.urbanPace.projected,
+          climateScore: data.metrics.climateScore.projected,
+          revenue: data.metrics.revenue.projected,
+        });
+        if (data.trajectory) setTrajectoryData(data.trajectory);
+        if (data.explainability) setExplainDrivers(data.explainability);
+        if (data.sensitivity) setSensitivityList(data.sensitivity);
+        setIsSimulating(false);
+        return;
+      }
+    } catch (err) {
+      console.warn('API simulation call failed, falling back to local model', err);
+    }
+
+    // Local fallback if server is offline
     setTimeout(() => {
-      // Basic mock calculation based on sliders to show some dynamic change
       const newDisputeRate = Math.max(12, 38.2 - (params.budget / 50) - ((180 - params.window) / 10));
       const newUrbanPace = Math.max(1.5, 4.5 - (params.tax / 10));
       const newClimateScore = Math.min(100, 62 + (params.ceiling < 50 ? 5 : 0) + (params.budget / 30));
@@ -118,10 +145,10 @@ export default function SimulatePage() {
         revenue: Number(newRevenue.toFixed(0)),
       });
       setIsSimulating(false);
-    }, 1500);
+    }, 800);
   };
 
-  const chartData = [
+  const chartData = trajectoryData || [
     { year: '2020 (Hist)', baseline: 42.1, projected: null },
     { year: '2021 (Hist)', baseline: 40.5, projected: null },
     { year: '2022 (Hist)', baseline: 39.8, projected: null },
@@ -397,33 +424,60 @@ export default function SimulatePage() {
               <div className="flex items-start gap-3 mb-5">
                 <Info className="h-5 w-5 text-[#1E293B] shrink-0" />
                 <div className="space-y-3 text-xs text-slate-700 leading-relaxed">
-                  <p><strong>Driver 1:</strong> A ₹10 Cr increase in drone survey budget historically correlates with a 0.38 reduction in boundary litigation based on 2019–2024 DILRMP data.</p>
-                  <p><strong>Driver 2:</strong> Shortening the court window by 30 days increases early settlement probability by 4.2%, marginally decreasing the backlog cascade.</p>
-                  <p><strong>Driver 3:</strong> Conversion tax hikes &gt;12% show diminishing returns in state revenue due to evasion, capping at a 0.9 elasticity factor.</p>
+                  {explainDrivers ? (
+                    explainDrivers.map((driver, idx) => (
+                      <p key={idx}><strong>Driver {idx + 1}:</strong> {driver}</p>
+                    ))
+                  ) : (
+                    <>
+                      <p><strong>Driver 1:</strong> A ₹10 Cr increase in drone survey budget historically correlates with a 0.38 reduction in boundary litigation based on 2019–2024 DILRMP data.</p>
+                      <p><strong>Driver 2:</strong> Shortening the court window by 30 days increases early settlement probability by 4.2%, marginally decreasing the backlog cascade.</p>
+                      <p><strong>Driver 3:</strong> Conversion tax hikes &gt;12% show diminishing returns in state revenue due to evasion, capping at a 0.9 elasticity factor.</p>
+                    </>
+                  )}
                 </div>
               </div>
 
               <div className="border-t border-slate-200 pt-4">
                 <p className="text-xs font-bold text-[#1E293B] mb-3">Parameter Sensitivity (Current Run)</p>
                 <div className="space-y-3">
-                  <div>
-                    <div className="flex justify-between text-[11px] text-slate-600 mb-1">
-                      <span>Modernization Budget Impact</span>
-                      <span>High</span>
-                    </div>
-                    <div className="h-2 bg-slate-100 rounded-sm overflow-hidden">
-                      <div className="h-full bg-[#B91C1C]" style={{ width: '85%' }} />
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-[11px] text-slate-600 mb-1">
-                      <span>Fast-Track Window Impact</span>
-                      <span>Moderate</span>
-                    </div>
-                    <div className="h-2 bg-slate-100 rounded-sm overflow-hidden">
-                      <div className="h-full bg-[#B45309]" style={{ width: '45%' }} />
-                    </div>
-                  </div>
+                  {sensitivityList ? (
+                    sensitivityList.map((item, idx) => (
+                      <div key={idx}>
+                        <div className="flex justify-between text-[11px] text-slate-600 mb-1">
+                          <span>{item.label}</span>
+                          <span className={item.impact_level === 'High' ? 'text-red-700 font-bold' : 'text-amber-700 font-bold'}>{item.impact_level} ({item.impact_score}%)</span>
+                        </div>
+                        <div className="h-2 bg-slate-100 rounded-sm overflow-hidden">
+                          <div 
+                            className={`h-full ${item.impact_score > 60 ? 'bg-[#B91C1C]' : 'bg-[#B45309]'}`} 
+                            style={{ width: `${item.impact_score}%` }} 
+                          />
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <>
+                      <div>
+                        <div className="flex justify-between text-[11px] text-slate-600 mb-1">
+                          <span>Modernization Budget Impact</span>
+                          <span>High</span>
+                        </div>
+                        <div className="h-2 bg-slate-100 rounded-sm overflow-hidden">
+                          <div className="h-full bg-[#B91C1C]" style={{ width: '85%' }} />
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-[11px] text-slate-600 mb-1">
+                          <span>Fast-Track Window Impact</span>
+                          <span>Moderate</span>
+                        </div>
+                        <div className="h-2 bg-slate-100 rounded-sm overflow-hidden">
+                          <div className="h-full bg-[#B45309]" style={{ width: '45%' }} />
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

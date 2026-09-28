@@ -36,9 +36,22 @@ function Panel({ title, eyebrow, children, className = '' }: { title?: string; e
   );
 }
 
-function SynthesisTable({ selected }: { selected: LandDocument[] }) {
+function SynthesisTable({ selected, data }: { selected: LandDocument[]; data?: any }) {
   const names = selected.map((document) => document.title).join(' and ');
   const isCadastral = selected.some((document) => document.theme === 'Cadastral Mapping');
+  const coreObjective = data?.core_objective || `Together, ${names} support a traceable land-record workflow by linking policy intent, state implementation and verified source metadata.`;
+  const consensus = data?.consensus_points || [
+    'Source records should retain an issuing authority, publication date and review status.',
+    'Village or district verification is a required control before records are treated as final.',
+    ...(isCadastral ? ['Geospatial reference quality is material to reliable cadastral interoperability.'] : [])
+  ];
+  const conflicts = data?.conflicting_guidelines || 'The selected records use different administrative levels and evidentiary standards. The current index does not establish a single cross-state rule for timelines, land classification or dispute escalation.';
+  const recommendations = data?.recommendations_for_dolr || [
+    'Commission a state-by-state comparison note using the current gazette record as the legal baseline.',
+    'Standardise metadata for version, geography and source page references.',
+    'Route unresolved state-specific gaps to the relevant department before publishing a consolidated guidance note.'
+  ];
+
   return (
     <Panel eyebrow="Comparative synthesis / grounded output" title={`Policy synthesis across ${selected.length} selected documents`}>
       <div className="overflow-x-auto">
@@ -46,19 +59,27 @@ function SynthesisTable({ selected }: { selected: LandDocument[] }) {
           <tbody>
             <tr>
               <th className="w-48 border-b border-r border-slate-200 bg-[#eef2f5] px-4 py-4 align-top font-bold text-[#244562]">Core Objective</th>
-              <td className="border-b border-slate-200 px-4 py-4 leading-5 text-slate-700">Together, {names} support a traceable land-record workflow by linking policy intent, state implementation and verified source metadata.</td>
+              <td className="border-b border-slate-200 px-4 py-4 leading-5 text-slate-700">{coreObjective}</td>
             </tr>
             <tr>
               <th className="border-b border-r border-slate-200 bg-[#eef2f5] px-4 py-4 align-top font-bold text-[#244562]">Consensus Points</th>
-              <td className="border-b border-slate-200 px-4 py-4 leading-5 text-slate-700"><ul className="list-disc space-y-1 pl-4"><li>Source records should retain an issuing authority, publication date and review status.</li><li>Village or district verification is a required control before records are treated as final.</li>{isCadastral && <li>Geospatial reference quality is material to reliable cadastral interoperability.</li>}</ul></td>
+              <td className="border-b border-slate-200 px-4 py-4 leading-5 text-slate-700">
+                <ul className="list-disc space-y-1 pl-4">
+                  {consensus.map((point: string, idx: number) => <li key={idx}>{point}</li>)}
+                </ul>
+              </td>
             </tr>
             <tr>
               <th className="border-b border-r border-slate-200 bg-[#eef2f5] px-4 py-4 align-top font-bold text-[#244562]">Conflicting Guidelines or Policy Gaps</th>
-              <td className="border-b border-slate-200 px-4 py-4 leading-5 text-slate-700">The selected records use different administrative levels and evidentiary standards. The current index does not establish a single cross-state rule for timelines, land classification or dispute escalation.</td>
+              <td className="border-b border-slate-200 px-4 py-4 leading-5 text-slate-700">{conflicts}</td>
             </tr>
             <tr>
               <th className="border-r border-slate-200 bg-[#eef2f5] px-4 py-4 align-top font-bold text-[#244562]">Recommended Next Steps for DoLR</th>
-              <td className="px-4 py-4 leading-5 text-slate-700"><ol className="list-decimal space-y-1 pl-4"><li>Commission a state-by-state comparison note using the current gazette record as the legal baseline.</li><li>Standardise metadata for version, geography and source page references.</li><li>Route unresolved state-specific gaps to the relevant department before publishing a consolidated guidance note.</li></ol></td>
+              <td className="px-4 py-4 leading-5 text-slate-700">
+                <ol className="list-decimal space-y-1 pl-4">
+                  {recommendations.map((rec: string, idx: number) => <li key={idx}>{rec}</li>)}
+                </ol>
+              </td>
             </tr>
           </tbody>
         </table>
@@ -70,6 +91,8 @@ function SynthesisTable({ selected }: { selected: LandDocument[] }) {
 export default function SynthesisPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([documents[0].id, documents[1].id]);
   const [synthesized, setSynthesized] = useState(false);
+  const [synthesizing, setSynthesizing] = useState(false);
+  const [synthesisResult, setSynthesisResult] = useState<any | null>(null);
   const selected = useMemo(() => documents.filter((document) => selectedIds.includes(document.id)), [selectedIds]);
 
   const toggleDocument = (id: string) => {
@@ -77,6 +100,28 @@ export default function SynthesisPage() {
     setSelectedIds((current) => current.includes(id)
       ? current.filter((item) => item !== id)
       : current.length < 3 ? [...current, id] : current);
+  };
+
+  const handleSynthesize = async () => {
+    setSynthesizing(true);
+    try {
+      const res = await fetch('/api/v1/ai/synthesis/compare', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ document_ids: selectedIds }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setSynthesisResult(data);
+        setSynthesized(true);
+        setSynthesizing(false);
+        return;
+      }
+    } catch (err) {
+      console.warn('Synthesis API call failed, falling back to local synthesis', err);
+    }
+    setSynthesized(true);
+    setSynthesizing(false);
   };
 
   return (
@@ -112,7 +157,9 @@ export default function SynthesisPage() {
           </div>
           <div className="border-t border-slate-200 p-4">
             <p className="text-xs text-slate-500"><span className="font-bold text-[#244562]">{selectedIds.length}</span> of 3 documents selected</p>
-            <button className="focus-ring mt-3 flex w-full items-center justify-center gap-2 bg-[#244562] px-3 py-2.5 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-50" data-testid="button-synthesize-selected-documents" type="button" disabled={selectedIds.length < 2} onClick={() => setSynthesized(true)}><Sparkles className="h-4 w-4" />Synthesize Selected Documents</button>
+            <button className="focus-ring mt-3 flex w-full items-center justify-center gap-2 bg-[#244562] px-3 py-2.5 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-50" data-testid="button-synthesize-selected-documents" type="button" disabled={selectedIds.length < 2 || synthesizing} onClick={handleSynthesize}>
+              <Sparkles className="h-4 w-4" />{synthesizing ? "Synthesizing with Gemini..." : "Synthesize Selected Documents"}
+            </button>
             {selectedIds.length < 2 && <p className="mt-2 text-[10px] text-[#9b6300]">Select at least two records to continue.</p>}
           </div>
         </Panel>
@@ -133,7 +180,7 @@ export default function SynthesisPage() {
           {synthesized && selected.length >= 2 && (
             <>
               <div className="flex items-center justify-between border border-[#b7d4c1] bg-[#f0f8f1] p-3 text-xs font-semibold text-[#287449]" data-testid="status-synthesis-generated"><span className="flex items-center gap-2"><Check className="h-4 w-4" />Synthesis generated from {selected.length} indexed source records.</span><button className="focus-ring flex items-center gap-1 text-[#244562] underline underline-offset-2" type="button" onClick={() => setSynthesized(false)}><RefreshCw className="h-3.5 w-3.5" />Revise selection</button></div>
-              <SynthesisTable selected={selected} />
+              <SynthesisTable selected={selected} data={synthesisResult} />
               <Panel eyebrow="Traceability" title="Selected source register">
                 <div className="divide-y divide-slate-200">{selected.map((document) => <Link className="focus-ring flex items-center justify-between gap-3 p-4 hover:bg-slate-50" data-testid={`link-synthesis-source-${document.id}`} href={`/repository#${document.id}`} key={document.id}><span className="flex items-center gap-3"><FileText className="h-4 w-4 text-[#244562]" /><span><span className="block text-xs font-bold text-[#244562]">{document.title}</span><span className="mt-1 block font-mono text-[10px] text-slate-500">{document.refId} · {document.published}</span></span></span><ChevronRight className="h-4 w-4 text-slate-400" /></Link>)}</div>
               </Panel>

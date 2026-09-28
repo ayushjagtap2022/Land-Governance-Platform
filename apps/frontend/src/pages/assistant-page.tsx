@@ -129,11 +129,32 @@ export default function AssistantPage() {
 
   const sourceDocuments = useMemo(() => response?.sourceIds.map((id) => documents.find((document) => document.id === id)).filter((document): document is LandDocument => Boolean(document)) ?? [], [response]);
 
-  const ask = (value = question) => {
+  const ask = async (value = question) => {
     const trimmed = value.trim();
     if (!trimmed || isSearching) return;
     setQuestion(trimmed);
     setIsSearching(true);
+    try {
+      const res = await fetch('/api/v1/ai/assistant/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: trimmed }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setResponse({
+          query: data.query,
+          bullets: data.bullets,
+          sourceIds: data.source_ids,
+        });
+        setIsSearching(false);
+        return;
+      }
+    } catch (err) {
+      console.warn('AI Assistant API call failed, falling back to local library', err);
+    }
+
+    // Local library fallback
     window.setTimeout(() => {
       const matching = responseLibrary.find((item) => item.query.toLowerCase() === trimmed.toLowerCase());
       setResponse(matching ?? {
@@ -146,7 +167,7 @@ export default function AssistantPage() {
         sourceIds: ['DOC-26019-001', 'DOC-26019-005'],
       });
       setIsSearching(false);
-    }, 650);
+    }, 450);
   };
 
   const copyBrief = () => {

@@ -153,15 +153,67 @@ function UploadModal({ onClose }: { onClose: () => void }) {
     timersRef.current.forEach((timer) => window.clearTimeout(timer));
   }, []);
 
-  const startPipeline = (file: File) => {
+  const [uploadedUrl, setUploadedUrl] = useState('');
+
+  const startPipeline = async (file: File) => {
     setFileName(file.name);
     setStage('uploading');
     timersRef.current.forEach((timer) => window.clearTimeout(timer));
-    timersRef.current = [
-      window.setTimeout(() => setStage('ocr'), 850),
-      window.setTimeout(() => setStage('metadata'), 1700),
-      window.setTimeout(() => setStage('review'), 2550),
-    ];
+
+    const t1 = window.setTimeout(() => setStage('ocr'), 750);
+    const t2 = window.setTimeout(() => setStage('metadata'), 1600);
+    timersRef.current = [t1, t2];
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/v1/repository/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.metadata) {
+          setMetadata({
+            title: data.metadata.title,
+            authority: data.metadata.issuing_authority,
+            year: data.metadata.publication_year,
+          });
+        }
+        if (data.file_url) {
+          setUploadedUrl(data.file_url);
+        }
+        window.clearTimeout(t1);
+        window.clearTimeout(t2);
+        setStage('review');
+        return;
+      }
+    } catch (err) {
+      console.warn('Upload API call failed, using heuristic staging', err);
+    }
+
+    timersRef.current.push(window.setTimeout(() => setStage('review'), 2500));
+  };
+
+  const commitRecord = async () => {
+    try {
+      await fetch('/api/v1/repository/commit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: metadata.title,
+          authority: metadata.authority,
+          year: metadata.year,
+          theme: 'Cadastral Mapping',
+          administrative_level: 'National',
+          file_name: fileName,
+          file_url: uploadedUrl,
+        }),
+      });
+    } catch (e) {
+      console.warn('Commit API failed', e);
+    }
+    setStage('committed');
   };
 
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
@@ -282,7 +334,7 @@ function UploadModal({ onClose }: { onClose: () => void }) {
             </div>
             <div className="mt-5 flex justify-end gap-2">
               {stage === 'review' && <button className="focus-ring border border-slate-300 px-3 py-2 text-xs font-bold text-slate-700" data-testid="button-cancel-upload-review" type="button" onClick={onClose}>Cancel</button>}
-              <button className="focus-ring flex items-center gap-2 bg-[#244562] px-4 py-2 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-60" data-testid="button-commit-registry" type="button" disabled={stage === 'committed'} onClick={() => setStage('committed')}>
+              <button className="focus-ring flex items-center gap-2 bg-[#244562] px-4 py-2 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-60" data-testid="button-commit-registry" type="button" disabled={stage === 'committed'} onClick={commitRecord}>
                 <CheckCircle2 className="h-4 w-4" />{stage === 'committed' ? 'Committed' : 'Commit to National Registry'}
               </button>
             </div>

@@ -44,3 +44,12 @@ Thumbs.db
 
 .cursor/rules/nx-rules.mdc
 .github/instructions/nx.instructions.md
+data/
+# Datasets & Large Files
+Land Governance Platform Datasets/
+apps/api/uploads/
+apps/api/__pycache__/
+__pycache__/
+*.pyc
+*.parquet
+
