@@ -1,3 +1,5 @@
+import os
+from pathlib import Path
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
@@ -15,6 +17,23 @@ class Settings(BaseSettings):
     
     # Redis for WebSockets (Use memory:// for local dev, redis:// for production)
     REDIS_URL: str = "memory://"
+
+    # Google Gemini API (Using latest gemini-2.5-flash)
+    GEMINI_API_KEY: str = ""
+    GEMINI_MODEL: str = "gemini-2.5-flash"
+    GEMINI_EMBEDDING_MODEL: str = "text-embedding-004"
+
+    # AWS S3 Storage
+    AWS_ACCESS_KEY_ID: str = ""
+    AWS_SECRET_ACCESS_KEY: str = ""
+    AWS_REGION: str = "ap-south-1"
+    AWS_S3_BUCKET: str = "land-governance-platform"
+
+    # Local storage fallback directory
+    UPLOAD_DIR: Path = Path(__file__).resolve().parent.parent.parent / "uploads"
+
+    # Datasets directory
+    DATASETS_DIR: Path = Path(r"C:\Nirmal\Projects\Land-Governance-Platform\Land Governance Platform Datasets")
     
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -23,3 +42,4 @@ class Settings(BaseSettings):
     )
 
 settings = Settings()
+settings.UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
