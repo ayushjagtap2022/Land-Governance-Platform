@@ -1,0 +1,145 @@
+/**
+ * Login Page — Authenticates users via the FastAPI backend.
+ */
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { Link, useLocation } from 'wouter';
+import { LogIn, Eye, EyeOff, ShieldCheck } from 'lucide-react';
+import { toast } from 'sonner';
+import api from '@/lib/api';
+import { useAuthStore } from '@/stores/authStore';
+
+const loginSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+  password: z.string().min(1, 'Password is required'),
+});
+
+type LoginForm = z.infer<typeof loginSchema>;
+
+export default function LoginPage() {
+  const [, setLocation] = useLocation();
+  const login = useAuthStore((s) => s.login);
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginForm>({
+    resolver: zodResolver(loginSchema),
+  });
+
+  const onSubmit = async (data: LoginForm) => {
+    setIsLoading(true);
+    try {
+      const res = await api.post('/auth/login', data);
+      const { access_token, user } = res.data;
+      login(access_token, user);
+      toast.success(`Welcome back, ${user.full_name}!`);
+      setLocation('/repository');
+    } catch (err: any) {
+      const message = err.response?.data?.detail || 'Login failed. Please try again.';
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="flex min-h-[100dvh] flex-col items-center justify-center bg-[#f4f6f8] px-4">
+      {/* Header strip */}
+      <div className="mb-8 text-center">
+        <div className="mb-3 flex items-center justify-center gap-2">
+          <ShieldCheck className="h-8 w-8 text-[#132f4c]" />
+        </div>
+        <h1 className="font-serif text-3xl font-semibold text-[#132f4c]">
+          Land Governance Platform
+        </h1>
+        <p className="mt-1 text-sm text-slate-500">
+          Department of Land Resources · Ministry of Rural Development
+        </p>
+      </div>
+
+      {/* Login card */}
+      <div className="w-full max-w-md border border-slate-300 bg-white shadow-sm">
+        <div className="border-b border-slate-200 bg-slate-50 px-6 py-4">
+          <h2 className="text-sm font-bold text-[#132f4c]">Sign in to your account</h2>
+        </div>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 p-6">
+          <div>
+            <label htmlFor="email" className="mb-1 block text-xs font-semibold text-slate-700">
+              Email Address
+            </label>
+            <input
+              id="email"
+              type="email"
+              autoComplete="email"
+              placeholder="you@institution.ac.in"
+              className="focus-ring h-10 w-full border border-slate-300 px-3 text-sm"
+              {...register('email')}
+            />
+            {errors.email && (
+              <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>
+            )}
+          </div>
+
+          <div>
+            <label htmlFor="password" className="mb-1 block text-xs font-semibold text-slate-700">
+              Password
+            </label>
+            <div className="relative">
+              <input
+                id="password"
+                type={showPassword ? 'text' : 'password'}
+                autoComplete="current-password"
+                placeholder="••••••••"
+                className="focus-ring h-10 w-full border border-slate-300 px-3 pr-10 text-sm"
+                {...register('password')}
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600"
+                onClick={() => setShowPassword(!showPassword)}
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
+            {errors.password && (
+              <p className="mt-1 text-xs text-red-600">{errors.password.message}</p>
+            )}
+          </div>
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="focus-ring flex h-10 w-full items-center justify-center gap-2 bg-[#244562] text-xs font-bold text-white hover:bg-[#132f4c] disabled:opacity-60 disabled:cursor-wait"
+          >
+            {isLoading ? (
+              'Signing in...'
+            ) : (
+              <>
+                <LogIn className="h-4 w-4" /> Sign In
+              </>
+            )}
+          </button>
+        </form>
+
+        <div className="border-t border-slate-200 bg-slate-50 px-6 py-4 text-center text-xs text-slate-600">
+          Don&apos;t have an account?{' '}
+          <Link href="/register" className="font-bold text-[#244562] underline underline-offset-2">
+            Register here
+          </Link>
+        </div>
+      </div>
+
+      <p className="mt-6 text-[10px] text-slate-400">
+        SIH PS 26019 · National Digital Platform for Land Governance
+      </p>
+    </div>
+  );
+}

@@ -44,7 +44,8 @@ class ProposalCreate(SQLModel):
     """Schema for POST /innovation/challenges/{id}/proposals."""
     title: str
     abstract: str
-    detailed_plan: Optional[str] = None
+    document_url: Optional[str] = None
+    requested_funding: Optional[float] = None
     team_members: Optional[list[dict]] = None  # e.g. [{"name": "...", "email": "..."}]
 
 
@@ -68,7 +69,7 @@ class ProposalRead(SQLModel):
     submitted_by: uuid.UUID
     title: str
     abstract: str
-    detailed_plan: Optional[str] = None
+    document_url: Optional[str] = None
     team_members: Optional[list[dict]] = None
     status: ProposalStatus
     score: Optional[float] = None
@@ -97,7 +98,7 @@ class Proposal(SQLModel, table=True):
     # Proposal content
     title: str = Field(index=True)
     abstract: str
-    detailed_plan: Optional[str] = None
+    document_url: Optional[str] = None
     team_members: Optional[list[dict]] = Field(default=None, sa_column=Column(JSON))
     
     # Status tracking (PDF: "under review → shortlisted → funded")

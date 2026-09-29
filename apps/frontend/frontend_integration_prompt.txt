@@ -1,9 +1,4 @@
-================================================================================
- FRONTEND ↔ BACKEND INTEGRATION PROMPT
- Land Governance Platform — SIH 2026
-================================================================================
 
---- COPY EVERYTHING BELOW THIS LINE ---
 
 ## Context
 

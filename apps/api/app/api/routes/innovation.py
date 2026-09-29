@@ -10,7 +10,7 @@ All endpoints for the Innovation Portal:
 """
 import uuid
 from typing import Optional
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.api.dependencies import get_db, get_current_user, require_role
@@ -24,6 +24,7 @@ from app.models.proposal import (
 )
 from app.models.notification import NotificationType
 from app.services import innovation_service, notification_service
+from app.services.s3_service import upload_proposal_pdf
 
 router = APIRouter()
 
@@ -157,6 +158,44 @@ async def submit_proposal(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     
+    return ProposalRead.model_validate(proposal)
+
+
+@router.post(
+    "/proposals/{proposal_id}/upload-document",
+    response_model=ProposalRead,
+    summary="Upload PDF document for a proposal",
+)
+async def upload_proposal_document(
+    proposal_id: uuid.UUID,
+    file: UploadFile = File(...),
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """
+    Upload the PDF detailed plan to an S3-compatible bucket and attach to the proposal.
+    """
+    if file.content_type != "application/pdf":
+        raise HTTPException(status_code=400, detail="Only PDF files are allowed.")
+        
+    proposal = await innovation_service.get_proposal_by_id(db, proposal_id)
+    if not proposal:
+        raise HTTPException(status_code=404, detail="Proposal not found.")
+        
+    if proposal.submitted_by != current_user.id:
+        raise HTTPException(status_code=403, detail="You can only upload documents to your own proposals.")
+        
+    try:
+        # Upload to S3
+        url = upload_proposal_pdf(file)
+        # Update database
+        proposal.document_url = url
+        db.add(proposal)
+        await db.commit()
+        await db.refresh(proposal)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+        
     return ProposalRead.model_validate(proposal)
 
 
