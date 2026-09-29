@@ -177,13 +177,23 @@ class RAGService:
                     system_instruction=system_instruction,
                     temperature=0.2
                 )
-                response = await client.aio.models.generate_content(
-                    model=settings.GEMINI_MODEL,
-                    contents=prompt,
-                    config=gen_config
-                )
                 
-                if response.text:
+                candidate_models = [settings.GEMINI_MODEL, "gemini-3.8-flash", "gemini-2.0-flash"]
+                response = None
+                for candidate in candidate_models:
+                    try:
+                        response = await client.aio.models.generate_content(
+                            model=candidate,
+                            contents=prompt,
+                            config=gen_config
+                        )
+                        if response and response.text:
+                            break
+                    except Exception as err:
+                        logger.warning(f"Candidate model {candidate} failed: {err}")
+                        continue
+                
+                if response and response.text:
                     bullets = [b.strip().lstrip("-•*").strip() for b in response.text.split("\n") if b.strip()]
                     bullets = [b for b in bullets if len(b) > 10][:4]
                     if bullets:

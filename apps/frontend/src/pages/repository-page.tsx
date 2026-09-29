@@ -15,6 +15,7 @@ import {
   LockKeyhole,
   Map,
   Search,
+  Sparkles,
   UploadCloud,
   X,
 } from 'lucide-react';
@@ -210,6 +211,9 @@ function UploadModal({ onClose, onCommitSuccess }: { onClose: () => void; onComm
           file_url: uploadedUrl,
         }),
       });
+      if (onCommitSuccess) {
+        onCommitSuccess();
+      }
     } catch (e) {
       console.warn('Commit API failed', e);
     }
@@ -377,6 +381,39 @@ function VersionDrawer({ document, onClose }: { document: LandDocument; onClose:
 }
 
 function PreviewDrawer({ document, onClose }: { document: LandDocument; onClose: () => void }) {
+  const [aiSummary, setAiSummary] = useState<any | null>(null);
+  const [summarizing, setSummarizing] = useState(false);
+  const [relatedDocs, setRelatedDocs] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch(`/api/v1/repository/documents/${document.id}/related`)
+      .then(res => res.json())
+      .then(data => { if (Array.isArray(data)) setRelatedDocs(data); })
+      .catch(() => {});
+  }, [document.id]);
+
+  const handleGenerateSummary = async () => {
+    setSummarizing(true);
+    try {
+      const res = await fetch('/api/v1/ai/summarize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: document.title,
+          content: document.summary,
+          department: document.department,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setAiSummary(data);
+      }
+    } catch (e) {
+      console.warn('Summarization failed', e);
+    }
+    setSummarizing(false);
+  };
+
   return (
     <div className="fixed inset-0 z-40 flex justify-end bg-[#132f4c]/30" role="dialog" aria-modal="true" aria-label="Inline document preview">
       <div className="h-full w-full max-w-lg overflow-y-auto border-l border-slate-300 bg-white shadow-xl">
@@ -388,24 +425,79 @@ function PreviewDrawer({ document, onClose }: { document: LandDocument; onClose:
           <button className="focus-ring border border-slate-400 px-2 py-1 text-xs font-bold" data-testid="button-close-inline-preview" type="button" onClick={onClose}><X className="h-4 w-4" /></button>
         </div>
         <div className="space-y-5 p-5">
-          <div className="flex items-center gap-3 border border-slate-200 bg-slate-50 p-4">
-            <FileText className="h-8 w-8 text-[#244562]" />
-            <div>
-              <p className="text-sm font-bold text-[#244562]">{document.format} source record</p>
-              <p className="mt-1 text-xs text-slate-500">{document.pages} pages · {document.version} · {document.published}</p>
+          <div className="flex items-center justify-between border border-slate-200 bg-slate-50 p-4">
+            <div className="flex items-center gap-3">
+              <FileText className="h-8 w-8 text-[#244562]" />
+              <div>
+                <p className="text-sm font-bold text-[#244562]">{document.format} source record</p>
+                <p className="mt-1 text-xs text-slate-500">{document.pages} pages · {document.version} · {document.published}</p>
+              </div>
             </div>
+            <button
+              className="focus-ring flex items-center gap-1.5 bg-[#244562] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#132f4c]"
+              type="button"
+              disabled={summarizing}
+              onClick={handleGenerateSummary}
+            >
+              <Sparkles className="h-3.5 w-3.5" />
+              {summarizing ? 'Summarizing...' : 'AI Summary'}
+            </button>
           </div>
-          <div className="min-h-[280px] border border-slate-300 bg-[#f8fafc] p-8">
-            <div className="mx-auto max-w-sm border border-slate-300 bg-white p-6 shadow-sm">
-              <p className="text-center font-serif text-lg font-bold text-[#132f4c]">Department of Land Resources</p>
-              <div className="mx-auto mt-4 h-1 w-24 bg-[#f2b134]" />
-              <p className="mt-8 text-sm font-bold text-[#244562]">{document.title}</p>
-              <p className="mt-4 text-xs leading-6 text-slate-600">{document.summary}</p>
-              <div className="mt-8 grid grid-cols-2 gap-2 text-[10px] text-slate-500">
+
+          {aiSummary && (
+            <div className="border border-[#b9cce0] bg-[#eef4fa] p-4 text-xs leading-relaxed text-slate-800">
+              <p className="font-bold text-[#244562] mb-1 flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5 text-[#244562]" />
+                Gemini Executive Summary:
+              </p>
+              <p className="mb-3 text-slate-700">{aiSummary.executive_summary}</p>
+              <p className="font-bold text-[#244562] mb-1">Key Takeaways:</p>
+              <ul className="list-disc pl-4 space-y-1 mb-3 text-slate-700">
+                {aiSummary.key_takeaways?.map((item: string, idx: number) => (
+                  <li key={idx}>{item}</li>
+                ))}
+              </ul>
+              {aiSummary.statutory_implications && (
+                <p className="text-[11px] text-slate-600 border-t border-slate-300 pt-2">
+                  <strong>Statutory Impact:</strong> {aiSummary.statutory_implications}
+                </p>
+              )}
+            </div>
+          )}
+
+          <div className="min-h-[220px] border border-slate-300 bg-[#f8fafc] p-6">
+            <div className="mx-auto max-w-sm border border-slate-300 bg-white p-5 shadow-sm">
+              <p className="text-center font-serif text-base font-bold text-[#132f4c]">Department of Land Resources</p>
+              <div className="mx-auto mt-3 h-1 w-20 bg-[#f2b134]" />
+              <p className="mt-5 text-sm font-bold text-[#244562]">{document.title}</p>
+              <p className="mt-3 text-xs leading-5 text-slate-600">{document.summary}</p>
+              <div className="mt-6 grid grid-cols-2 gap-2 text-[10px] text-slate-500">
                 <span>Reference: {document.refId}</span><span className="text-right">Issued: {document.published}</span>
               </div>
             </div>
           </div>
+
+          {relatedDocs.length > 0 && (
+            <div className="border border-slate-200 bg-slate-50 p-4">
+              <p className="text-xs font-bold text-[#244562] mb-2">Related Policy & Research Records</p>
+              <div className="divide-y divide-slate-200">
+                {relatedDocs.map((rel: any) => (
+                  <div key={rel.id} className="py-2 text-xs flex justify-between items-start gap-2">
+                    <div>
+                      <p className="font-semibold text-slate-800">{rel.title}</p>
+                      <p className="text-[10px] text-slate-500">{rel.department} · {rel.theme}</p>
+                    </div>
+                    {rel.similarity_score !== undefined && (
+                      <span className="shrink-0 bg-[#eef4fa] text-[#244562] text-[10px] font-mono px-2 py-0.5 rounded font-bold">
+                        {rel.similarity_score}% match
+                      </span>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="border-l-2 border-[#f2b134] bg-[#fff8e8] p-3 text-xs leading-5 text-slate-700">This preview is a registry excerpt. Open the source record for the complete file.</div>
         </div>
       </div>
@@ -419,9 +511,12 @@ export default function RepositoryPage() {
   const [query, setQuery] = useState('');
   const [docList, setDocList] = useState<LandDocument[]>(documents);
 
-  const fetchDocuments = async () => {
+  const fetchDocuments = async (q = query, mode = searchMode) => {
     try {
-      const res = await fetch('/api/v1/repository/documents');
+      const params = new URLSearchParams();
+      if (q && q.trim()) params.set('query', q.trim());
+      if (mode) params.set('search_mode', mode);
+      const res = await fetch(`/api/v1/repository/documents?${params.toString()}`);
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
@@ -443,6 +538,7 @@ export default function RepositoryPage() {
             format: d.format,
             pages: d.pages,
             version: d.version,
+            versions: d.versions || [],
             visibility: d.visibility,
             summary: d.summary,
             fileUrl: d.file_url,
@@ -455,9 +551,6 @@ export default function RepositoryPage() {
     }
   };
 
-  useEffect(() => {
-    fetchDocuments();
-  }, []);
   const [searchMode, setSearchMode] = useState<'exact' | 'semantic'>('exact');
   const [language, setLanguage] = useState<'English' | 'हिन्दी'>('English');
   const [state, setState] = useState('All India');
@@ -476,7 +569,22 @@ export default function RepositoryPage() {
     if (search) setQuery(search);
   }, []);
 
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      fetchDocuments(query, searchMode);
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [query, searchMode]);
+
   const filtered = useMemo(() => docList.filter((document) => {
+    if (searchMode === 'semantic' && query.trim()) {
+      return (state === 'All India' || document.stateRegion === state)
+        && (level === 'National' || document.administrativeLevel === level)
+        && (theme === 'Cadastral Mapping' || document.theme === theme)
+        && (documentType === 'All types' || document.documentType === documentType)
+        && document.year >= Number(yearFrom)
+        && document.year <= Number(yearTo);
+    }
     const normalizedQuery = query.trim().toLowerCase();
     const searchText = `${document.refId} ${document.title} ${document.department} ${document.stateRegion} ${document.theme}`.toLowerCase();
     const queryWords = normalizedQuery.split(/\s+/).filter(Boolean);
@@ -490,7 +598,7 @@ export default function RepositoryPage() {
       && (documentType === 'All types' || document.documentType === documentType)
       && document.year >= Number(yearFrom)
       && document.year <= Number(yearTo);
-  }), [documentType, level, query, searchMode, state, theme, yearFrom, yearTo]);
+  }), [docList, documentType, level, query, searchMode, state, theme, yearFrom, yearTo]);
 
   const clearFilters = () => {
     setQuery('');

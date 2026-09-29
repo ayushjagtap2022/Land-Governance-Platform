@@ -67,13 +67,22 @@ class OCRService:
                     data=file_bytes[:1024*1024*4],
                     mime_type=mime_type
                 )
-                response = client.models.generate_content(
-                    model=settings.GEMINI_MODEL,
-                    contents=[part, prompt],
-                    config=gen_config
-                )
+                candidate_models = [settings.GEMINI_MODEL, "gemini-3.8-flash", "gemini-2.0-flash"]
+                response = None
+                for candidate in candidate_models:
+                    try:
+                        response = client.models.generate_content(
+                            model=candidate,
+                            contents=[part, prompt],
+                            config=gen_config
+                        )
+                        if response and response.text:
+                            break
+                    except Exception as err:
+                        logger.warning(f"OCR candidate model {candidate} failed: {err}")
+                        continue
 
-                if response.text:
+                if response and response.text:
                     data = json.loads(response.text)
                     return ExtractedMetadata(
                         title=data.get("title", filename.replace("_", " ").rsplit(".", 1)[0].title()),

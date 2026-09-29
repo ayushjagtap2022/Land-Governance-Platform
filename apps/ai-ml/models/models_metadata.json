@@ -1,0 +1,255 @@
+{
+  "trained_at": "2026-09-29T20:22:09Z",
+  "total_districts": 640,
+  "total_states": 35,
+  "models": {
+    "dispute_risk": {
+      "model_id": "MOD-DISPUTE-RF-01",
+      "name": "Land Dispute & Titling Risk Regressor",
+      "algorithm": "RandomForestRegressor",
+      "framework": "scikit-learn",
+      "n_estimators": 120,
+      "features": [
+        "urban_household_ratio",
+        "agri_worker_ratio",
+        "cultivator_ratio",
+        "marginal_worker_ratio",
+        "literacy_rate",
+        "rented_house_ratio",
+        "sc_st_ratio",
+        "dilapidated_house_ratio",
+        "nl_mean",
+        "nl_growth_velocity",
+        "internet_ratio",
+        "economic_density_index"
+      ],
+      "target": "district_dispute_risk_index_0_to_100",
+      "metrics": {
+        "r2_score": 0.8345,
+        "mae": 2.4582,
+        "rmse": 3.255,
+        "cv_5fold_r2_mean": 0.6004,
+        "cv_5fold_r2_std": 0.0922
+      },
+      "feature_importances": [
+        {
+          "feature": "nl_growth_velocity",
+          "importance": 0.2893,
+          "percentage": 28.93
+        },
+        {
+          "feature": "agri_worker_ratio",
+          "importance": 0.2228,
+          "percentage": 22.28
+        },
+        {
+          "feature": "rented_house_ratio",
+          "importance": 0.1472,
+          "percentage": 14.72
+        },
+        {
+          "feature": "urban_household_ratio",
+          "importance": 0.1107,
+          "percentage": 11.07
+        },
+        {
+          "feature": "sc_st_ratio",
+          "importance": 0.0674,
+          "percentage": 6.74
+        },
+        {
+          "feature": "literacy_rate",
+          "importance": 0.04,
+          "percentage": 4.0
+        },
+        {
+          "feature": "dilapidated_house_ratio",
+          "importance": 0.0299,
+          "percentage": 2.99
+        },
+        {
+          "feature": "cultivator_ratio",
+          "importance": 0.0265,
+          "percentage": 2.65
+        },
+        {
+          "feature": "nl_mean",
+          "importance": 0.019,
+          "percentage": 1.9
+        },
+        {
+          "feature": "marginal_worker_ratio",
+          "importance": 0.0182,
+          "percentage": 1.82
+        },
+        {
+          "feature": "internet_ratio",
+          "importance": 0.015,
+          "percentage": 1.5
+        },
+        {
+          "feature": "economic_density_index",
+          "importance": 0.014,
+          "percentage": 1.4
+        }
+      ]
+    },
+    "urban_conversion": {
+      "model_id": "MOD-SPRAWL-HGB-02",
+      "name": "Urban Land Conversion & Sprawl Forecaster",
+      "algorithm": "HistGradientBoostingRegressor",
+      "framework": "scikit-learn",
+      "features": [
+        "nl_mean",
+        "nl_growth_velocity",
+        "nl_std",
+        "urban_household_ratio",
+        "rural_household_ratio",
+        "economic_density_index",
+        "internet_ratio",
+        "literacy_rate"
+      ],
+      "target": "annual_agricultural_to_urban_conversion_hectares_per_100k",
+      "metrics": {
+        "r2_score": 0.8318,
+        "mae": 19.8157,
+        "rmse": 28.5552
+      },
+      "feature_importances": [
+        {
+          "feature": "nl_growth_velocity",
+          "importance": 0.6241,
+          "percentage": 62.41
+        },
+        {
+          "feature": "urban_household_ratio",
+          "importance": 0.1145,
+          "percentage": 11.45
+        },
+        {
+          "feature": "economic_density_index",
+          "importance": 0.0979,
+          "percentage": 9.79
+        },
+        {
+          "feature": "nl_mean",
+          "importance": 0.0539,
+          "percentage": 5.39
+        },
+        {
+          "feature": "internet_ratio",
+          "importance": 0.0498,
+          "percentage": 4.98
+        },
+        {
+          "feature": "nl_std",
+          "importance": 0.0487,
+          "percentage": 4.87
+        },
+        {
+          "feature": "rural_household_ratio",
+          "importance": 0.0069,
+          "percentage": 0.69
+        },
+        {
+          "feature": "literacy_rate",
+          "importance": 0.0041,
+          "percentage": 0.41
+        }
+      ]
+    },
+    "climate_vulnerability": {
+      "model_id": "MOD-CLIMATE-RF-03",
+      "name": "Agrarian & Climate Distress Vulnerability Model",
+      "algorithm": "RandomForestRegressor",
+      "framework": "scikit-learn",
+      "n_estimators": 100,
+      "features": [
+        "rf_actual_mean",
+        "rf_actual_std",
+        "rf_departure_var",
+        "cultivator_ratio",
+        "agri_worker_ratio",
+        "crop_avg_yield",
+        "electric_lighting_ratio",
+        "dilapidated_house_ratio",
+        "agrarian_dependency_ratio"
+      ],
+      "target": "climate_distress_vulnerability_index_0_to_100",
+      "metrics": {
+        "r2_score": 0.9543,
+        "mae": 0.9348,
+        "rmse": 1.2872
+      },
+      "feature_importances": [
+        {
+          "feature": "cultivator_ratio",
+          "importance": 0.5247,
+          "percentage": 52.47
+        },
+        {
+          "feature": "electric_lighting_ratio",
+          "importance": 0.4002,
+          "percentage": 40.02
+        },
+        {
+          "feature": "rf_departure_var",
+          "importance": 0.0534,
+          "percentage": 5.34
+        },
+        {
+          "feature": "crop_avg_yield",
+          "importance": 0.007,
+          "percentage": 0.7
+        },
+        {
+          "feature": "dilapidated_house_ratio",
+          "importance": 0.0049,
+          "percentage": 0.49
+        },
+        {
+          "feature": "agrarian_dependency_ratio",
+          "importance": 0.0028,
+          "percentage": 0.28
+        },
+        {
+          "feature": "rf_actual_std",
+          "importance": 0.0026,
+          "percentage": 0.26
+        },
+        {
+          "feature": "agri_worker_ratio",
+          "importance": 0.0023,
+          "percentage": 0.23
+        },
+        {
+          "feature": "rf_actual_mean",
+          "importance": 0.002,
+          "percentage": 0.2
+        }
+      ]
+    }
+  },
+  "training_datasets": [
+    {
+      "name": "Census of India 2011",
+      "rows": 640,
+      "citation": "Office of the Registrar General & Census Commissioner, India"
+    },
+    {
+      "name": "VIIRS/DMSP Nighttime Lights Panel (2014-2020)",
+      "rows": 8333,
+      "citation": "Earth Observation Group, NOAA / VIIRS"
+    },
+    {
+      "name": "IMD District Precipitation Records",
+      "rows": 24000,
+      "citation": "India Meteorological Department (IMD)"
+    },
+    {
+      "name": "District Crop Production & Yield Panel",
+      "rows": 246000,
+      "citation": "Ministry of Agriculture & Farmers Welfare, GoI"
+    }
+  ]
+}

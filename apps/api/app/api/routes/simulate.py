@@ -19,4 +19,4 @@ async def evaluate_policy_simulation(payload: SimulationInput):
 @router.get("/baselines")
 async def get_state_baselines() -> Dict[str, Any]:
     """Returns historical baseline indicators for all supported states."""
-    return STATE_BASELINES
+    return simulation_service.baselines

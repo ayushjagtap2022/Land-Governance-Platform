@@ -79,12 +79,23 @@ export default function InnovationPage() {
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const queryClient = useQueryClient();
 
-  const { data: challenges = [], isLoading: isLoadingChallenges } = useQuery({
+  type ChallengeItem = {
+    id: string;
+    title: string;
+    description: string;
+    total_grant_pool: number;
+    proposals_count?: number;
+    deadline?: string;
+    status?: string;
+    [key: string]: any;
+  };
+
+  const { data: challenges = [], isLoading: isLoadingChallenges } = useQuery<ChallengeItem[]>({
     queryKey: ['challenges'],
     queryFn: () => api.get('/innovation/challenges').then(r => r.data),
   });
 
-  const { data: pilots = [], isLoading: isLoadingPilots } = useQuery({
+  const { data: pilots = [], isLoading: isLoadingPilots } = useQuery<any[]>({
     queryKey: ['pilots'],
     // Use showcase for now or fallback to empty array if no global endpoint
     queryFn: () => api.get('/innovation/showcase').then(r => r.data).catch(() => []),
@@ -188,7 +199,7 @@ export default function InnovationPage() {
                   <h3 className="font-bold text-[#1E293B] text-base leading-snug mb-3">{challenge.title}</h3>
                   <div className="space-y-2 text-xs text-slate-600 mb-4">
                     <p className="flex items-center gap-2">
-                      <Calendar className="h-3.5 w-3.5 text-slate-400" /> Deadline: <span className="font-semibold text-slate-800">{new Date(challenge.deadline).toLocaleDateString()}</span>
+                      <Calendar className="h-3.5 w-3.5 text-slate-400" /> Deadline: <span className="font-semibold text-slate-800">{challenge.deadline ? new Date(challenge.deadline).toLocaleDateString() : 'Rolling Application'}</span>
                     </p>
                     <p className="flex items-start gap-2">
                       <AlertCircle className="h-3.5 w-3.5 text-slate-400 shrink-0 mt-0.5" /> Eligibility: <span>{challenge.eligibility_criteria}</span>

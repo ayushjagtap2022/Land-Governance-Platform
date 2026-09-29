@@ -54,13 +54,22 @@ class SynthesisService:
                     response_mime_type="application/json",
                     temperature=0.2
                 )
-                response = client.models.generate_content(
-                    model=settings.GEMINI_MODEL,
-                    contents=prompt,
-                    config=gen_config
-                )
+                candidate_models = [settings.GEMINI_MODEL, "gemini-3.8-flash", "gemini-2.0-flash"]
+                response = None
+                for candidate in candidate_models:
+                    try:
+                        response = client.models.generate_content(
+                            model=candidate,
+                            contents=prompt,
+                            config=gen_config
+                        )
+                        if response and response.text:
+                            break
+                    except Exception as err:
+                        logger.warning(f"Synthesis candidate model {candidate} failed: {err}")
+                        continue
 
-                if response.text:
+                if response and response.text:
                     data = json.loads(response.text)
                     return SynthesisResponse(
                         document_ids=doc_ids,

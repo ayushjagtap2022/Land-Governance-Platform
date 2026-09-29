@@ -9,7 +9,8 @@ from app.api.routes import (
     admin,
     simulate,
     assistant,
-    repository
+    repository,
+    ml
 )
 
 api_router = APIRouter()
@@ -41,3 +42,7 @@ api_router.include_router(assistant.router, prefix="/ai", tags=["ai"])
 
 # Module 2: Central Knowledge Repository
 api_router.include_router(repository.router, prefix="/repository", tags=["repository"])
+
+# AI/ML Predictive Models Engine (Scikit-Learn)
+api_router.include_router(ml.router, prefix="/ml", tags=["ml"])
+

@@ -142,9 +142,9 @@ SEED_DOCUMENTS = [
     }
 ]
 
-def format_document_dict(doc: Document) -> Dict[str, Any]:
+def format_document_dict(doc: Document, similarity: Optional[float] = None) -> Dict[str, Any]:
     meta = doc.metadata_json or {}
-    return {
+    res = {
         "id": str(doc.id),
         "ref_id": meta.get("ref_id", f"DOC-{str(doc.id)[:8]}"),
         "title": doc.title,
@@ -166,6 +166,9 @@ def format_document_dict(doc: Document) -> Dict[str, Any]:
         "summary": doc.summary or "",
         "file_url": meta.get("file_url")
     }
+    if similarity is not None:
+        res["similarity_score"] = round(similarity * 100, 1)
+    return res
 
 async def ensure_seed_documents(db: AsyncSession):
     try:
@@ -207,6 +210,18 @@ async def upload_document(file: UploadFile = File(...)):
 @router.post("/commit")
 async def commit_document(record: CommitRecordRequest, db: AsyncSession = Depends(get_db)):
     try:
+        # Check for duplicates by title
+        dup_stmt = select(Document).where(Document.title == record.title)
+        dup_res = await db.execute(dup_stmt)
+        existing_doc = dup_res.scalar_one_or_none()
+        if existing_doc:
+            return {
+                "success": False,
+                "duplicate": True,
+                "message": f"Duplicate record detected: '{record.title}' is already registered in the National Registry.",
+                "document": format_document_dict(existing_doc)
+            }
+
         new_id = uuid.uuid4()
         ref_id = f"REG-2024-{str(new_id)[:6].upper()}"
         year_val = int(record.year) if record.year.isdigit() else 2024
@@ -263,6 +278,7 @@ async def get_documents(
     theme: Optional[str] = None,
     year_from: Optional[int] = None,
     year_to: Optional[int] = None,
+    search_mode: Optional[str] = "exact",
     db: AsyncSession = Depends(get_db)
 ) -> List[Dict[str, Any]]:
     try:
@@ -270,20 +286,56 @@ async def get_documents(
         stmt = select(Document).order_by(Document.created_at.desc())
         result = await db.execute(stmt)
         docs = result.scalars().all()
-        formatted = [format_document_dict(d) for d in docs]
 
-        if state and state != "All India":
-            formatted = [d for d in formatted if d.get("state_region") == state or d.get("state_region") == "All India"]
-        if theme and theme != "All":
-            formatted = [d for d in formatted if d.get("theme") == theme]
-        if year_from:
-            formatted = [d for d in formatted if d.get("year", 0) >= year_from]
-        if year_to:
-            formatted = [d for d in formatted if d.get("year", 0) <= year_to]
-        if query:
-            q = query.lower()
-            formatted = [d for d in formatted if q in d.get("title", "").lower() or q in d.get("summary", "").lower()]
+        query_vec = generate_embedding(query.strip()) if (query and search_mode == "semantic") else None
+
+        scored_docs = []
+        for d in docs:
+            sim = None
+            if query_vec is not None and d.embedding is not None:
+                sim = float(np.dot(query_vec, d.embedding))
+            scored_docs.append((d, sim))
+
+        # Filter and format
+        formatted = []
+        for d, sim in scored_docs:
+            doc_dict = format_document_dict(d, similarity=sim)
             
+            # Apply state filter
+            if state and state != "All India":
+                if doc_dict.get("state_region") != state and doc_dict.get("state_region") != "All India":
+                    continue
+
+            # Apply theme filter
+            if theme and theme != "All":
+                if doc_dict.get("theme") != theme:
+                    continue
+
+            # Apply year range filters
+            if year_from and doc_dict.get("year", 0) < year_from:
+                continue
+            if year_to and doc_dict.get("year", 0) > year_to:
+                continue
+
+            # Apply query filtering
+            if query and query.strip():
+                q = query.strip().lower()
+                if search_mode == "exact":
+                    text_blob = f"{doc_dict.get('title', '')} {doc_dict.get('summary', '')} {doc_dict.get('department', '')}".lower()
+                    if q not in text_blob:
+                        continue
+                elif search_mode == "semantic":
+                    # In semantic mode, include if similarity is positive or text has match
+                    text_blob = f"{doc_dict.get('title', '')} {doc_dict.get('summary', '')}".lower()
+                    if (sim is not None and sim < 0.05) and (q not in text_blob):
+                        continue
+
+            formatted.append(doc_dict)
+
+        # Sort by similarity score if semantic mode
+        if search_mode == "semantic" and query_vec is not None:
+            formatted.sort(key=lambda x: x.get("similarity_score", 0), reverse=True)
+
         return formatted
     except Exception as e:
         print(f"Warning: Database query failed, returning empty list: {e}")
@@ -314,3 +366,48 @@ async def get_document(doc_id: str, db: AsyncSession = Depends(get_db)):
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Database fetch failed: {str(e)}")
+
+@router.get("/documents/{doc_id}/related")
+async def get_related_documents(doc_id: str, limit: int = 3, db: AsyncSession = Depends(get_db)) -> List[Dict[str, Any]]:
+    """
+    Returns related documents based on vector cosine similarity (PS point 14).
+    """
+    try:
+        target_doc = None
+        try:
+            target_uuid = uuid.UUID(doc_id)
+            stmt = select(Document).where(Document.id == target_uuid)
+            res = await db.execute(stmt)
+            target_doc = res.scalar_one_or_none()
+        except ValueError:
+            pass
+
+        if not target_doc:
+            stmt = select(Document)
+            res = await db.execute(stmt)
+            for doc in res.scalars().all():
+                meta = doc.metadata_json or {}
+                if meta.get("ref_id") == doc_id or str(doc.id) == doc_id:
+                    target_doc = doc
+                    break
+
+        if not target_doc or target_doc.embedding is None:
+            return []
+
+        # Find other documents and compute similarity
+        stmt = select(Document).where(Document.id != target_doc.id)
+        res = await db.execute(stmt)
+        other_docs = res.scalars().all()
+
+        scored = []
+        target_vec = target_doc.embedding
+        for d in other_docs:
+            if d.embedding:
+                sim = float(np.dot(target_vec, d.embedding))
+                scored.append((d, sim))
+
+        scored.sort(key=lambda x: x[1], reverse=True)
+        return [format_document_dict(d, similarity=sim) for d, sim in scored[:limit]]
+    except Exception as e:
+        print(f"Warning: Failed to retrieve related documents: {e}")
+        return []
