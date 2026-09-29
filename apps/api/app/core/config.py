@@ -18,9 +18,9 @@ class Settings(BaseSettings):
     # Redis for WebSockets (Use memory:// for local dev, redis:// for production)
     REDIS_URL: str = "memory://"
 
-    # Google Gemini API (Using latest gemini-2.5-flash)
+    # Google Gemini API (Using latest gemini-3-flash-preview)
     GEMINI_API_KEY: str = ""
-    GEMINI_MODEL: str = "gemini-2.5-flash"
+    GEMINI_MODEL: str = "gemini-3-flash-preview"
     GEMINI_EMBEDDING_MODEL: str = "text-embedding-004"
 
     # AWS S3 Storage

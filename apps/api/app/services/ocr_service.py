@@ -58,16 +58,19 @@ class OCRService:
                     "}"
                 )
 
+                from google.genai import types
+                gen_config = types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    temperature=0.1
+                )
+                part = types.Part.from_bytes(
+                    data=file_bytes[:1024*1024*4],
+                    mime_type=mime_type
+                )
                 response = client.models.generate_content(
                     model=settings.GEMINI_MODEL,
-                    contents=[
-                        {"mime_type": mime_type, "data": file_bytes[:1024*1024*4]},  # First 4MB for fast analysis
-                        prompt
-                    ],
-                    config={
-                        "response_mime_type": "application/json",
-                        "temperature": 0.1
-                    }
+                    contents=[part, prompt],
+                    config=gen_config
                 )
 
                 if response.text:

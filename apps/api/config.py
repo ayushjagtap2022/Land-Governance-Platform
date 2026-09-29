@@ -9,9 +9,9 @@ class Settings(BaseSettings):
     HOST: str = "0.0.0.0"
     DEBUG: bool = True
 
-    # Google Gemini API (Using latest gemini-2.5-flash)
+    # Google Gemini API (Using latest gemini-3-flash-preview)
     GEMINI_API_KEY: str = os.getenv("GEMINI_API_KEY", "")
-    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+    GEMINI_MODEL: str = os.getenv("GEMINI_MODEL", "gemini-3-flash-preview")
     GEMINI_EMBEDDING_MODEL: str = os.getenv("GEMINI_EMBEDDING_MODEL", "text-embedding-004")
 
     # Neon PostgreSQL + pgvector

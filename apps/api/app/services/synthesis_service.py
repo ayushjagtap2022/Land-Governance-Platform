@@ -49,13 +49,15 @@ class SynthesisService:
                     "}"
                 )
 
+                from google.genai import types
+                gen_config = types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    temperature=0.2
+                )
                 response = client.models.generate_content(
                     model=settings.GEMINI_MODEL,
                     contents=prompt,
-                    config={
-                        "response_mime_type": "application/json",
-                        "temperature": 0.2
-                    }
+                    config=gen_config
                 )
 
                 if response.text:

@@ -172,13 +172,15 @@ class RAGService:
                 )
 
                 prompt = f"Context:\n{context_str}\n\nQuestion: {query}\n\nAnswer:"
-                response = client.models.generate_content(
+                from google.genai import types
+                gen_config = types.GenerateContentConfig(
+                    system_instruction=system_instruction,
+                    temperature=0.2
+                )
+                response = await client.aio.models.generate_content(
                     model=settings.GEMINI_MODEL,
                     contents=prompt,
-                    config={
-                        "system_instruction": system_instruction,
-                        "temperature": 0.2
-                    }
+                    config=gen_config
                 )
                 
                 if response.text:
