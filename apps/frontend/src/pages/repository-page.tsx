@@ -137,7 +137,7 @@ function SearchModeButton({ active, children, onClick, testId }: { active: boole
   );
 }
 
-function UploadModal({ onClose }: { onClose: () => void }) {
+function UploadModal({ onClose, onCommitSuccess }: { onClose: () => void; onCommitSuccess?: () => void }) {
   const [stage, setStage] = useState<UploadStage>('idle');
   const [fileName, setFileName] = useState('');
   const [dragActive, setDragActive] = useState(false);
@@ -417,6 +417,47 @@ export default function RepositoryPage() {
   const { activeRole } = useRole();
   const isPublic = activeRole === 'Public';
   const [query, setQuery] = useState('');
+  const [docList, setDocList] = useState<LandDocument[]>(documents);
+
+  const fetchDocuments = async () => {
+    try {
+      const res = await fetch('/api/v1/repository/documents');
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) {
+          const mapped: LandDocument[] = data.map((d: any) => ({
+            id: d.id,
+            refId: d.ref_id,
+            title: d.title,
+            department: d.department,
+            category: d.category,
+            theme: d.theme,
+            stateRegion: d.state_region,
+            administrativeLevel: d.administrative_level,
+            documentType: (d.document_type || 'Policy Paper') as RepositoryDocumentType,
+            recordType: (d.record_type || 'Policy Drafts') as RepositoryRecordType,
+            year: d.year,
+            published: d.published,
+            updated: d.updated,
+            status: d.status,
+            format: d.format,
+            pages: d.pages,
+            version: d.version,
+            visibility: d.visibility,
+            summary: d.summary,
+            fileUrl: d.file_url,
+          }));
+          setDocList(mapped);
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to load live documents from Neon DB', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchDocuments();
+  }, []);
   const [searchMode, setSearchMode] = useState<'exact' | 'semantic'>('exact');
   const [language, setLanguage] = useState<'English' | 'हिन्दी'>('English');
   const [state, setState] = useState('All India');
@@ -435,7 +476,7 @@ export default function RepositoryPage() {
     if (search) setQuery(search);
   }, []);
 
-  const filtered = useMemo(() => documents.filter((document) => {
+  const filtered = useMemo(() => docList.filter((document) => {
     const normalizedQuery = query.trim().toLowerCase();
     const searchText = `${document.refId} ${document.title} ${document.department} ${document.stateRegion} ${document.theme}`.toLowerCase();
     const queryWords = normalizedQuery.split(/\s+/).filter(Boolean);
@@ -529,7 +570,7 @@ export default function RepositoryPage() {
               </div>
             </div>
             <div className="flex flex-col gap-2 border-t border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-600 md:flex-row md:items-center md:justify-between">
-              <span data-testid="text-repository-result-count">{filtered.length} of {documents.length} registry records shown</span>
+              <span data-testid="text-repository-result-count">{filtered.length} of {docList.length} registry records shown</span>
               <span className="flex items-center gap-1 text-[11px]"><Map className="h-3.5 w-3.5" />Metadata index refreshed 18 Jun 2024</span>
             </div>
           </Panel>
@@ -585,7 +626,7 @@ export default function RepositoryPage() {
               </table>
             </div>
             <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-4 py-3 text-[11px] text-slate-500">
-              <span>Showing {filtered.length} of {documents.length} records</span>
+              <span>Showing {filtered.length} of {docList.length} records</span>
               <span className="flex items-center gap-1"><FileArchive className="h-3.5 w-3.5" />Supported source formats: PDF · CSV · GeoJSON · SHP</span>
             </div>
           </Panel>
@@ -593,7 +634,7 @@ export default function RepositoryPage() {
       </div>
       {selectedVersion && <VersionDrawer document={selectedVersion} onClose={() => setSelectedVersion(null)} />}
       {selectedPreview && <PreviewDrawer document={selectedPreview} onClose={() => setSelectedPreview(null)} />}
-      {uploadOpen && <UploadModal onClose={() => setUploadOpen(false)} />}
+      {uploadOpen && <UploadModal onClose={() => setUploadOpen(false)} onCommitSuccess={fetchDocuments} />}
     </PageFrame>
   );
 }
