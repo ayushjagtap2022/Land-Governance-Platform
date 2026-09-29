@@ -1,6 +1,10 @@
 import { useState } from 'react';
-import { Bell, ChevronDown, Search, ShieldCheck, UserRound } from 'lucide-react';
+import { Bell, ChevronDown, Search, ShieldCheck, UserRound, LogIn, LogOut } from 'lucide-react';
 import { useRole, type Role } from '@/context/RoleContext';
+import { useAuthStore } from '@/stores/authStore';
+import { Link } from 'wouter';
+import { useQuery } from '@tanstack/react-query';
+import api from '@/lib/api';
 
 const roles: Role[] = ['Researcher', 'Official', 'Institution Admin', 'Public', 'Super Admin'];
 
@@ -11,6 +15,18 @@ export function Header() {
   const [notifsOpen, setNotifsOpen] = useState(false);
   const [showNotifSettings, setShowNotifSettings] = useState(false);
   const [notifsTab, setNotifsTab] = useState('Ministry');
+  const [profileOpen, setProfileOpen] = useState(false);
+  
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
+
+  const { data: notifications } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: () => api.get('/notifications').then(res => res.data),
+    enabled: isAuthenticated,
+  });
+
 
   return (
     <header className="relative z-20">
@@ -102,29 +118,26 @@ export function Header() {
                         <div className="max-h-64 overflow-y-auto p-0">
                           {notifsTab === 'Ministry' && (
                             <div className="divide-y divide-slate-100">
-                              <div className="p-3 hover:bg-slate-50 cursor-pointer">
-                                <p className="text-xs font-bold text-[#1E293B]">New Directive Published</p>
-                                <p className="text-[11px] text-slate-600 mt-1">Guidelines for drone-based cadastral resurvey released.</p>
-                                <p className="text-[10px] text-slate-400 mt-2">2 hours ago</p>
-                              </div>
+                              {notifications && notifications.length > 0 ? (
+                                notifications.map((n: any) => (
+                                  <div key={n.id} className="p-3 hover:bg-slate-50 cursor-pointer">
+                                    <p className={`text-xs font-bold ${n.type === 'SUCCESS' ? 'text-[#15803D]' : 'text-[#1E293B]'}`}>{n.title}</p>
+                                    <p className="text-[11px] text-slate-600 mt-1">{n.content}</p>
+                                    <p className="text-[10px] text-slate-400 mt-2">
+                                      {new Date(n.created_at).toLocaleDateString()}
+                                    </p>
+                                  </div>
+                                ))
+                              ) : (
+                                <div className="p-6 text-center text-slate-500 text-xs">
+                                  No new notifications
+                                </div>
+                              )}
                             </div>
                           )}
-                          {notifsTab === 'Workspace' && (
-                            <div className="divide-y divide-slate-100">
-                              <div className="p-3 hover:bg-slate-50 cursor-pointer">
-                                <p className="text-xs font-bold text-[#1E293B]">Review Requested</p>
-                                <p className="text-[11px] text-slate-600 mt-1">Dr. S. Nair invited you to Co-Author the SVAMITVA notes.</p>
-                                <p className="text-[10px] text-slate-400 mt-2">1 day ago</p>
-                              </div>
-                            </div>
-                          )}
-                          {notifsTab === 'Simulation' && (
-                            <div className="divide-y divide-slate-100">
-                              <div className="p-3 hover:bg-slate-50 cursor-pointer">
-                                <p className="text-xs font-bold text-[#15803D]">Calculations Completed</p>
-                                <p className="text-[11px] text-slate-600 mt-1">Scenario B (Fast-Track Courts) processed successfully.</p>
-                                <p className="text-[10px] text-slate-400 mt-2">Just now</p>
-                              </div>
+                          {notifsTab !== 'Ministry' && (
+                            <div className="p-6 text-center text-slate-500 text-xs">
+                              No new notifications
                             </div>
                           )}
                         </div>
@@ -134,38 +147,89 @@ export function Header() {
                 )}
               </div>
               <div className="relative">
-                <button
-                  className="focus-ring flex h-9 items-center gap-2 border border-[#e7a62b] bg-[#f2b134] px-2.5 text-left text-xs font-bold text-[#132f4c]"
-                  data-testid="button-role-switcher"
-                  type="button"
-                aria-expanded={roleOpen}
-                onClick={() => setRoleOpen((open) => !open)}
-              >
-                <ShieldCheck className="h-4 w-4" />
-                <span className="hidden sm:inline">Demo Persona: {activeRole}</span>
-                <span className="sm:hidden">{activeRole}</span>
-                <ChevronDown className="h-3.5 w-3.5" />
-              </button>
-              {roleOpen && (
-                <div className="absolute right-0 top-11 z-50 w-56 border border-slate-400 bg-white py-1 text-slate-800 shadow-lg">
-                  <p className="border-b border-slate-200 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">Switch demo persona</p>
-                  {roles.map((role) => (
+                {isAuthenticated ? (
+                  <div className="flex h-9 items-center gap-2 border border-[#e7a62b] bg-[#f2b134] px-2.5 text-left text-xs font-bold text-[#132f4c]" title="Your verified account role">
+                    <ShieldCheck className="h-4 w-4" />
+                    <span className="hidden sm:inline">Role: {activeRole}</span>
+                    <span className="sm:hidden">{activeRole}</span>
+                  </div>
+                ) : (
+                  <>
                     <button
-                      className={`focus-ring block w-full px-3 py-2 text-left text-xs hover:bg-slate-100 ${role === activeRole ? 'bg-slate-100 font-bold text-[#132f4c]' : ''}`}
-                      data-testid={`button-role-${role.toLowerCase().replaceAll(' ', '-')}`}
-                      key={role}
+                      className="focus-ring flex h-9 items-center gap-2 border border-[#e7a62b] bg-[#f2b134] px-2.5 text-left text-xs font-bold text-[#132f4c]"
+                      data-testid="button-role-switcher"
                       type="button"
-                      onClick={() => { setActiveRole(role); setRoleOpen(false); }}
+                      aria-expanded={roleOpen}
+                      onClick={() => setRoleOpen((open) => !open)}
                     >
-                      {role}
+                      <ShieldCheck className="h-4 w-4" />
+                      <span className="hidden sm:inline">Demo Persona: {activeRole}</span>
+                      <span className="sm:hidden">{activeRole}</span>
+                      <ChevronDown className="h-3.5 w-3.5" />
                     </button>
-                  ))}
+                    {roleOpen && (
+                      <div className="absolute right-0 top-11 z-50 w-56 border border-slate-400 bg-white py-1 text-slate-800 shadow-lg">
+                        <p className="border-b border-slate-200 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">Switch demo persona</p>
+                        {roles.map((role) => (
+                          <button
+                            className={`focus-ring block w-full px-3 py-2 text-left text-xs hover:bg-slate-100 ${role === activeRole ? 'bg-slate-100 font-bold text-[#132f4c]' : ''}`}
+                            data-testid={`button-role-${role.toLowerCase().replaceAll(' ', '-')}`}
+                            key={role}
+                            type="button"
+                            onClick={() => { setActiveRole(role); setRoleOpen(false); }}
+                          >
+                            {role}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            
+            <div className="relative border-l border-white/30 pl-3">
+              <button 
+                onClick={() => setProfileOpen(!profileOpen)}
+                className={`focus-ring flex h-9 items-center justify-center gap-2 border border-white/30 bg-[#244562] px-2.5 sm:px-0 sm:w-9 ${profileOpen ? 'bg-[#1e3a53]' : ''}`}
+                title="User Profile"
+              >
+                {isAuthenticated && <span className="mr-1 hidden lg:inline text-xs font-bold pl-2">{user?.full_name?.split(' ')[0]}</span>}
+                <UserRound className="h-4 w-4" />
+              </button>
+              
+              {profileOpen && (
+                <div className="absolute right-0 top-11 z-50 w-48 border border-slate-400 bg-white py-1 text-slate-800 shadow-lg">
+                  {isAuthenticated ? (
+                    <>
+                      <div className="border-b border-slate-200 px-4 py-2">
+                        <p className="text-xs font-bold text-[#132f4c]">{user?.full_name}</p>
+                        <p className="text-[10px] text-slate-500 truncate">{user?.email}</p>
+                      </div>
+                      <button
+                        className="focus-ring flex w-full items-center gap-2 px-4 py-2 text-left text-xs text-red-600 hover:bg-slate-100 font-bold"
+                        onClick={() => { logout(); setProfileOpen(false); }}
+                      >
+                        <LogOut className="h-3.5 w-3.5" /> Logout
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <Link href="/login" onClick={() => setProfileOpen(false)}>
+                        <a className="focus-ring flex w-full items-center gap-2 px-4 py-2.5 text-left text-xs hover:bg-slate-100 text-[#132f4c] font-bold">
+                          <LogIn className="h-3.5 w-3.5" /> Sign In
+                        </a>
+                      </Link>
+                      <Link href="/register" onClick={() => setProfileOpen(false)}>
+                        <a className="focus-ring flex w-full items-center gap-2 px-4 py-2.5 text-left text-xs hover:bg-slate-100 text-slate-600">
+                          Create Account
+                        </a>
+                      </Link>
+                    </>
+                  )}
                 </div>
               )}
             </div>
-            <div className="hidden h-9 w-9 items-center justify-center border border-white/30 bg-[#244562] sm:flex" aria-label="Current user profile">
-              <UserRound className="h-4 w-4" />
-            </div>
+            
           </div>
         </div>
         <div className="flex h-1" aria-label="National tricolor border">

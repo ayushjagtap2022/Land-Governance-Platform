@@ -22,6 +22,8 @@ from app.models.proposal import (
     Proposal, ProposalCreate, ProposalStatus, ProposalStatusUpdate,
     ProposalFundingUpdate, ProposalVote, FundingStatus,
 )
+from app.models.notification import NotificationType
+from app.services import notification_service
 
 
 # ===========================================================================
@@ -149,7 +151,8 @@ async def submit_proposal(
         submitted_by=submitted_by,
         title=proposal_in.title.strip(),
         abstract=proposal_in.abstract.strip(),
-        detailed_plan=proposal_in.detailed_plan,
+        funding_amount=proposal_in.requested_funding,
+        document_url=proposal_in.document_url,
         team_members=proposal_in.team_members,
     )
     
@@ -162,6 +165,20 @@ async def submit_proposal(
     
     await db.commit()
     await db.refresh(proposal)
+    
+    # Trigger a notification to the user
+    try:
+        await notification_service.send_notification(
+            db=db,
+            user_id=submitted_by,
+            title="Proposal Submitted Successfully",
+            content=f"Your proposal '{proposal.title}' has been received and is under review.",
+            type=NotificationType.SUCCESS,
+        )
+    except Exception as e:
+        print(f"Failed to send notification: {e}")
+        pass # Silently fail if notification errors out so it doesn't break submission
+        
     return proposal
 
 

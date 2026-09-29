@@ -2,12 +2,15 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { CheckCircle2, ChevronRight, CircleHelp, Download, FileCheck2, Filter, MapPin, Minus, Plus, Search, Send, Table2, Upload, UsersRound } from 'lucide-react';
 import { Link, Route, Switch, useLocation } from 'wouter';
+import { Toaster as SonnerToaster } from 'sonner';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Header } from '@/components/layout/Header';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { RoleProvider, useRole, type Role } from '@/context/RoleContext';
+import { useAuthStore } from '@/stores/authStore';
+import { useNotifications } from '@/hooks/use-notifications';
 import { activity, documentCategories, documents, initialStates, type DocumentCategory, type LandDocument } from '@/data/mockData';
 import GroundedAssistantPage from '@/pages/assistant-page';
 import GeospatialMapPage from '@/pages/map-page';
@@ -20,6 +23,8 @@ import WorkspacesPage from '@/pages/workspaces-page';
 import InnovationPage from '@/pages/innovation-page';
 import AdminPage from '@/pages/admin-page';
 import DevelopersPage from '@/pages/developers-page';
+import LoginPage from '@/pages/login-page';
+import RegisterPage from '@/pages/register-page';
 
 const queryClient = new QueryClient();
 
@@ -201,6 +206,11 @@ function RoutedErrorBoundary({ children }: { children: ReactNode }) {
 }
 
 function Shell() {
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
+  // Connect global notifications when logged in
+  useNotifications();
+
   return <div className="min-h-[100dvh] bg-[#f4f6f8]"><Header /><div className="flex w-full flex-col md:flex-row"><Sidebar /><main className="min-w-0 flex-1"><RoutedErrorBoundary><Switch><Route path="/" component={HomeRedirect} /><Route path="/repository"><Guard allowed={allRoles} name="Repository"><CentralRepositoryPage /></Guard></Route><Route path="/map"><Guard allowed={allRoles} name="GIS Map"><GeospatialMapPage /></Guard></Route><Route path="/innovation"><Guard allowed={allRoles} name="Innovation Portal"><InnovationPage /></Guard></Route><Route path="/assistant"><Guard allowed={researchRoles} name="AI Assistant"><GroundedAssistantPage /></Guard></Route><Route path="/synthesis"><Guard allowed={researchRoles} name="Research Synthesis"><SynthesisPage /></Guard></Route><Route path="/workspaces"><Guard allowed={researchRoles} name="Workspaces"><WorkspacesPage /></Guard></Route><Route path="/analytics"><Guard allowed={governanceRoles} name="Analytics Hub"><AnalyticsPage /></Guard></Route><Route path="/simulate"><Guard allowed={governanceRoles} name="Policy Simulator"><SimulatePage /></Guard></Route><Route path="/admin"><Guard allowed={governanceRoles} name="Admin Console"><AdminPage /></Guard></Route><Route path="/developers"><Guard allowed={governanceRoles} name="Developer API"><DevelopersPage /></Guard></Route><Route component={NotFound} /></Switch></RoutedErrorBoundary></main></div></div>;
 }
 
@@ -211,7 +221,26 @@ function HomeRedirect() {
 }
 
 function App() {
-  return <QueryClientProvider client={queryClient}><TooltipProvider><RoleProvider><Shell /></RoleProvider><Toaster /></TooltipProvider></QueryClientProvider>;
+  const hydrate = useAuthStore((s) => s.hydrate);
+  useEffect(() => { hydrate(); }, [hydrate]);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <RoleProvider>
+          <Switch>
+            {/* Auth pages render WITHOUT Sidebar/Header */}
+            <Route path="/login" component={LoginPage} />
+            <Route path="/register" component={RegisterPage} />
+            {/* Everything else renders inside the Shell */}
+            <Route><Shell /></Route>
+          </Switch>
+        </RoleProvider>
+        <Toaster />
+        <SonnerToaster position="top-right" richColors />
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
 }
 
 export default App;

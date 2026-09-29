@@ -12,7 +12,10 @@ import {
   Shield,
   UsersRound,
   X,
+  Loader2,
 } from 'lucide-react';
+import { useAuthStore } from '@/stores/authStore';
+import { useChat } from '@/hooks/use-chat';
 
 function Breadcrumb({ current }: { current: string }) {
   return (
@@ -74,6 +77,10 @@ export default function WorkspacesPage() {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [inviteRole, setInviteRole] = useState('Read-Only Observer');
   const [notes, setNotes] = useState('## Draft Findings\n\n- Drone survey accuracy verified at 5cm GSD.\n- Discrepancy observed in village boundary overlap.\n\n### Next Steps\nRequire inter-departmental verification with State Revenue.');
+  const [chatInput, setChatInput] = useState('');
+  
+  const currentUser = useAuthStore(s => s.user);
+  const { messages, sendMessage, isConnected } = useChat(selectedProject);
 
   const projects = [
     { id: '1', title: 'Joint Working Group on Cadastral Resurvey Standards', members: 12, status: 'In Committee Review' as BadgeType, updated: '2 days ago' },
@@ -137,11 +144,10 @@ export default function WorkspacesPage() {
           </Panel>
 
           {/* Collaborative Notes */}
-          <Panel title="Collaborative Policy Notes" className="lg:col-span-2">
+          <Panel title="Collaborative Policy Notes" className="lg:col-span-1">
             <div className="p-0 border-b border-slate-200 bg-[#F8FAFC] px-4 py-2 flex items-center gap-2">
               <button className="text-[11px] font-bold text-slate-600 hover:text-[#1E293B]">Format</button>
-              <button className="text-[11px] font-bold text-slate-600 hover:text-[#1E293B]">Insert Table</button>
-              <button className="text-[11px] font-bold text-slate-600 hover:text-[#1E293B]">Cite Document</button>
+              <button className="text-[11px] font-bold text-slate-600 hover:text-[#1E293B]">Insert</button>
             </div>
             <textarea
               className="w-full h-[250px] p-4 text-sm font-mono text-slate-700 bg-white focus:outline-none resize-none"
@@ -151,6 +157,58 @@ export default function WorkspacesPage() {
             <div className="border-t border-slate-200 px-4 py-3 bg-slate-50 flex justify-between items-center">
               <span className="text-[10px] text-slate-500">Last synced: Just now</span>
               <button className="text-xs font-bold text-[#1E293B] hover:underline">Save Draft</button>
+            </div>
+          </Panel>
+
+          {/* Workspace Chat */}
+          <Panel title="Workspace Chat" className="lg:col-span-1 flex flex-col">
+            <div className="p-2 border-b border-slate-200 bg-[#F8FAFC] flex justify-between items-center text-[10px] font-bold">
+              {isConnected ? (
+                <span className="text-[#15803D] flex items-center gap-1"><CheckCircle2 className="h-3 w-3" /> Connected</span>
+              ) : (
+                <span className="text-[#B45309] flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Reconnecting...</span>
+              )}
+            </div>
+            <div className="flex-1 h-[250px] overflow-y-auto p-4 bg-white space-y-3">
+              {messages.length === 0 && <p className="text-xs text-slate-500 text-center mt-10">No messages yet. Start the conversation!</p>}
+              {messages.map((msg, i) => {
+                const isMe = msg.user_id === currentUser?.id;
+                return (
+                  <div key={i} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
+                    <span className="text-[10px] text-slate-500 mb-1">{isMe ? 'You' : msg.user_name}</span>
+                    <div className={`px-3 py-2 rounded max-w-[80%] text-sm ${isMe ? 'bg-[#1E293B] text-white' : 'bg-slate-100 text-slate-800'}`}>
+                      {msg.content}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="border-t border-slate-200 p-3 bg-slate-50 flex gap-2">
+              <input 
+                type="text" 
+                value={chatInput}
+                onChange={e => setChatInput(e.target.value)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' && chatInput.trim()) {
+                    sendMessage(chatInput.trim());
+                    setChatInput('');
+                  }
+                }}
+                className="flex-1 border border-slate-300 px-3 py-2 text-sm focus-ring"
+                placeholder="Type a message..."
+              />
+              <button 
+                onClick={() => {
+                  if (chatInput.trim()) {
+                    sendMessage(chatInput.trim());
+                    setChatInput('');
+                  }
+                }}
+                disabled={!isConnected || !chatInput.trim()}
+                className="bg-[#1E293B] text-white px-3 py-2 flex items-center justify-center disabled:opacity-50"
+              >
+                <Send className="h-4 w-4" />
+              </button>
             </div>
           </Panel>
 
