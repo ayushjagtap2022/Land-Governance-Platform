@@ -111,7 +111,7 @@ function Guard({ allowed, name, children }: { allowed: Role[]; name: string; chi
 
 
 const allRoles: Role[] = ['Public', 'Researcher', 'Official', 'Institution Admin', 'Super Admin'];
-const researchRoles: Role[] = ['Researcher'];
+const researchRoles: Role[] = ['Researcher', 'Super Admin'];
 const governanceRoles: Role[] = ['Official', 'Institution Admin', 'Super Admin'];
 
 function RepositoryPage() {

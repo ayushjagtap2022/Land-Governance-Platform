@@ -165,9 +165,29 @@ export default function LoginPage() {
           {/* Fast SIH Judge Persona Shortcuts */}
           <div className="mt-4 rounded-xs border border-slate-200 bg-slate-50 p-3">
             <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
-              ⚡ Evaluator / Judge Fast Login
+              ⚡ Evaluator / Admin Fast Login
             </p>
             <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  login('evaluator-superadmin-token', {
+                    id: 'a2357c04-f92e-49b1-9d53-3ad0d26772cd',
+                    email: 'nirmaldarekar90@gmail.com',
+                    full_name: 'Nirmal Darekar',
+                    role: 'super_admin',
+                    institution: 'National Land Governance Platform Administration',
+                    is_active: true,
+                    is_verified: true,
+                    created_at: new Date().toISOString(),
+                  });
+                  toast.success('Logged in as Super Admin (Nirmal Darekar) — Full Access Granted!');
+                  setLocation('/analytics');
+                }}
+                className="col-span-2 border border-emerald-500 bg-emerald-50 px-2 py-2 text-xs font-bold text-emerald-900 hover:bg-emerald-100 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <span>👑</span> Super Admin: Nirmal Darekar (All Access)
+              </button>
               <button
                 type="button"
                 onClick={() => {

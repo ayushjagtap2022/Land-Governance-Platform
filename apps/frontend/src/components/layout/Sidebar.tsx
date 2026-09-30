@@ -26,9 +26,9 @@ const navItems: NavItem[] = [
   { label: 'Repository', href: '/repository', icon: BookOpen, roles: baseRoles },
   { label: 'GIS Map', href: '/map', icon: Map, roles: baseRoles },
   { label: 'Innovation Portal', href: '/innovation', icon: Lightbulb, roles: baseRoles },
-  { label: 'Workspaces', href: '/workspaces', icon: Home, roles: ['Researcher'] },
-  { label: 'AI Assistant', href: '/assistant', icon: MessageSquareText, roles: ['Researcher'] },
-  { label: 'Synthesis', href: '/synthesis', icon: Sparkles, roles: ['Researcher'] },
+  { label: 'Workspaces', href: '/workspaces', icon: Home, roles: ['Researcher', 'Super Admin'] },
+  { label: 'AI Assistant', href: '/assistant', icon: MessageSquareText, roles: ['Researcher', 'Super Admin'] },
+  { label: 'Synthesis', href: '/synthesis', icon: Sparkles, roles: ['Researcher', 'Super Admin'] },
   { label: 'Policy Simulator', href: '/simulate', icon: SlidersHorizontal, roles: ['Official', 'Institution Admin', 'Super Admin'] },
   { label: 'Analytics Hub', href: '/analytics', icon: BarChart3, roles: ['Official', 'Institution Admin', 'Super Admin'] },
   { label: 'Admin Console', href: '/admin', icon: Settings2, roles: ['Official', 'Institution Admin', 'Super Admin'] },
@@ -36,7 +36,7 @@ const navItems: NavItem[] = [
 ];
 
 export function Sidebar() {
-  const { activeRole } = useRole();
+  const { activeRole, evaluatorMode } = useRole();
   const [location] = useLocation();
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     try {
@@ -56,7 +56,7 @@ export function Sidebar() {
     });
   };
 
-  const visible = navItems.filter((item) => item.roles.includes(activeRole));
+  const visible = navItems.filter((item) => evaluatorMode || activeRole === 'Super Admin' || item.roles.includes(activeRole));
 
   return (
     <aside
