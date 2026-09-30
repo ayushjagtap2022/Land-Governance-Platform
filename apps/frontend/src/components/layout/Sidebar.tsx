@@ -5,6 +5,7 @@ import { useRole, type Role } from '@/context/RoleContext';
 type NavItem = { label: string; href: string; icon: typeof Home; roles: Role[] };
 const baseRoles: Role[] = ['Public', 'Researcher', 'Official', 'Institution Admin', 'Super Admin'];
 const navItems: NavItem[] = [
+  { label: 'Overview', href: '/', icon: Home, roles: baseRoles },
   { label: 'Repository', href: '/repository', icon: BookOpen, roles: baseRoles },
   { label: 'GIS Map', href: '/map', icon: Map, roles: baseRoles },
   { label: 'Innovation Portal', href: '/innovation', icon: Lightbulb, roles: baseRoles },

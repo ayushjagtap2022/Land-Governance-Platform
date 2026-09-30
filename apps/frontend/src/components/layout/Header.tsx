@@ -50,7 +50,7 @@ export function Header() {
 
       <div className="bg-[#132f4c] text-white">
         <div className="flex w-full items-center gap-4 px-4 py-3 md:px-8">
-          <div className="flex min-w-0 items-center gap-3">
+          <Link href="/" className="flex min-w-0 items-center gap-3 cursor-pointer hover:opacity-95 transition-opacity">
             <div className="emblem-mark" aria-label="State Emblem of India placeholder">
               <span>सत्यमेव</span><strong>अशोक</strong><span>जयते</span>
             </div>
@@ -58,7 +58,7 @@ export function Header() {
               <p className="truncate text-[12px] font-semibold leading-5">भू-संसाधन विभाग / Department of Land Resources</p>
               <p className="truncate text-[11px] text-slate-300">ग्रामीण विकास मंत्रालय / Ministry of Rural Development</p>
             </div>
-          </div>
+          </Link>
           <div className="ml-auto flex items-center gap-2 sm:gap-3">
             <div className="relative hidden lg:block">
               <label htmlFor="global-search" className="sr-only">Search the platform</label>

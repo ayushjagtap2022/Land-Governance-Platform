@@ -25,6 +25,7 @@ import AdminPage from '@/pages/admin-page';
 import DevelopersPage from '@/pages/developers-page';
 import LoginPage from '@/pages/login-page';
 import RegisterPage from '@/pages/register-page';
+import LandingPage from '@/pages/landing-page';
 
 const queryClient = new QueryClient();
 
@@ -211,13 +212,32 @@ function Shell() {
   // Connect global notifications when logged in
   useNotifications();
 
-  return <div className="min-h-[100dvh] bg-[#f4f6f8]"><Header /><div className="flex w-full flex-col md:flex-row"><Sidebar /><main className="min-w-0 flex-1"><RoutedErrorBoundary><Switch><Route path="/" component={HomeRedirect} /><Route path="/repository"><Guard allowed={allRoles} name="Repository"><CentralRepositoryPage /></Guard></Route><Route path="/map"><Guard allowed={allRoles} name="GIS Map"><GeospatialMapPage /></Guard></Route><Route path="/innovation"><Guard allowed={allRoles} name="Innovation Portal"><InnovationPage /></Guard></Route><Route path="/assistant"><Guard allowed={researchRoles} name="AI Assistant"><GroundedAssistantPage /></Guard></Route><Route path="/synthesis"><Guard allowed={researchRoles} name="Research Synthesis"><SynthesisPage /></Guard></Route><Route path="/workspaces"><Guard allowed={researchRoles} name="Workspaces"><WorkspacesPage /></Guard></Route><Route path="/analytics"><Guard allowed={governanceRoles} name="Analytics Hub"><AnalyticsPage /></Guard></Route><Route path="/simulate"><Guard allowed={governanceRoles} name="Policy Simulator"><SimulatePage /></Guard></Route><Route path="/admin"><Guard allowed={governanceRoles} name="Admin Console"><AdminPage /></Guard></Route><Route path="/developers"><Guard allowed={governanceRoles} name="Developer API"><DevelopersPage /></Guard></Route><Route component={NotFound} /></Switch></RoutedErrorBoundary></main></div></div>;
-}
-
-function HomeRedirect() {
-  const [, setLocation] = useLocation();
-  useEffect(() => { setLocation('/repository'); }, [setLocation]);
-  return null;
+  return (
+    <div className="min-h-[100dvh] bg-[#f4f6f8]">
+      <Header />
+      <div className="flex w-full flex-col md:flex-row">
+        <Sidebar />
+        <main className="min-w-0 flex-1">
+          <RoutedErrorBoundary>
+            <Switch>
+              <Route path="/" component={LandingPage} />
+              <Route path="/repository"><Guard allowed={allRoles} name="Repository"><CentralRepositoryPage /></Guard></Route>
+              <Route path="/map"><Guard allowed={allRoles} name="GIS Map"><GeospatialMapPage /></Guard></Route>
+              <Route path="/innovation"><Guard allowed={allRoles} name="Innovation Portal"><InnovationPage /></Guard></Route>
+              <Route path="/assistant"><Guard allowed={researchRoles} name="AI Assistant"><GroundedAssistantPage /></Guard></Route>
+              <Route path="/synthesis"><Guard allowed={researchRoles} name="Research Synthesis"><SynthesisPage /></Guard></Route>
+              <Route path="/workspaces"><Guard allowed={researchRoles} name="Workspaces"><WorkspacesPage /></Guard></Route>
+              <Route path="/analytics"><Guard allowed={governanceRoles} name="Analytics Hub"><AnalyticsPage /></Guard></Route>
+              <Route path="/simulate"><Guard allowed={governanceRoles} name="Policy Simulator"><SimulatePage /></Guard></Route>
+              <Route path="/admin"><Guard allowed={governanceRoles} name="Admin Console"><AdminPage /></Guard></Route>
+              <Route path="/developers"><Guard allowed={governanceRoles} name="Developer API"><DevelopersPage /></Guard></Route>
+              <Route component={NotFound} />
+            </Switch>
+          </RoutedErrorBoundary>
+        </main>
+      </div>
+    </div>
+  );
 }
 
 function App() {
