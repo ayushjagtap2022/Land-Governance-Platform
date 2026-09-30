@@ -9,7 +9,7 @@ import api from '@/lib/api';
 const roles: Role[] = ['Researcher', 'Official', 'Institution Admin', 'Public', 'Super Admin'];
 
 export function Header() {
-  const { activeRole, setActiveRole } = useRole();
+  const { activeRole, setActiveRole, evaluatorMode, toggleEvaluatorMode } = useRole();
   const [search, setSearch] = useState('');
   const [roleOpen, setRoleOpen] = useState(false);
   const [notifsOpen, setNotifsOpen] = useState(false);
@@ -146,7 +146,21 @@ export function Header() {
                   </div>
                 )}
               </div>
-              <div className="relative">
+              <div className="relative flex items-center gap-2">
+                <button
+                  onClick={toggleEvaluatorMode}
+                  className={`focus-ring hidden lg:flex h-9 items-center gap-1.5 px-2.5 text-xs font-bold border transition-colors cursor-pointer ${
+                    evaluatorMode
+                      ? 'border-emerald-400 bg-emerald-500/20 text-emerald-200 hover:bg-emerald-500/30'
+                      : 'border-slate-500 bg-slate-800 text-slate-400 hover:bg-slate-700'
+                  }`}
+                  title="Toggle open evaluator mode to unlock all routes during SIH evaluation"
+                  type="button"
+                >
+                  <span className={`h-2 w-2 rounded-full ${evaluatorMode ? 'bg-emerald-400 animate-pulse' : 'bg-slate-400'}`} />
+                  <span>Evaluator Pass: {evaluatorMode ? 'ON' : 'OFF'}</span>
+                </button>
+
                 {isAuthenticated ? (
                   <div className="flex h-9 items-center gap-2 border border-[#e7a62b] bg-[#f2b134] px-2.5 text-left text-xs font-bold text-[#132f4c]" title="Your verified account role">
                     <ShieldCheck className="h-4 w-4" />

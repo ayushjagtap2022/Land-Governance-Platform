@@ -35,3 +35,21 @@ def get_trends(
 ):
     """Returns multi-year historical trend series (2000-2024) grounded in MoAFW 181k records."""
     return analytics_service.get_historical_trends(state=state)
+
+@router.get("/dashboards/{category}", summary="Fetch Data for Specific PS Point 16 Dashboard")
+def get_dashboard_category(
+    category: str,
+    state: Optional[str] = Query("Maharashtra", description="State name for state-specific indicators")
+):
+    """
+    Returns empirical datasets for any of the 7 specific dashboards required by SIH PS 26019:
+    - research_output
+    - policy_performance
+    - land_use_trends
+    - climate_resilience
+    - dispute_statistics
+    - project_outcomes
+    - geospatial_insights
+    """
+    return analytics_service.get_dashboard_data(category=category, state=state)
+

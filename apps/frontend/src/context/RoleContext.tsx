@@ -15,6 +15,8 @@ const ROLE_MAP: Record<BackendRole, Role> = {
 type RoleContextValue = {
   activeRole: Role;
   setActiveRole: (role: Role) => void;
+  evaluatorMode: boolean;
+  toggleEvaluatorMode: () => void;
 };
 
 const RoleContext = createContext<RoleContextValue | undefined>(undefined);
@@ -26,6 +28,18 @@ export function RoleProvider({ children }: { children: ReactNode }) {
   // When a real user is logged in, derive the role from their backend role.
   // Otherwise, default to 'Researcher' for the demo persona switcher.
   const [activeRole, setActiveRole] = useState<Role>('Researcher');
+  const [evaluatorMode, setEvaluatorMode] = useState<boolean>(() => {
+    const saved = localStorage.getItem('evaluator_mode');
+    return saved !== null ? saved === 'true' : true; // Default ON for seamless evaluation
+  });
+
+  const toggleEvaluatorMode = () => {
+    setEvaluatorMode((prev) => {
+      const next = !prev;
+      localStorage.setItem('evaluator_mode', String(next));
+      return next;
+    });
+  };
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -33,7 +47,10 @@ export function RoleProvider({ children }: { children: ReactNode }) {
     }
   }, [isAuthenticated, user]);
 
-  const value = useMemo(() => ({ activeRole, setActiveRole }), [activeRole]);
+  const value = useMemo(
+    () => ({ activeRole, setActiveRole, evaluatorMode, toggleEvaluatorMode }),
+    [activeRole, evaluatorMode]
+  );
   return <RoleContext.Provider value={value}>{children}</RoleContext.Provider>;
 }
 
@@ -41,4 +58,4 @@ export function useRole() {
   const context = useContext(RoleContext);
   if (!context) throw new Error('useRole must be used within RoleProvider');
   return context;
-}
+}

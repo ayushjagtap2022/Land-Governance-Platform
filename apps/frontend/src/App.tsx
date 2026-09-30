@@ -67,15 +67,33 @@ function Panel({ title, eyebrow, children, className = '' }: { title?: string; e
 }
 
 function AccessDenied({ requested }: { requested: string }) {
-  const { activeRole } = useRole();
+  const { activeRole, setActiveRole, toggleEvaluatorMode } = useRole();
   return (
-    <PageFrame kicker="Access control" title="Access restricted" description={`The ${requested} workspace is not enabled for the ${activeRole} demo persona.`}>
+    <PageFrame kicker="Access control" title="Access restricted" description={`The ${requested} workspace is currently restricted for the ${activeRole} demo persona.`}>
       <div className="border border-slate-300 bg-white p-6 md:p-10">
         <div className="flex max-w-xl items-start gap-4">
           <div className="border border-[#f2b134] bg-[#fff8e8] p-3"><CircleHelp className="h-6 w-6 text-[#9b6300]" /></div>
           <div>
-            <h2 className="text-lg font-bold text-[#132f4c]">Choose another workspace</h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">Use the Demo Persona Switcher in the government header to review the permissions and navigation available to another role.</p>
+            <h2 className="text-lg font-bold text-[#132f4c]">Evaluation Access Options</h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              This module requires official governance or research clearance under strict RBAC. To evaluate this module during SIH judging, you can switch personas or enable open evaluator mode:
+            </p>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <button
+                onClick={() => setActiveRole('Official')}
+                className="bg-[#132f4c] text-white px-3.5 py-2 text-xs font-bold hover:bg-slate-800 transition-colors cursor-pointer"
+                type="button"
+              >
+                Switch to Official Role
+              </button>
+              <button
+                onClick={() => toggleEvaluatorMode()}
+                className="border border-[#f2b134] bg-[#fff8e8] text-[#9b6300] px-3.5 py-2 text-xs font-bold hover:bg-amber-100 transition-colors cursor-pointer"
+                type="button"
+              >
+                ⚡ Enable Open Evaluator Pass
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -84,9 +102,13 @@ function AccessDenied({ requested }: { requested: string }) {
 }
 
 function Guard({ allowed, name, children }: { allowed: Role[]; name: string; children: ReactNode }) {
-  const { activeRole } = useRole();
-  return allowed.includes(activeRole) ? <>{children}</> : <AccessDenied requested={name} />;
+  const { activeRole, evaluatorMode } = useRole();
+  if (evaluatorMode || allowed.includes(activeRole) || activeRole === 'Super Admin') {
+    return <>{children}</>;
+  }
+  return <AccessDenied requested={name} />;
 }
+
 
 const allRoles: Role[] = ['Public', 'Researcher', 'Official', 'Institution Admin', 'Super Admin'];
 const researchRoles: Role[] = ['Researcher'];
