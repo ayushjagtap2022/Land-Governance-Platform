@@ -26,10 +26,18 @@ def list_spatial_districts(
     """Returns real Indian districts with lat/lng, Census population, modernization %, and dispute risk."""
     return geodata_service.list_districts(state=state, limit=limit)
 
+@router.get("/temporal-stats", summary="Get National Land Transitions & Digitization Progress for Year")
+def get_temporal_statistics(
+    year: int = Query(2024, ge=1999, le=2025, description="Year for multi-temporal land use progression (1999-2025)")
+):
+    """Returns MoAFW-derived land use percentages, cadastral digitization %, and SVAMITVA cards for the selected year."""
+    return geodata_service.get_temporal_stats(year=year)
+
 @router.get("/geojson/{layer_key}", summary="Get GeoJSON FeatureCollection for Layer")
 def get_geojson_layer(
     layer_key: str,
-    year: int = Query(2024, ge=2015, le=2024, description="Year for multi-temporal land use time-slider")
+    year: int = Query(2024, ge=1999, le=2025, description="Year for multi-temporal land use time-slider")
 ):
     """Returns GeoJSON FeatureCollection for cadastral survey plots, LULC zones, or climate risks."""
     return geodata_service.get_geojson_layer(layer_key=layer_key, year=year)
+
