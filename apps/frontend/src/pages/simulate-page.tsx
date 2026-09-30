@@ -746,18 +746,31 @@ export default function SimulatePage() {
             headerAction={
               <div className="flex gap-2">
                 <button 
-                  className="border border-slate-300 bg-white px-2 py-1 text-[10px] font-bold text-slate-700 hover:bg-slate-50"
-                  onClick={() => setScenarioA(projected)}
+                  className="border border-slate-300 bg-white px-2 py-1 text-[10px] font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                  onClick={() => {
+                    if (projected) {
+                      setScenarioA({
+                        name: `Custom Scenario (${state})`,
+                        params: { ...params },
+                        result: projected,
+                      });
+                      toast.success('Active simulation saved to Scenario A in Delta Comparator!');
+                    }
+                  }}
                   disabled={!projected}
                 >
                   Save to Scenario A
                 </button>
                 <button 
-                  className="border border-slate-300 bg-white px-2 py-1 text-[10px] font-bold text-slate-700 hover:bg-slate-50"
-                  onClick={() => setShowComparison(!showComparison)}
+                  className={`border px-2 py-1 text-[10px] font-bold cursor-pointer transition-colors ${
+                    showComparator 
+                      ? 'border-blue-600 bg-blue-50 text-blue-700' 
+                      : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+                  }`}
+                  onClick={() => setShowComparator(!showComparator)}
                 >
                   <SplitSquareHorizontal className="h-3.5 w-3.5 inline-block mr-1" />
-                  Compare
+                  Compare (Scenario A vs B)
                 </button>
               </div>
             }
@@ -837,13 +850,15 @@ export default function SimulatePage() {
                 </div>
               </div>
 
-              {showComparison && scenarioA && projected && (
+              {showComparator && scenarioA && projected && (
                 <div className="mb-6 border border-[#1E293B] p-4 bg-slate-50">
-                  <p className="text-xs font-bold text-[#1E293B] mb-4">Comparative Analysis: Scenario A vs Current Projection</p>
+                  <p className="text-xs font-bold text-[#1E293B] mb-4">
+                    Comparative Analysis: {scenarioA.name} vs Current Projection
+                  </p>
                   <div className="grid grid-cols-2 gap-4 text-xs font-mono">
                     <div className="border-r border-slate-300">
                       <span className="text-slate-500 block mb-1">Scenario A Dispute Rate</span>
-                      <span className="text-lg text-[#B45309] font-bold">{scenarioA.disputeRate}</span>
+                      <span className="text-lg text-[#B45309] font-bold">{scenarioA.result.disputeRate}</span>
                     </div>
                     <div>
                       <span className="text-slate-500 block mb-1">Current Dispute Rate</span>
