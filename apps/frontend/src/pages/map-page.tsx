@@ -5,33 +5,39 @@ import {
   CheckCircle2,
   ChevronRight,
   CloudRain,
+  Compass,
   Download,
+  Eye,
+  GitCommit,
   Info,
   Layers,
   Map as MapIcon,
   MapPin,
   Minus,
   MousePointer2,
+  Navigation,
   Pause,
   Pentagon,
   Play,
+  Radio,
   RotateCcw,
   Ruler,
   Satellite,
   Search,
   ShieldAlert,
   Sparkles,
+  Train,
   X,
   ZoomIn,
   ZoomOut,
-  
 } from 'lucide-react';
-import { Circle, CircleMarker, MapContainer, Polygon, Popup, ScaleControl, TileLayer, useMap, useMapEvents } from 'react-leaflet';
+import { Circle, CircleMarker, MapContainer, Polygon, Polyline, Popup, ScaleControl, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import { Link } from 'wouter';
 import type { LatLng, LeafletMouseEvent } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
- 
-type LayerKey = 'cadastral' | 'lulc' | 'dispute' | 'climate' | 'satellite';
+
+type LayerKey = 'cadastral' | 'lulc' | 'dispute' | 'climate' | 'corridors' | 'satellite';
+type SpectralMode = 'standard' | 'truecolor' | 'falsecolor' | 'ndvi';
 
 type LayerState = {
   label: string;
@@ -89,12 +95,158 @@ const districtFacts: DistrictFact[] = [
   { district: 'Bengaluru Urban', state: 'Karnataka', coordinates: [12.97, 77.59], villages: '1,026', modernization: 91, disputes: 9.8, cards: '198,740', risk: 'Low' },
 ];
 
+type InfrastructureCorridor = {
+  id: string;
+  name: string;
+  agency: string;
+  type: 'Industrial' | 'Freight Railway' | 'Expressway';
+  lengthKm: number;
+  status: 'Operational / Phased' | 'Under Construction' | 'Land Acquisition Phase';
+  acquisitionProgressPct: number;
+  parcelsAcquired: string;
+  directDisbursementCr: number;
+  points: [number, number][];
+  description: string;
+  nodes: string[];
+  statesCovered: string[];
+};
+
+const nationalCorridors: InfrastructureCorridor[] = [
+  {
+    id: 'corridor-dmic',
+    name: 'Delhi-Mumbai Industrial Corridor (DMIC)',
+    agency: 'National Industrial Corridor Development Corp (NICDC)',
+    type: 'Industrial',
+    lengthKm: 1504,
+    status: 'Operational / Phased',
+    acquisitionProgressPct: 92.4,
+    parcelsAcquired: '48,230 parcels',
+    directDisbursementCr: 34800,
+    statesCovered: ['Delhi', 'Haryana', 'Rajasthan', 'Gujarat', 'Maharashtra'],
+    nodes: ['Dadri Multi-Modal Logistics Hub', 'Dholera Special Investment Region', 'Shendra-Bidkin Industrial Area', 'Dighi Port Node'],
+    description: 'High-impact 150-km influence zone along Western DFC leveraging smart industrial cities and automated land titling.',
+    points: [
+      [28.55, 77.55],
+      [28.36, 76.94],
+      [27.98, 76.38],
+      [26.91, 75.78],
+      [24.58, 73.71],
+      [23.02, 72.57],
+      [22.25, 72.19],
+      [22.30, 73.18],
+      [21.17, 72.83],
+      [19.29, 73.06],
+      [18.95, 72.95]
+    ]
+  },
+  {
+    id: 'corridor-wdfc',
+    name: 'Western Dedicated Freight Corridor (WDFC)',
+    agency: 'Dedicated Freight Corridor Corp of India (DFCCIL)',
+    type: 'Freight Railway',
+    lengthKm: 1506,
+    status: 'Operational / Phased',
+    acquisitionProgressPct: 98.7,
+    parcelsAcquired: '62,400 parcels',
+    directDisbursementCr: 28150,
+    statesCovered: ['Uttar Pradesh', 'Haryana', 'Rajasthan', 'Gujarat', 'Maharashtra'],
+    nodes: ['Dadri Freight Terminal', 'Rewari Interchange', 'Sanand Logistics Park', 'JNPT Port Railhead'],
+    description: 'Double-stack electric freight corridor connecting inland northern industrial clusters to maritime gateway ports.',
+    points: [
+      [28.55, 77.55],
+      [28.18, 76.62],
+      [26.87, 75.24],
+      [26.45, 74.64],
+      [25.73, 73.36],
+      [24.17, 72.43],
+      [23.00, 72.38],
+      [21.70, 72.99],
+      [20.38, 72.90],
+      [18.95, 72.95]
+    ]
+  },
+  {
+    id: 'corridor-edfc',
+    name: 'Eastern Dedicated Freight Corridor (EDFC)',
+    agency: 'DFCCIL / Ministry of Railways',
+    type: 'Freight Railway',
+    lengthKm: 1875,
+    status: 'Operational / Phased',
+    acquisitionProgressPct: 96.2,
+    parcelsAcquired: '71,900 parcels',
+    directDisbursementCr: 31400,
+    statesCovered: ['Punjab', 'Haryana', 'Uttar Pradesh', 'Bihar', 'Jharkhand', 'West Bengal'],
+    nodes: ['Ludhiana Dry Port', 'Khurja Junction', 'Prayagraj Operations Centre', 'Sonnagar Mineral Terminal', 'Dankuni Terminus'],
+    description: 'Electrified high-density heavy-haul railway for coal, steel, and agricultural cargo transit across the Indo-Gangetic plain.',
+    points: [
+      [30.90, 75.85],
+      [29.96, 77.55],
+      [28.25, 77.85],
+      [27.18, 78.01],
+      [26.45, 80.33],
+      [25.43, 81.84],
+      [25.28, 83.12],
+      [24.96, 84.18],
+      [23.80, 86.44],
+      [22.68, 88.30]
+    ]
+  },
+  {
+    id: 'corridor-samruddhi',
+    name: 'Samruddhi Mahamarg (Mumbai-Nagpur Super Communication Expressway)',
+    agency: 'Maharashtra State Road Development Corp (MSRDC)',
+    type: 'Expressway',
+    lengthKm: 701,
+    status: 'Operational / Phased',
+    acquisitionProgressPct: 99.8,
+    parcelsAcquired: '28,500 parcels',
+    directDisbursementCr: 8400,
+    statesCovered: ['Maharashtra'],
+    nodes: ['JNPT / Bhiwandi Terminal', 'Igatpuri Ghat Node', 'Chhatrapati Sambhajinagar SEZ', 'Jalna Dry Port', 'Wardha Industrial Hub', 'Nagpur MIHAN'],
+    description: '120 km/h access-controlled greenfield expressway connecting 10 districts with digitized land pooling models.',
+    points: [
+      [19.29, 73.06],
+      [19.70, 73.56],
+      [19.85, 74.00],
+      [19.87, 75.34],
+      [19.84, 75.88],
+      [20.48, 77.49],
+      [20.74, 78.60],
+      [21.14, 79.08]
+    ]
+  },
+  {
+    id: 'corridor-bangalore-chennai',
+    name: 'Bengaluru-Chennai Expressway (NE-7 / Bharatmala Phase 1)',
+    agency: 'National Highways Authority of India (NHAI)',
+    type: 'Expressway',
+    lengthKm: 262,
+    status: 'Under Construction',
+    acquisitionProgressPct: 91.5,
+    parcelsAcquired: '14,800 parcels',
+    directDisbursementCr: 5600,
+    statesCovered: ['Karnataka', 'Andhra Pradesh', 'Tamil Nadu'],
+    nodes: ['Hoskote Tech Cluster', 'Bangarapet Logistics Node', 'Chittoor Industrial Area', 'Sriperumbudur Auto SEZ', 'Chennai Port Link'],
+    description: 'Tri-state high-speed transit spine reducing container logistics time from 7 hours to 2.5 hours.',
+    points: [
+      [13.07, 77.79],
+      [13.00, 77.94],
+      [12.98, 78.19],
+      [13.20, 78.75],
+      [13.21, 79.10],
+      [12.92, 79.33],
+      [12.97, 79.94]
+    ]
+  }
+];
+
 const initialLayers: Record<LayerKey, LayerState> = {
   cadastral: { label: 'Cadastral Parcel Boundaries', description: 'Digitized DILRMP survey grids', visible: true, opacity: 0.82, color: '#287449' },
   lulc: { label: 'Land Use / Land Cover', description: 'Agriculture, urban, forest and waterbody', visible: true, opacity: 0.48, color: '#d49333' },
+  corridors: { label: 'Infrastructure Corridors (PS 26019)', description: 'DMIC, Western DFC & Bharatmala alignments', visible: true, opacity: 0.88, color: '#d97706' },
   dispute: { label: 'Land Dispute Density Heatmap', description: 'Pending litigation density', visible: false, opacity: 0.52, color: '#b23b32' },
   climate: { label: 'Climate Vulnerability & Drought Zones', description: 'IMD rainfall deficit, groundwater stress & floods', visible: true, opacity: 0.55, color: '#547996' },
-  satellite: { label: 'Satellite Imagery Base Layer', description: 'Bhuvan / ISRO overlay toggle', visible: false, opacity: 0.78, color: '#132f4c' },
+  satellite: { label: 'Satellite Imagery Base Layer', description: 'Bhuvan / ISRO Earth Observation overlay', visible: false, opacity: 0.78, color: '#132f4c' },
 };
 
 const cadastralPolygons: [number, number][][] = [
@@ -197,6 +349,8 @@ export default function MapPage() {
   const [aoiPoints, setAoiPoints] = useState<[number, number][]>([]);
   const [selectedDistrict, setSelectedDistrict] = useState<DistrictFact | null>(null);
   const [selectedClimateZone, setSelectedClimateZone] = useState<ClimateZone | null>(null);
+  const [selectedCorridor, setSelectedCorridor] = useState<InfrastructureCorridor | null>(null);
+  const [spectralMode, setSpectralMode] = useState<SpectralMode>('standard');
   const [notice, setNotice] = useState('');
   const [districtsList, setDistrictsList] = useState<DistrictFact[]>(districtFacts);
   const [districtSearch, setDistrictSearch] = useState('');
@@ -408,11 +562,58 @@ export default function MapPage() {
           <div className="relative overflow-hidden border border-slate-400 bg-[#dbe7ea] shadow-sm">
             <MapContainer center={indiaCenter} zoom={5} minZoom={4} maxZoom={9} zoomControl={false} className="h-[620px] w-full" scrollWheelZoom>
               <MapController stateFilter={selectedStateFilter} districts={districtsList} />
-              {layers.satellite.visible ? <TileLayer attribution="Tiles © Esri" url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" opacity={layers.satellite.opacity} /> : <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" opacity={0.8} />}
+              {layers.satellite.visible ? (
+                <TileLayer
+                  attribution="ISRO Bhuvan / CartoSat / Sentinel-2 &copy; NRSC &amp; Esri"
+                  url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                  opacity={layers.satellite.opacity}
+                  className={
+                    spectralMode === 'falsecolor'
+                      ? 'filter hue-rotate-[290deg] saturate-[1.8] contrast-[1.25]'
+                      : spectralMode === 'ndvi'
+                      ? 'filter hue-rotate-[95deg] saturate-[2.3] contrast-[1.4] brightness-95'
+                      : ''
+                  }
+                />
+              ) : (
+                <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" opacity={0.8} />
+              )}
               {layers.cadastral.visible && (cadastralFeatures.length > 0 ? cadastralFeatures : cadastralPolygons.map((pts, i) => ({ id: `poly-${i}`, points: pts, properties: {} }))).map((zone) => (
                 <Polygon key={zone.id} positions={zone.points} pathOptions={{ color: layers.cadastral.color, weight: 1.5, opacity: layers.cadastral.opacity, fillOpacity: 0.12 }} />
               ))}
               {layers.lulc.visible && lulcFeatures.map((zone, index) => <Polygon key={`lulc-${index}`} positions={zone.points} pathOptions={{ color: zone.color, weight: 1, opacity: layers.lulc.opacity, fillOpacity: layers.lulc.opacity * 0.35 }} />)}
+              {layers.corridors.visible && nationalCorridors.map((corridor) => {
+                const strokeColor = corridor.type === 'Freight Railway' ? '#2563eb' : corridor.type === 'Expressway' ? '#059669' : '#d97706';
+                return (
+                  <Polyline
+                    key={corridor.id}
+                    positions={corridor.points}
+                    pathOptions={{
+                      color: strokeColor,
+                      weight: 5,
+                      opacity: layers.corridors.opacity,
+                      dashArray: corridor.type === 'Freight Railway' ? '8 6' : corridor.type === 'Expressway' ? '12 6' : '10 4',
+                    }}
+                    eventHandlers={{
+                      click: () => setSelectedCorridor(corridor)
+                    }}
+                  >
+                    <Popup>
+                      <div className="p-1 min-w-[200px] text-xs">
+                        <div className="flex items-center gap-1.5 font-bold text-[#132f4c]">
+                          <Train className="h-3.5 w-3.5 text-amber-600" />
+                          <span>{corridor.name}</span>
+                        </div>
+                        <p className="text-[11px] text-slate-500 mt-0.5">{corridor.agency}</p>
+                        <div className="mt-2 text-[11px] flex justify-between border-t border-slate-100 pt-1">
+                          <span>Length: <b>{corridor.lengthKm} km</b></span>
+                          <span className="text-emerald-700 font-bold">{corridor.acquisitionProgressPct}% Acquired</span>
+                        </div>
+                      </div>
+                    </Popup>
+                  </Polyline>
+                );
+              })}
               {layers.dispute.visible && filteredDistricts.filter(d => d.disputes > 26).map((district, idx) => (
                 district?.coordinates && district.coordinates[0] != null ? (
                   <Circle key={`dispute-${district.state}-${district.district}-${idx}`} center={district.coordinates} radius={Math.min(65000, Math.max(25000, district.disputes * 1400))} pathOptions={{ color: '#b23b32', fillColor: '#b23b32', opacity: layers.dispute.opacity, fillOpacity: layers.dispute.opacity * 0.4 }} />
@@ -467,6 +668,60 @@ export default function MapPage() {
                 <span>{filteredDistricts.length} Districts Plotted</span>
                 <span className="font-semibold text-[#287449]">{temporalStats.cadastral_digitization_pct}% Modernized</span>
               </div>
+            </div>
+
+            {/* Earth Observation (EO) & ISRO Bhuvan Spectral Band Selector (PS 26019 Item 13) */}
+            {layers.satellite.visible && (
+              <div className="absolute top-20 left-3 z-[1000] border border-slate-300 bg-white/95 p-2.5 shadow-md backdrop-blur-xs max-w-xs" data-testid="panel-spectral-bands">
+                <div className="flex items-center justify-between gap-2 border-b border-slate-200 pb-1.5 mb-1.5">
+                  <div className="flex items-center gap-1.5 text-xs font-bold text-[#132f4c]">
+                    <Satellite className="h-3.5 w-3.5 text-blue-600" />
+                    <span>ISRO / EO Spectral Bands</span>
+                  </div>
+                  <span className="text-[9px] font-mono bg-blue-50 text-blue-700 px-1 py-0.5 rounded border border-blue-200">5.8m LISS-IV</span>
+                </div>
+                <div className="grid grid-cols-3 gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setSpectralMode('standard')}
+                    className={`px-1.5 py-1 text-[10px] font-bold rounded transition-colors ${spectralMode === 'standard' ? 'bg-[#244562] text-white shadow-xs' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                  >
+                    True Color
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSpectralMode('falsecolor')}
+                    className={`px-1.5 py-1 text-[10px] font-bold rounded transition-colors ${spectralMode === 'falsecolor' ? 'bg-rose-700 text-white shadow-xs' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                    title="NIR False Color Composite: Dense vegetation in red, urban built-up in cyan"
+                  >
+                    FCC (NIR)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSpectralMode('ndvi')}
+                    className={`px-1.5 py-1 text-[10px] font-bold rounded transition-colors ${spectralMode === 'ndvi' ? 'bg-emerald-700 text-white shadow-xs' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}
+                    title="NDVI Crop Stress & Canopy Health Index"
+                  >
+                    NDVI Index
+                  </button>
+                </div>
+                <p className="mt-1.5 text-[9px] text-slate-500 leading-tight">
+                  {spectralMode === 'falsecolor' 
+                    ? '🔴 False Color (NIR): Dense vegetation in scarlet red, urban built-up in cyan, open water in deep blue.'
+                    : spectralMode === 'ndvi'
+                    ? '🟢 NDVI Index: High photosynthetic vigor in deep green; arid/barren zones highlighted in amber.'
+                    : '🌐 Standard 3-Band Natural Optical Imagery.'}
+                </p>
+              </div>
+            )}
+
+            {/* ISRO Bhuvan / NRSC Watermark (PS 26019 Item 13) */}
+            <div className="absolute bottom-1 left-28 z-[1000] bg-slate-900/80 text-white/90 text-[9px] font-mono px-2 py-0.5 rounded backdrop-blur-xs flex items-center gap-2 pointer-events-none">
+              <span>🛰️ ISRO NRSC Bhuvan Open Data</span>
+              <span className="text-slate-400">|</span>
+              <span>Sensor: Resourcesat-2 &amp; Sentinel-2</span>
+              <span className="text-slate-400">|</span>
+              <span>Res: 5.8m Multispectral</span>
             </div>
 
             <LayerControl layers={layers} onToggle={toggleLayer} onOpacity={setLayerOpacity} />
@@ -909,6 +1164,123 @@ export default function MapPage() {
               >
                 <Sparkles className="h-4 w-4" />
                 Simulate Land Policy in this Climate Zone
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Infrastructure Corridor Impact & Land Acquisition Factsheet (PS 26019 Item 10) */}
+      {selectedCorridor && (
+        <div
+          className="fixed inset-0 z-[1200] flex justify-end bg-slate-900/40 backdrop-blur-xs transition-opacity duration-200"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Infrastructure corridor factsheet"
+          onClick={() => setSelectedCorridor(null)}
+        >
+          <div
+            className="flex h-full w-full max-w-md flex-col border-l border-slate-300 bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex shrink-0 items-start justify-between border-b border-slate-200 bg-[#fffbf2] p-5">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2 py-0.5 text-[10px] font-bold uppercase rounded bg-amber-100 text-amber-900 border border-amber-300">
+                    {selectedCorridor.type}
+                  </span>
+                  <span className="text-xs font-semibold text-emerald-800">
+                    {selectedCorridor.status}
+                  </span>
+                </div>
+                <h2 className="font-serif text-lg font-bold text-[#132f4c] mt-1.5">{selectedCorridor.name}</h2>
+                <p className="mt-0.5 text-xs text-slate-600 font-medium">{selectedCorridor.agency}</p>
+              </div>
+              <button
+                className="focus-ring border border-slate-300 bg-white p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors"
+                type="button"
+                aria-label="Close corridor factsheet"
+                onClick={() => setSelectedCorridor(null)}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto p-5 space-y-4">
+              {/* Metrics Grid */}
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Total Alignment</p>
+                  <p className="mt-1 font-mono text-xl font-bold text-[#132f4c]">{selectedCorridor.lengthKm.toLocaleString()} km</p>
+                </div>
+                <div className="border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Acquisition Status</p>
+                  <p className="mt-1 font-mono text-xl font-bold text-[#287449]">{selectedCorridor.acquisitionProgressPct}%</p>
+                </div>
+                <div className="border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Direct Compensation</p>
+                  <p className="mt-1 font-mono text-xl font-bold text-[#9b6300]">₹ {selectedCorridor.directDisbursementCr.toLocaleString()} Cr</p>
+                </div>
+                <div className="border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Parcels Acquired</p>
+                  <p className="mt-1 font-mono text-xs font-bold text-slate-700">{selectedCorridor.parcelsAcquired}</p>
+                </div>
+              </div>
+
+              {/* Acquisition Progress Bar */}
+              <div className="border border-slate-200 bg-slate-50/70 p-3.5 space-y-2">
+                <div className="flex justify-between text-xs font-semibold">
+                  <span className="text-slate-700">Right of Way (RoW) Land Vesting</span>
+                  <span className="text-emerald-700 font-mono">{selectedCorridor.acquisitionProgressPct}% Cleared</span>
+                </div>
+                <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
+                  <div className="h-full bg-emerald-600 transition-all duration-300" style={{ width: `${selectedCorridor.acquisitionProgressPct}%` }} />
+                </div>
+                <p className="text-[10px] text-slate-500">Compliant with RFCTLARR Act 2013 (Right to Fair Compensation &amp; Transparency in Land Acquisition).</p>
+              </div>
+
+              {/* States Covered */}
+              <div className="border border-slate-200 p-3.5 space-y-1.5">
+                <p className="text-xs font-bold text-[#244562]">States &amp; Union Territories Traversed</p>
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {selectedCorridor.statesCovered.map((st) => (
+                    <span key={st} className="px-2 py-0.5 text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200 rounded">
+                      {st}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Key Nodes & Dry Ports */}
+              <div className="border border-slate-200 p-3.5 space-y-2">
+                <p className="text-xs font-bold text-[#244562]">Major Logistics Nodes &amp; Intermodal Hubs</p>
+                <ul className="space-y-1.5 text-xs text-slate-600">
+                  {selectedCorridor.nodes.map((node, i) => (
+                    <li key={i} className="flex items-center gap-2">
+                      <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                      <span>{node}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Impact Description */}
+              <div className="border border-amber-200 bg-amber-50/50 p-3.5 text-xs text-slate-700">
+                <p className="font-semibold text-amber-900 mb-1">Land Governance Impact</p>
+                <p className="text-[11px] leading-relaxed">{selectedCorridor.description}</p>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="shrink-0 border-t border-slate-200 bg-slate-50 p-4 space-y-2">
+              <Link
+                className="focus-ring flex w-full items-center justify-center gap-2 bg-[#244562] px-4 py-2.5 text-xs font-bold text-white hover:bg-[#132f4c] shadow-sm transition-colors"
+                href={`/repository?search=${encodeURIComponent(selectedCorridor.name)}`}
+              >
+                <MapPin className="h-4 w-4" />
+                View Land Records &amp; Gazette Notifications
               </Link>
             </div>
           </div>
