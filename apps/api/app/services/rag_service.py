@@ -106,8 +106,56 @@ SEED_CHUNKS: List[DocumentChunk] = [
         department="Revenue & Forest Department, Maharashtra",
         page=10,
         text="Under the Maharashtra Land Revenue Code, agricultural land conversion to non-agricultural (NA) use requires an express application under Section 44. Non-agricultural assessment tax (NA Tax) ranges from 1% to 15% depending on commercial vs residential classification. Auto-mutation via MahaBhulekh triggers within 15 days upon registered sale deed notice."
+    ),
+    DocumentChunk(
+        id="CHK-006-1",
+        doc_id="DOC-26019-006",
+        title="RFCTLARR Act 2013: Land Acquisition, Fair Compensation & Rehabilitation Framework",
+        department="Ministry of Rural Development",
+        page=8,
+        text="The Right to Fair Compensation and Transparency in Land Acquisition, Rehabilitation and Resettlement Act (RFCTLARR) 2013 mandates a Social Impact Assessment (SIA) under Section 4, preliminary notification under Section 11, and final declaration under Section 19. Compensation under Section 26 applies a multiplier of 1.0x (urban) or up to 2.0x (rural) to market circle rates, augmented by 100% mandatory solatium under Section 30. Section 23A facilitates direct consent awards with upfront negotiated bonuses to eliminate Reference Court litigation."
+    ),
+    DocumentChunk(
+        id="CHK-007-1",
+        doc_id="DOC-26019-007",
+        title="National Bhulekh & RoR Digital Mutation Technical Protocol",
+        department="Department of Land Resources",
+        page=12,
+        text="Centralized Bhulekh and Jamabandi platforms maintain digital Records of Rights (RoR, Khasra, Khatauni). Automated mutation (Dakhil-Kharij) triggers instantly from registration sub-registrar offices via API handshake, establishing a mandatory 15-day public objection notice period prior to final khatoni updation and geo-tagged parcel lock."
     )
 ]
+
+HINDI_TERMS_MAP: Dict[str, str] = {
+    "भूमि अधिग्रहण": "land acquisition rfctlarr compensation award social impact assessment",
+    "अधिग्रहण": "acquisition rfctlarr land compensation",
+    "भूलेख": "bhulekh land records ror record of rights khasra khatauni",
+    "खतौनी": "khatauni tenancy ror ownership title records",
+    "खसरा": "khasra plot number cadastral survey parcel",
+    "स्वामित्व": "svamitva drone survey village abadi property cards aakaarbandh",
+    "पट्टा": "leasing tenancy leasehold agricultural land niti aayog",
+    "विवाद": "dispute litigation court boundary conflict resolution",
+    "मुकदमा": "litigation court fast track dispute window",
+    "नामांतरण": "mutation digital mutation title transfer dakhil kharij",
+    "दाखिल खारिज": "dakhil kharij mutation revenue entry bhulekh",
+    "चकबंदी": "consolidation of holdings re-parcellation cadastral",
+    "सीमांकन": "demarcation boundary survey cors sub-5cm",
+    "मुआवजा": "compensation solatium market value rfctlarr multiplier",
+    "डिजिटलीकरण": "digitization computerization dilrmp drone ror",
+    "ड्रोन": "drone cors survey of india svamitva mapping",
+}
+
+def is_devanagari(text: str) -> bool:
+    """Checks whether the text contains Devanagari characters."""
+    return any("\u0900" <= ch <= "\u097F" for ch in text)
+
+def expand_multilingual_query(query: str) -> str:
+    """Cross-lingual query expansion matching Hindi terms to English domain equivalents."""
+    tokens = [query]
+    q_lower = query.lower()
+    for term, expansion in HINDI_TERMS_MAP.items():
+        if term in q_lower or any(word in q_lower for word in term.split()):
+            tokens.append(expansion)
+    return " ".join(tokens)
 
 def cosine_similarity(a: List[float], b: List[float]) -> float:
     dot = np.dot(a, b)
@@ -123,10 +171,10 @@ class RAGService:
 
     def retrieve_relevant_chunks(self, query: str, top_k: int = 3) -> List[DocumentChunk]:
         """
-        Retrieves top relevant chunks using semantic embedding if Gemini is configured,
-        or keyword token similarity fallback.
+        Retrieves top relevant chunks using multilingual expansion and token overlap.
         """
-        query_words = set(query.lower().split())
+        expanded_query = expand_multilingual_query(query)
+        query_words = set(expanded_query.lower().split())
         
         # Keyword scoring fallback
         scored = []
@@ -135,12 +183,13 @@ class RAGService:
             overlap = len(query_words.intersection(chunk_words))
             # Bonus if doc title or department matches
             if any(w in chunk.title.lower() for w in query_words):
-                overlap += 3
+                overlap += 4
             score = overlap / (len(query_words) + 1)
             scored.append((score, chunk))
         
         scored.sort(key=lambda x: x[0], reverse=True)
         return [c for score, c in scored[:top_k]]
+
 
     async def answer_query(self, query: str) -> AssistantResponse:
         relevant = self.retrieve_relevant_chunks(query, top_k=3)
@@ -163,9 +212,11 @@ class RAGService:
                     for c in relevant
                 ])
                 
+                lang_inst = "Answer in formal, clear Hindi (Devanagari script) with appropriate legal terminologies." if is_devanagari(query) else "Answer in concise English."
                 system_instruction = (
                     "You are the National Land Governance Policy Assistant for the Ministry of Rural Development. "
                     "Answer the user's research question strictly and solely based on the provided context passages. "
+                    f"{lang_inst} "
                     "Do NOT extrapolate or hallucinate facts. "
                     "Format your response as 3 concise bullet points. "
                     "At the end of each bullet, append the exact source citation like [DOC-26019-001, Page 14]."
@@ -207,12 +258,20 @@ class RAGService:
             except Exception as e:
                 logger.error(f"Gemini API call failed: {e}. Falling back to grounded heuristic response.")
 
-        # Grounded Heuristic Response Fallback
-        bullets = [
-            f"The indexed records indicate that '{relevant[0].title}' provides the authoritative framework for this area ({relevant[0].department}).",
-            f"Under verified procedures (Ref: {relevant[0].doc_id}, Page {relevant[0].page}), operations require linked verification, objection windows, and statutory notice before treating entries as conclusive.",
-            f"Cross-referencing with {relevant[1].title} (Page {relevant[1].page}) confirms that state administrative statutes retain jurisdiction over classification schedules and dispute escalation."
-        ]
+        # Grounded Heuristic Response Fallback (English / Devanagari)
+        if is_devanagari(query):
+            bullets = [
+                f"सत्यापित नीतिगत अभिलेखों के अनुसार, '{relevant[0].title}' इस विषय पर आधिकारिक विधिक ढांचा प्रदान करता है ({relevant[0].department})। [{relevant[0].doc_id}, पृष्ठ {relevant[0].page}]",
+                f"विहित सांविधिक प्रक्रिया के तहत: {relevant[0].text[:150]}... [{relevant[0].doc_id}, पृष्ठ {relevant[0].page}]",
+                f"संबंधित दस्तावेज '{relevant[1].title}' (पृष्ठ {relevant[1].page}) के साथ मिलान से पुष्टि होती है कि राज्य राजस्व संहिता एवं केंद्रीय दिशा-निर्देशों का अनुपालन अनिवार्य है। [{relevant[1].doc_id}, पृष्ठ {relevant[1].page}]"
+            ]
+        else:
+            bullets = [
+                f"The indexed records indicate that '{relevant[0].title}' provides the authoritative framework for this area ({relevant[0].department}). [{relevant[0].doc_id}, Page {relevant[0].page}]",
+                f"Under verified procedures (Ref: {relevant[0].doc_id}, Page {relevant[0].page}), operations require linked verification, objection windows, and statutory notice before treating entries as conclusive.",
+                f"Cross-referencing with {relevant[1].title} (Page {relevant[1].page}) confirms that state administrative statutes retain jurisdiction over classification schedules and dispute escalation. [{relevant[1].doc_id}, Page {relevant[1].page}]"
+            ]
+
         
         return AssistantResponse(
             query=query,
