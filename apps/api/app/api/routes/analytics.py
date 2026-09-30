@@ -30,6 +30,8 @@ def get_climate_radar(
     return analytics_service.get_climate_radar(state_a, state_b)
 
 @router.get("/trends", summary="Multi-Year Land Governance Trends")
-def get_trends():
-    """Returns multi-year historical trend series (2018-2024)."""
-    return analytics_service.get_historical_trends()
+def get_trends(
+    state: Optional[str] = Query(None, description="Optional state name to get specific state historical trends")
+):
+    """Returns multi-year historical trend series (2000-2024) grounded in MoAFW 181k records."""
+    return analytics_service.get_historical_trends(state=state)
