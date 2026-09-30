@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AlertCircle, ChevronRight, Download, Printer, Table2 } from 'lucide-react';
 import {
   Area,
@@ -74,6 +74,38 @@ export default function AnalyticsPage() {
   const [activeTab, setActiveTab] = useState(0);
   const [primaryRegion, setPrimaryRegion] = useState('Maharashtra');
   const [comparisonRegion, setComparisonRegion] = useState('Madhya Pradesh');
+  const [comparativeData, setComparativeData] = useState<any[]>(comparativeStateData);
+  const [climateRadar, setClimateRadar] = useState<any[]>(climateRadarData);
+  const [trendData, setTrendData] = useState<any[]>(analyticsTrendData);
+
+  useEffect(() => {
+    fetch(`/api/v1/analytics/compare?state_a=${encodeURIComponent(primaryRegion)}&state_b=${encodeURIComponent(comparisonRegion)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setComparativeData(data);
+        }
+      })
+      .catch(() => {});
+
+    fetch(`/api/v1/analytics/radar?state_a=${encodeURIComponent(primaryRegion)}&state_b=${encodeURIComponent(comparisonRegion)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setClimateRadar(data);
+        }
+      })
+      .catch(() => {});
+
+    fetch('/api/v1/analytics/trends')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setTrendData(data);
+        }
+      })
+      .catch(() => {});
+  }, [primaryRegion, comparisonRegion]);
 
   const tabs = [
     'Research Output',
@@ -221,7 +253,7 @@ export default function AnalyticsPage() {
           <Panel title="Climate Resilience Metrics">
             <div className="h-[400px] p-4">
               <ResponsiveContainer width="100%" height="100%">
-                <RadarChart cx="50%" cy="50%" outerRadius="80%" data={climateRadarData}>
+                <RadarChart cx="50%" cy="50%" outerRadius="80%" data={climateRadar}>
                   <PolarGrid stroke={colors.grid} />
                   <PolarAngleAxis dataKey="subject" tick={{ fill: colors.slate, fontSize: 12 }} />
                   <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: colors.slate, fontSize: 10 }} />
@@ -240,7 +272,7 @@ export default function AnalyticsPage() {
             <Panel title="National Dispute Volume Trends">
               <div className="h-[350px] p-4">
                 <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={analyticsTrendData} margin={{ top: 20, right: 30, left: 10, bottom: 0 }}>
+                  <ComposedChart data={trendData} margin={{ top: 20, right: 30, left: 10, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} vertical={false} />
                     <XAxis dataKey="year" tick={{ fontSize: 12, fill: colors.slate }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fontSize: 12, fill: colors.slate }} axisLine={false} tickLine={false} />
@@ -252,17 +284,17 @@ export default function AnalyticsPage() {
                 </ResponsiveContainer>
               </div>
             </Panel>
-            <Panel title={`Comparative Suit Load: ${primaryRegion} vs ${comparisonRegion}`}>
+            <Panel title={`Empirical Comparative Indicator: ${primaryRegion} vs ${comparisonRegion}`}>
               <div className="h-[350px] p-4">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={comparativeStateData} layout="vertical" margin={{ top: 20, right: 30, left: 40, bottom: 0 }}>
+                  <BarChart data={comparativeData} layout="vertical" margin={{ top: 20, right: 30, left: 40, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} horizontal={false} />
                     <XAxis type="number" tick={{ fontSize: 12, fill: colors.slate }} axisLine={false} tickLine={false} />
-                    <YAxis dataKey="category" type="category" tick={{ fontSize: 11, fill: colors.navy, fontWeight: 'bold' }} axisLine={false} tickLine={false} width={120} />
+                    <YAxis dataKey="category" type="category" tick={{ fontSize: 11, fill: colors.navy, fontWeight: 'bold' }} axisLine={false} tickLine={false} width={130} />
                     <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #CBD5E1', fontSize: '12px', borderRadius: '0' }} />
                     <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
-                    <Bar dataKey="Maharashtra" name={primaryRegion} fill={colors.navy} radius={[0, 2, 2, 0]} />
-                    <Bar dataKey="Madhya Pradesh" name={comparisonRegion} fill={colors.amber} radius={[0, 2, 2, 0]} />
+                    <Bar dataKey={primaryRegion} name={primaryRegion} fill={colors.navy} radius={[0, 2, 2, 0]} />
+                    <Bar dataKey={comparisonRegion} name={comparisonRegion} fill={colors.amber} radius={[0, 2, 2, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>

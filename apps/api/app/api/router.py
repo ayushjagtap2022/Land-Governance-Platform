@@ -10,7 +10,9 @@ from app.api.routes import (
     simulate,
     assistant,
     repository,
-    ml
+    ml,
+    geodata,
+    analytics
 )
 
 api_router = APIRouter()
@@ -45,4 +47,12 @@ api_router.include_router(repository.router, prefix="/repository", tags=["reposi
 
 # AI/ML Predictive Models Engine (Scikit-Learn)
 api_router.include_router(ml.router, prefix="/ml", tags=["ml"])
+
+# Module 5: GIS & Geospatial Visualization Engine
+api_router.include_router(geodata.router, prefix="/geodata", tags=["geodata"])
+
+# Module 6: Analytics & Decision-Support Dashboards
+api_router.include_router(analytics.router, prefix="/analytics", tags=["analytics"])
+
+
 

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   CheckCircle2,
   ChevronRight,
@@ -11,6 +11,7 @@ import {
   RotateCcw,
   Ruler,
   Satellite,
+  Search,
   X,
   ZoomIn,
   ZoomOut,
@@ -148,6 +149,43 @@ export default function MapPage() {
   const [aoiPoints, setAoiPoints] = useState<[number, number][]>([]);
   const [selectedDistrict, setSelectedDistrict] = useState<DistrictFact | null>(null);
   const [notice, setNotice] = useState('');
+  const [districtsList, setDistrictsList] = useState<DistrictFact[]>(districtFacts);
+  const [districtSearch, setDistrictSearch] = useState('');
+  const [lulcFeatures, setLulcFeatures] = useState<{ points: [number, number][]; color: string }[]>(lulcPolygons);
+
+  useEffect(() => {
+    fetch('/api/v1/geodata/districts')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setDistrictsList(data);
+        }
+      })
+      .catch(err => console.warn('Could not load real geodata districts, using fallback', err));
+  }, []);
+
+  useEffect(() => {
+    fetch(`/api/v1/geodata/geojson/lulc?year=${year}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.features) {
+          const polys = data.features.map((f: any) => ({
+            points: f.geometry.coordinates[0].map((coord: [number, number]) => [coord[1], coord[0]] as [number, number]),
+            color: f.properties.color || '#6e9c66'
+          }));
+          setLulcFeatures(polys);
+        }
+      })
+      .catch(() => {});
+  }, [year]);
+
+  const filteredDistricts = useMemo(() => {
+    if (!districtSearch.trim()) return districtsList.slice(0, 60);
+    const q = districtSearch.toLowerCase();
+    return districtsList.filter(d => 
+      d.district.toLowerCase().includes(q) || d.state.toLowerCase().includes(q)
+    ).slice(0, 60);
+  }, [districtsList, districtSearch]);
 
   const currentProgress = Math.min(94, 52 + (year - 2016) * 4);
   const currentUrban = Math.min(28, 17 + (year - 2016) * 1.3);
@@ -192,10 +230,10 @@ export default function MapPage() {
             <MapContainer center={indiaCenter} zoom={5} minZoom={4} maxZoom={9} zoomControl={false} className="h-[650px] w-full" scrollWheelZoom>
               {layers.satellite.visible ? <TileLayer attribution="Tiles © Esri" url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" opacity={layers.satellite.opacity} /> : <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" opacity={0.8} />}
               {layers.cadastral.visible && cadastralPolygons.map((points, index) => <Polygon key={`cadastral-${index}`} positions={points} pathOptions={{ color: layers.cadastral.color, weight: 1, opacity: layers.cadastral.opacity, fillOpacity: 0.08 }} />)}
-              {layers.lulc.visible && lulcPolygons.map((zone, index) => <Polygon key={`lulc-${index}`} positions={zone.points} pathOptions={{ color: zone.color, weight: 1, opacity: layers.lulc.opacity, fillOpacity: layers.lulc.opacity * 0.35 }} />)}
-              {layers.dispute.visible && districtFacts.map((district) => <Circle key={`dispute-${district.district}`} center={district.coordinates} radius={70000} pathOptions={{ color: '#b23b32', fillColor: '#b23b32', opacity: layers.dispute.opacity, fillOpacity: layers.dispute.opacity * 0.45 }} />)}
+              {layers.lulc.visible && lulcFeatures.map((zone, index) => <Polygon key={`lulc-${index}`} positions={zone.points} pathOptions={{ color: zone.color, weight: 1, opacity: layers.lulc.opacity, fillOpacity: layers.lulc.opacity * 0.35 }} />)}
+              {layers.dispute.visible && filteredDistricts.slice(0, 15).map((district) => <Circle key={`dispute-${district.district}`} center={district.coordinates} radius={55000} pathOptions={{ color: '#b23b32', fillColor: '#b23b32', opacity: layers.dispute.opacity, fillOpacity: layers.dispute.opacity * 0.45 }} />)}
               {layers.climate.visible && riskZones.map((zone, index) => <Polygon key={`risk-${index}`} positions={zone.points} pathOptions={{ color: zone.color, weight: 1, opacity: layers.climate.opacity, fillOpacity: layers.climate.opacity * 0.45 }} />)}
-              {districtFacts.map((district) => <CircleMarker center={district.coordinates} key={district.district} radius={7} pathOptions={{ color: '#132f4c', weight: 2, fillColor: '#f2b134', fillOpacity: 1 }} eventHandlers={{ click: () => setSelectedDistrict(district) }}><span /></CircleMarker>)}
+              {filteredDistricts.map((district) => <CircleMarker center={district.coordinates} key={district.district} radius={6} pathOptions={{ color: '#132f4c', weight: 2, fillColor: district.risk === 'High' ? '#b23b32' : district.risk === 'Moderate' ? '#f2b134' : '#287449', fillOpacity: 1 }} eventHandlers={{ click: () => setSelectedDistrict(district) }}><span /></CircleMarker>)}
               {aoiPoints.length >= 3 && <Polygon positions={aoiPoints} pathOptions={{ color: '#9b6300', weight: 2, dashArray: '5 4', fillColor: '#f2b134', fillOpacity: 0.18 }} />}
               {aoiPoints.map((point, index) => <CircleMarker center={point} key={`aoi-point-${index}`} radius={4} pathOptions={{ color: '#9b6300', fillColor: '#f2b134', fillOpacity: 1 }} />)}
               <MapPointer mode={mode} onCoordinate={handleCoordinate} onZoom={setZoom} />
@@ -205,7 +243,10 @@ export default function MapPage() {
 
             <LayerControl layers={layers} onToggle={toggleLayer} onOpacity={setLayerOpacity} />
             <div className="absolute bottom-3 right-3 z-[1000] flex items-center gap-3 border border-slate-400 bg-white/95 px-3 py-2 text-[10px] text-slate-700 shadow-sm">
-              <span className="font-bold">Legend</span><span className="flex items-center gap-1"><span className="h-2 w-2 bg-[#287449]" />Cadastral</span><span className="flex items-center gap-1"><span className="h-2 w-2 bg-[#f2b134]" />Inspection point</span>
+              <span className="font-bold">Legend</span>
+              <span className="flex items-center gap-1"><span className="h-2 w-2 bg-[#287449]" />Low Risk</span>
+              <span className="flex items-center gap-1"><span className="h-2 w-2 bg-[#f2b134]" />Moderate</span>
+              <span className="flex items-center gap-1"><span className="h-2 w-2 bg-[#b23b32]" />High Risk</span>
             </div>
           </div>
           <div className="flex flex-wrap items-center justify-between gap-2 border border-slate-400 border-t-0 bg-[#132f4c] px-3 py-2 text-[10px] text-white shadow-sm">
@@ -217,10 +258,47 @@ export default function MapPage() {
 
         <aside className="space-y-5">
           <div className="border border-slate-300 bg-white">
+            <div className="border-b border-slate-200 bg-[#eef2f5] px-4 py-3">
+              <p className="section-kicker mb-1">National Cadastral Directory</p>
+              <h2 className="text-sm font-bold text-[#244562]">Search 640 Indian Districts</h2>
+            </div>
+            <div className="p-3 space-y-2.5">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-slate-400" />
+                <input
+                  type="text"
+                  placeholder="Filter district or state..."
+                  value={districtSearch}
+                  onChange={(e) => setDistrictSearch(e.target.value)}
+                  className="w-full pl-8 pr-3 py-1.5 border border-slate-300 text-xs focus:ring-1 focus:ring-[#244562] outline-none"
+                />
+              </div>
+              <div className="max-h-44 overflow-y-auto divide-y divide-slate-100 text-xs">
+                {filteredDistricts.map((d, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setSelectedDistrict(d)}
+                    className="w-full text-left py-1.5 px-2 hover:bg-slate-50 flex items-center justify-between"
+                  >
+                    <div>
+                      <span className="font-semibold text-slate-800 block text-xs">{d.district}</span>
+                      <span className="text-[10px] text-slate-500">{d.state}</span>
+                    </div>
+                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${d.risk === 'High' ? 'bg-red-100 text-red-700' : d.risk === 'Moderate' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                      {d.disputes}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="border border-slate-300 bg-white">
             <div className="border-b border-slate-200 bg-[#eef2f5] px-4 py-3"><p className="section-kicker mb-1">Historical view / {year}</p><h2 className="text-sm font-bold text-[#244562]">Land classification timeline</h2></div>
             <div className="p-4">
-              <label className="block text-xs font-semibold text-slate-700" htmlFor="map-year">Historical year <span className="float-right font-mono text-[#244562]">{year}</span><input className="mt-3 block w-full accent-[#244562]" data-testid="input-map-history-year" id="map-year" type="range" min="2016" max="2026" step="1" value={year} onChange={(event) => setYear(Number(event.target.value))} /></label>
-              <div className="mt-3 flex justify-between font-mono text-[10px] text-slate-500"><span>2016</span><span>2026</span></div>
+              <label className="block text-xs font-semibold text-slate-700" htmlFor="map-year">Historical year <span className="float-right font-mono text-[#244562]">{year}</span><input className="mt-3 block w-full accent-[#244562]" data-testid="input-map-history-year" id="map-year" type="range" min="2015" max="2024" step="1" value={year} onChange={(event) => setYear(Number(event.target.value))} /></label>
+              <div className="mt-3 flex justify-between font-mono text-[10px] text-slate-500"><span>2015 (Pre-SVAMITVA)</span><span>2024 (Current)</span></div>
               <div className="mt-5 space-y-4">{metrics.map((metric) => <div key={metric.label}><div className="mb-1 flex justify-between text-[11px]"><span className="text-slate-600">{metric.label}</span><span className="font-mono font-bold text-[#244562]">{metric.value}</span></div><div className="h-2 bg-slate-100"><div className="h-full" style={{ backgroundColor: metric.color, width: metric.value }} /></div></div>)}</div>
             </div>
           </div>
