@@ -37,6 +37,7 @@ import {
   ComposedChart
 } from 'recharts';
 import { initialStates } from '@/data/mockData';
+import { toast } from 'sonner';
 
 function Breadcrumb({ current }: { current: string }) {
   return (
@@ -116,6 +117,28 @@ export default function SimulatePage() {
   const [presets, setPresets] = useState<any[]>([]);
   const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
 
+  // Scenario A vs Scenario B Delta Comparator State (PS 26019 Item 12)
+  const [showComparator, setShowComparator] = useState(false);
+  const [scenarioA, setScenarioA] = useState<{
+    name: string;
+    params: ScenarioParams;
+    result: ScenarioResult;
+  }>({
+    name: 'Scenario A: Baseline Policy',
+    params: { ceiling: 54, tax: 8, budget: 120, window: 180 },
+    result: { disputeRate: 38.2, urbanPace: 4.5, climateScore: 62, revenue: 840 },
+  });
+
+  const [scenarioB, setScenarioB] = useState<{
+    name: string;
+    params: ScenarioParams;
+    result: ScenarioResult;
+  }>({
+    name: 'Scenario B: Accelerated Titling & Drone Reform',
+    params: { ceiling: 45, tax: 12, budget: 280, window: 90 },
+    result: { disputeRate: 21.6, urbanPace: 3.3, climateScore: 78, revenue: 996 },
+  });
+
   // Infrastructure Delay Estimator State (PS 25017 & PS 26016)
   const [infraForm, setInfraForm] = useState({
     project_name: 'NHAI 6-Lane Economic Corridor Expansion',
@@ -162,8 +185,6 @@ export default function SimulatePage() {
   
   const [isSimulating, setIsSimulating] = useState(false);
   const [projected, setProjected] = useState<ScenarioResult | null>(null);
-  const [scenarioA, setScenarioA] = useState<ScenarioResult | null>(null);
-  const [showComparison, setShowComparison] = useState(false);
   const [trajectoryData, setTrajectoryData] = useState<any[] | null>(null);
   const [explainDrivers, setExplainDrivers] = useState<string[] | null>(null);
   const [sensitivityList, setSensitivityList] = useState<any[] | null>(null);
@@ -300,13 +321,54 @@ export default function SimulatePage() {
     URL.revokeObjectURL(url);
   };
 
+  const handleExportScenarioDeltaCsv = () => {
+    const deltaDispute = (scenarioB.result.disputeRate - scenarioA.result.disputeRate).toFixed(1);
+    const deltaUrban = (scenarioB.result.urbanPace - scenarioA.result.urbanPace).toFixed(1);
+    const deltaClimate = (scenarioB.result.climateScore - scenarioA.result.climateScore).toFixed(0);
+    const deltaRevenue = (scenarioB.result.revenue - scenarioA.result.revenue).toFixed(0);
+
+    const rows = [
+      ['Dimension', 'Metric', 'Scenario A (Baseline)', 'Scenario B (Target Reform)', 'Net Delta (B - A)', 'Evaluation'],
+      ['Input Lever', 'Land Ceiling Limit (Acres)', `${scenarioA.params.ceiling} ac`, `${scenarioB.params.ceiling} ac`, `${scenarioB.params.ceiling - scenarioA.params.ceiling} ac`, 'Cap adjustment'],
+      ['Input Lever', 'Agri-to-Non-Agri Tax (%)', `${scenarioA.params.tax}%`, `${scenarioB.params.tax}%`, `${scenarioB.params.tax - scenarioA.params.tax}%`, 'Fiscal incentive'],
+      ['Input Lever', 'Modernization Budget (₹ Cr)', `₹${scenarioA.params.budget} Cr`, `₹${scenarioB.params.budget} Cr`, `+₹${scenarioB.params.budget - scenarioA.params.budget} Cr`, 'State capital outlay'],
+      ['Input Lever', 'Fast-Track Settlement Window (Days)', `${scenarioA.params.window} days`, `${scenarioB.params.window} days`, `${scenarioB.params.window - scenarioA.params.window} days`, 'Judicial velocity'],
+      ['Projected Impact', 'Pending Boundary Dispute Rate (%)', `${scenarioA.result.disputeRate}%`, `${scenarioB.result.disputeRate}%`, `${deltaDispute}%`, Number(deltaDispute) < 0 ? 'Favorable litigation reduction' : 'Dispute risk elevated'],
+      ['Projected Impact', 'Urban Expansion Pace (%)', `${scenarioA.result.urbanPace}%`, `${scenarioB.result.urbanPace}%`, `${deltaUrban}%`, 'Controlled expansion pace'],
+      ['Projected Impact', 'Climate Resilience Score (0-100)', `${scenarioA.result.climateScore}`, `${scenarioB.result.climateScore}`, `+${deltaClimate} pts`, Number(deltaClimate) > 0 ? 'Eco-resilience gain' : 'Loss'],
+      ['Projected Impact', 'State Revenue Yield (₹ Cr)', `₹${scenarioA.result.revenue} Cr`, `₹${scenarioB.result.revenue} Cr`, `+₹${deltaRevenue} Cr`, Number(deltaRevenue) > 0 ? 'Surplus generation' : 'Deficit'],
+    ];
+
+    const csvContent = rows.map(r => r.map(c => `"${c}"`).join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Scenario_Delta_Comparison_${state.replace(/\s+/g, '_')}_2026.csv`;
+    link.click();
+    toast.success('Downloaded Scenario Delta Comparison CSV');
+  };
+
   return (
     <PageFrame
       kicker="Quantitative decision-support"
       title="Policy Simulation & Scenario Modeling"
       description="Adjust structural inputs to forecast downstream impacts on land disputes, urban expansion, and state revenue."
       actions={
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setShowComparator(!showComparator)}
+            className={`focus-ring flex items-center gap-1.5 px-3 py-2 text-xs font-bold border transition-colors shadow-2xs ${
+              showComparator
+                ? 'border-[#2563EB] bg-[#EFF6FF] text-[#1D4ED8]'
+                : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-50'
+            }`}
+            data-testid="button-toggle-comparator"
+          >
+            <SplitSquareHorizontal className="h-4 w-4" />
+            {showComparator ? 'Hide Scenario Delta Comparator' : 'Compare Scenario A vs B (Δ Delta)'}
+          </button>
           <button className="focus-ring flex items-center gap-2 border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50" type="button" onClick={handleSaveToWorkspace}>
             <Save className="h-3.5 w-3.5" /> Save Run to Workspace
           </button>
@@ -358,6 +420,166 @@ export default function SimulatePage() {
 
       {activeTab === 'policy' ? (
         <>
+          {/* Scenario A vs Scenario B Delta Comparator (PS 26019 Item 12) */}
+          {showComparator && (
+            <div className="mb-6 border-2 border-[#2563EB]/40 bg-white p-5 shadow-sm" data-testid="panel-scenario-comparator">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-200 pb-4 mb-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded uppercase">Dual-Scenario Modeling</span>
+                    <span className="text-xs text-slate-500 font-mono">Multivariate Delta Matrix</span>
+                  </div>
+                  <h3 className="font-serif text-lg font-bold text-[#1E293B] mt-1 flex items-center gap-2">
+                    <SplitSquareHorizontal className="h-5 w-5 text-blue-600" />
+                    Policy Impact Simulator: Scenario A vs Scenario B Delta Comparator
+                  </h3>
+                  <p className="text-xs text-slate-600 mt-0.5">
+                    Compare current baseline levers directly against proposed reform strategies to analyze trade-offs in litigation velocity, tax yields, and environmental conservation.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setScenarioA({
+                        name: `Scenario A: Custom Run (${params.ceiling}ac / ${params.tax}%)`,
+                        params: { ...params },
+                        result: projected ? { ...projected } : { ...BASELINE },
+                      });
+                      toast.info('Current settings pinned to Scenario A');
+                    }}
+                    className="focus-ring px-2.5 py-1.5 text-xs font-bold border border-slate-300 bg-white hover:bg-slate-50 text-slate-700"
+                  >
+                    Pin Current to Scenario A
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setScenarioB({
+                        name: `Scenario B: Reform Strategy (${params.ceiling}ac / ${params.tax}%)`,
+                        params: { ...params },
+                        result: projected ? { ...projected } : { ...BASELINE },
+                      });
+                      toast.info('Current settings pinned to Scenario B');
+                    }}
+                    className="focus-ring px-2.5 py-1.5 text-xs font-bold border border-emerald-600 bg-emerald-50 hover:bg-emerald-100 text-emerald-800"
+                  >
+                    Pin Current to Scenario B
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleExportScenarioDeltaCsv}
+                    className="focus-ring flex items-center gap-1.5 bg-[#1E293B] px-3 py-1.5 text-xs font-bold text-white hover:bg-slate-800"
+                  >
+                    <Download className="h-3.5 w-3.5" /> Export Delta CSV
+                  </button>
+                </div>
+              </div>
+
+              {/* 4 Delta Outcome KPI Tiles */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+                {/* Dispute Rate Delta */}
+                <div className="border border-slate-200 p-3 bg-slate-50/70">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase">Boundary Dispute Rate</span>
+                  <div className="flex items-baseline justify-between mt-1">
+                    <span className="font-mono text-sm text-slate-500">{scenarioA.result.disputeRate}% → <b className="text-slate-800">{scenarioB.result.disputeRate}%</b></span>
+                    <span className={`font-mono text-xs font-bold px-1.5 py-0.5 rounded ${scenarioB.result.disputeRate <= scenarioA.result.disputeRate ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+                      {scenarioB.result.disputeRate <= scenarioA.result.disputeRate ? 'Δ ' : 'Δ +'}
+                      {(scenarioB.result.disputeRate - scenarioA.result.disputeRate).toFixed(1)}%
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-emerald-700 mt-1 font-medium">
+                    {scenarioB.result.disputeRate <= scenarioA.result.disputeRate ? '✓ Fast-track settlement benefit' : '⚠ Increased litigation load'}
+                  </p>
+                </div>
+
+                {/* Urban Pace Delta */}
+                <div className="border border-slate-200 p-3 bg-slate-50/70">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase">Urban Expansion Pace</span>
+                  <div className="flex items-baseline justify-between mt-1">
+                    <span className="font-mono text-sm text-slate-500">{scenarioA.result.urbanPace}% → <b className="text-slate-800">{scenarioB.result.urbanPace}%</b></span>
+                    <span className="font-mono text-xs font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-800">
+                      Δ {(scenarioB.result.urbanPace - scenarioA.result.urbanPace).toFixed(1)}%
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-blue-700 mt-1 font-medium">Zoning pace differential</p>
+                </div>
+
+                {/* Climate Score Delta */}
+                <div className="border border-slate-200 p-3 bg-slate-50/70">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase">Climate Resilience Index</span>
+                  <div className="flex items-baseline justify-between mt-1">
+                    <span className="font-mono text-sm text-slate-500">{scenarioA.result.climateScore} → <b className="text-slate-800">{scenarioB.result.climateScore}</b></span>
+                    <span className={`font-mono text-xs font-bold px-1.5 py-0.5 rounded ${scenarioB.result.climateScore >= scenarioA.result.climateScore ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+                      {scenarioB.result.climateScore >= scenarioA.result.climateScore ? 'Δ +' : 'Δ '}
+                      {scenarioB.result.climateScore - scenarioA.result.climateScore} pts
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-emerald-700 mt-1 font-medium">Ecological land preservation</p>
+                </div>
+
+                {/* Revenue Delta */}
+                <div className="border border-slate-200 p-3 bg-slate-50/70">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase">State Revenue Yield</span>
+                  <div className="flex items-baseline justify-between mt-1">
+                    <span className="font-mono text-sm text-slate-500">₹{scenarioA.result.revenue}Cr → <b className="text-slate-800">₹{scenarioB.result.revenue}Cr</b></span>
+                    <span className={`font-mono text-xs font-bold px-1.5 py-0.5 rounded ${scenarioB.result.revenue >= scenarioA.result.revenue ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'}`}>
+                      {scenarioB.result.revenue >= scenarioA.result.revenue ? 'Δ +₹' : 'Δ -₹'}
+                      {Math.abs(scenarioB.result.revenue - scenarioA.result.revenue)} Cr
+                    </span>
+                  </div>
+                  <p className="text-[10px] text-slate-600 mt-1 font-medium">Net fiscal surplus / investment</p>
+                </div>
+              </div>
+
+              {/* Side-by-Side Detailed Parameter & Outcome Table */}
+              <div className="overflow-x-auto border border-slate-200">
+                <table className="w-full text-left text-xs border-collapse">
+                  <thead>
+                    <tr className="bg-slate-100 border-b border-slate-200 text-slate-700 font-bold uppercase tracking-wider text-[10px]">
+                      <th className="py-2.5 px-3">Variable Dimension</th>
+                      <th className="py-2.5 px-3 text-blue-900 bg-blue-50/70">Scenario A (Baseline)</th>
+                      <th className="py-2.5 px-3 text-emerald-900 bg-emerald-50/70">Scenario B (Target Strategy)</th>
+                      <th className="py-2.5 px-3 text-center">Net Delta (Δ)</th>
+                      <th className="py-2.5 px-3">Policy Assessment</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    <tr>
+                      <td className="py-2 px-3 font-semibold text-slate-700">Land Ceiling Limit</td>
+                      <td className="py-2 px-3 font-mono bg-blue-50/30">{scenarioA.params.ceiling} Acres</td>
+                      <td className="py-2 px-3 font-mono bg-emerald-50/30">{scenarioB.params.ceiling} Acres</td>
+                      <td className="py-2 px-3 font-mono text-center">{scenarioB.params.ceiling - scenarioA.params.ceiling} ac</td>
+                      <td className="py-2 px-3 text-slate-600 text-[11px]">Controls land consolidation vs fragmentation</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2 px-3 font-semibold text-slate-700">Agri to Non-Agri Tax Rate</td>
+                      <td className="py-2 px-3 font-mono bg-blue-50/30">{scenarioA.params.tax}%</td>
+                      <td className="py-2 px-3 font-mono bg-emerald-50/30">{scenarioB.params.tax}%</td>
+                      <td className="py-2 px-3 font-mono text-center">+{scenarioB.params.tax - scenarioA.params.tax}%</td>
+                      <td className="py-2 px-3 text-slate-600 text-[11px]">Disincentivizes prime farmland speculation</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2 px-3 font-semibold text-slate-700">Modernization Budget Outlay</td>
+                      <td className="py-2 px-3 font-mono bg-blue-50/30">₹ {scenarioA.params.budget} Cr</td>
+                      <td className="py-2 px-3 font-mono bg-emerald-50/30">₹ {scenarioB.params.budget} Cr</td>
+                      <td className="py-2 px-3 font-mono text-center text-emerald-700">+₹ {scenarioB.params.budget - scenarioA.params.budget} Cr</td>
+                      <td className="py-2 px-3 text-slate-600 text-[11px]">Accelerates drone cadastre and CORS deployment</td>
+                    </tr>
+                    <tr>
+                      <td className="py-2 px-3 font-semibold text-slate-700">Fast-Track Court Window</td>
+                      <td className="py-2 px-3 font-mono bg-blue-50/30">{scenarioA.params.window} Days</td>
+                      <td className="py-2 px-3 font-mono bg-emerald-50/30">{scenarioB.params.window} Days</td>
+                      <td className="py-2 px-3 font-mono text-center text-emerald-700">{scenarioB.params.window - scenarioA.params.window} days</td>
+                      <td className="py-2 px-3 text-slate-600 text-[11px]">Reduces statutory hearing time under Revenue Tribunal</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
           {/* 1-Click Policy Presets Banner */}
           <div className="mb-6 border border-slate-300 bg-white p-4 shadow-2xs">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-3">
