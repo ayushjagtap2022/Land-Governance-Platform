@@ -50,6 +50,7 @@ type DistrictFact = {
   disputes: number;
   cards: string;
   risk: 'Low' | 'Moderate' | 'High';
+  digitization_status?: string;
   population?: number;
   economic_density?: number;
   forest_cover_pct?: number;
@@ -136,6 +137,19 @@ function MapNavigation({ onReset }: { onReset: () => void }) {
   );
 }
 
+function MapController({ stateFilter, districts }: { stateFilter: string; districts: DistrictFact[] }) {
+  const map = useMap();
+  useEffect(() => {
+    if (stateFilter && stateFilter !== 'ALL') {
+      const match = districts.find(d => d.state.toLowerCase() === stateFilter.toLowerCase());
+      if (match?.coordinates) {
+        map.flyTo(match.coordinates, 7, { duration: 1.2 });
+      }
+    }
+  }, [stateFilter, map, districts]);
+  return null;
+}
+
 function MapPointer({ mode, onCoordinate, onZoom }: { mode: 'idle' | 'measure' | 'aoi'; onCoordinate: (event: LeafletMouseEvent) => void; onZoom: (zoom: number) => void }) {
   useMapEvents({
     click: onCoordinate,
@@ -175,6 +189,7 @@ export default function MapPage() {
   const [layers, setLayers] = useState(initialLayers);
   const [year, setYear] = useState(2024);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [colorMode, setColorMode] = useState<'modernization' | 'dispute'>('modernization');
   const [mode, setMode] = useState<'idle' | 'measure' | 'aoi'>('idle');
   const [coords, setCoords] = useState<LatLng | null>(null);
   const [zoom, setZoom] = useState(5);
@@ -186,6 +201,7 @@ export default function MapPage() {
   const [districtsList, setDistrictsList] = useState<DistrictFact[]>(districtFacts);
   const [districtSearch, setDistrictSearch] = useState('');
   const [selectedStateFilter, setSelectedStateFilter] = useState<string>('ALL');
+  const [cadastralFeatures, setCadastralFeatures] = useState<{ id: string; points: [number, number][]; properties: any }[]>([]);
   const [lulcFeatures, setLulcFeatures] = useState<{ points: [number, number][]; color: string }[]>(lulcPolygons);
   const [climateFeatures, setClimateFeatures] = useState<ClimateZone[]>([]);
   const [temporalStats, setTemporalStats] = useState<TemporalStats>({
@@ -196,7 +212,7 @@ export default function MapPage() {
     fallow_land_pct: 6.9,
     cadastral_digitization_pct: 94.2,
     svamitva_cards_issued_cr: 1.68,
-    milestone: 'SVAMITVA Drone Resurvey Active'
+    milestone: 'SVAMITVA Drone Resurvey Active (94.2% Digitized)'
   });
 
   // Multi-year animation playback
@@ -208,9 +224,9 @@ export default function MapPage() {
     return () => clearInterval(interval);
   }, [isPlaying]);
 
-  // Load districts
+  // Load 640 real districts dynamically by year
   useEffect(() => {
-    fetch('/api/v1/geodata/districts')
+    fetch(`/api/v1/geodata/districts?year=${year}&limit=1000`)
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
@@ -228,6 +244,7 @@ export default function MapPage() {
               disputes: d.dispute_risk ?? d.disputes ?? 24.5,
               cards: d.svamitva_cards_issued ?? d.cards ?? '145,000',
               risk: (d.risk_category || d.risk || 'Moderate') as 'Low' | 'Moderate' | 'High',
+              digitization_status: d.digitization_status || (d.modernization_index >= 70 ? 'Digitized' : d.modernization_index >= 35 ? 'In-Progress' : 'Legacy Paper Records'),
               population: d.population,
               economic_density: d.economic_density_index,
               forest_cover_pct: d.forest_cover_pct,
@@ -237,7 +254,26 @@ export default function MapPage() {
         }
       })
       .catch(err => console.warn('Could not load real geodata districts, using fallback', err));
-  }, []);
+  }, [year]);
+
+  // Load Cadastral GeoJSON by year
+  useEffect(() => {
+    fetch(`/api/v1/geodata/geojson/cadastral?year=${year}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.features) {
+          const polys = data.features
+            .filter((f: any) => f?.geometry?.coordinates?.[0])
+            .map((f: any) => ({
+              id: f.id || `cadastral-${Math.random()}`,
+              points: f.geometry.coordinates[0].map((coord: [number, number]) => [coord[1], coord[0]] as [number, number]),
+              properties: f.properties || {}
+            }));
+          setCadastralFeatures(polys);
+        }
+      })
+      .catch(() => {});
+  }, [year]);
 
   // Load temporal stats
   useEffect(() => {
@@ -313,7 +349,7 @@ export default function MapPage() {
         d.district.toLowerCase().includes(q) || d.state.toLowerCase().includes(q)
       );
     }
-    return list.slice(0, 75);
+    return list;
   }, [districtsList, districtSearch, selectedStateFilter]);
 
   const scaleLabel = zoom >= 6 ? '100 km' : zoom === 5 ? '250 km' : '500 km';
@@ -361,7 +397,7 @@ export default function MapPage() {
         <div>
           <p className="section-kicker mb-2">Spatial data access / national view</p>
           <h1 className="font-serif text-3xl font-semibold tracking-tight text-[#132f4c] md:text-4xl" data-testid="text-page-title-gis-map">Geospatial GIS Visualization Engine</h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Explore cadastral modernization, land-use classification, disputes and climate exposure across India through an accountable map interface.</p>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Explore cadastral modernization, land-use classification, disputes and climate exposure across all 640 Indian districts through an accountable temporal map.</p>
         </div>
         <MapToolbar mode={mode} onModeChange={(nextMode) => { setMode(nextMode); setMeasurePoints([]); setAoiPoints([]); }} onExport={() => setNotice('Map view export queued as PNG/PDF.')} onReset={resetExtent} />
       </div>
@@ -371,12 +407,15 @@ export default function MapPage() {
         <div className="min-w-0">
           <div className="relative overflow-hidden border border-slate-400 bg-[#dbe7ea] shadow-sm">
             <MapContainer center={indiaCenter} zoom={5} minZoom={4} maxZoom={9} zoomControl={false} className="h-[620px] w-full" scrollWheelZoom>
+              <MapController stateFilter={selectedStateFilter} districts={districtsList} />
               {layers.satellite.visible ? <TileLayer attribution="Tiles © Esri" url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" opacity={layers.satellite.opacity} /> : <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" opacity={0.8} />}
-              {layers.cadastral.visible && cadastralPolygons.map((points, index) => <Polygon key={`cadastral-${index}`} positions={points} pathOptions={{ color: layers.cadastral.color, weight: 1, opacity: layers.cadastral.opacity, fillOpacity: 0.08 }} />)}
+              {layers.cadastral.visible && (cadastralFeatures.length > 0 ? cadastralFeatures : cadastralPolygons.map((pts, i) => ({ id: `poly-${i}`, points: pts, properties: {} }))).map((zone) => (
+                <Polygon key={zone.id} positions={zone.points} pathOptions={{ color: layers.cadastral.color, weight: 1.5, opacity: layers.cadastral.opacity, fillOpacity: 0.12 }} />
+              ))}
               {layers.lulc.visible && lulcFeatures.map((zone, index) => <Polygon key={`lulc-${index}`} positions={zone.points} pathOptions={{ color: zone.color, weight: 1, opacity: layers.lulc.opacity, fillOpacity: layers.lulc.opacity * 0.35 }} />)}
-              {layers.dispute.visible && filteredDistricts.slice(0, 20).map((district) => (
+              {layers.dispute.visible && filteredDistricts.filter(d => d.disputes > 26).map((district) => (
                 district?.coordinates && district.coordinates[0] != null ? (
-                  <Circle key={`dispute-${district.district}`} center={district.coordinates} radius={55000} pathOptions={{ color: '#b23b32', fillColor: '#b23b32', opacity: layers.dispute.opacity, fillOpacity: layers.dispute.opacity * 0.45 }} />
+                  <Circle key={`dispute-${district.district}`} center={district.coordinates} radius={Math.min(65000, Math.max(25000, district.disputes * 1400))} pathOptions={{ color: '#b23b32', fillColor: '#b23b32', opacity: layers.dispute.opacity, fillOpacity: layers.dispute.opacity * 0.4 }} />
                 ) : null
               ))}
               {layers.climate.visible && climateFeatures.map((zone) => (
@@ -387,11 +426,28 @@ export default function MapPage() {
                   eventHandlers={{ click: () => setSelectedClimateZone(zone) }}
                 />
               ))}
-              {filteredDistricts.map((district) => (
-                district?.coordinates && district.coordinates[0] != null ? (
-                  <CircleMarker center={district.coordinates} key={district.district} radius={6} pathOptions={{ color: '#132f4c', weight: 2, fillColor: district.risk === 'High' ? '#b23b32' : district.risk === 'Moderate' ? '#f2b134' : '#287449', fillOpacity: 1 }} eventHandlers={{ click: () => setSelectedDistrict(district) }}><span /></CircleMarker>
-                ) : null
-              ))}
+              {filteredDistricts.map((district) => {
+                if (!district?.coordinates || district.coordinates[0] == null) return null;
+                const isDigitized = (district.digitization_status === 'Digitized' || district.modernization >= 70);
+                const isProgress = (district.digitization_status === 'In-Progress' || (district.modernization >= 35 && district.modernization < 70));
+                const pinColor = colorMode === 'modernization'
+                  ? (isDigitized ? '#287449' : isProgress ? '#f2b134' : '#b23b32')
+                  : (district.risk === 'High' ? '#b23b32' : district.risk === 'Moderate' ? '#f2b134' : '#287449');
+                return (
+                  <CircleMarker
+                    center={district.coordinates}
+                    key={district.district}
+                    radius={zoom >= 7 ? 6 : 4}
+                    pathOptions={{
+                      color: '#ffffff',
+                      weight: 1,
+                      fillColor: pinColor,
+                      fillOpacity: 0.95
+                    }}
+                    eventHandlers={{ click: () => setSelectedDistrict(district) }}
+                  />
+                );
+              })}
               {aoiPoints.length >= 3 && <Polygon positions={aoiPoints} pathOptions={{ color: '#9b6300', weight: 2, dashArray: '5 4', fillColor: '#f2b134', fillOpacity: 0.18 }} />}
               {aoiPoints.map((point, index) => <CircleMarker center={point} key={`aoi-point-${index}`} radius={4} pathOptions={{ color: '#9b6300', fillColor: '#f2b134', fillOpacity: 1 }} />)}
               <MapPointer mode={mode} onCoordinate={handleCoordinate} onZoom={setZoom} />
@@ -399,13 +455,56 @@ export default function MapPage() {
               <ScaleControl position="bottomleft" imperial={false} maxWidth={120} />
             </MapContainer>
 
+            {/* Real-time Year Era Badge */}
+            <div className="absolute top-3 left-3 z-[1000] border border-slate-300 bg-white/95 px-3 py-2 shadow-md backdrop-blur-xs max-w-[280px]">
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-xl font-bold text-[#132f4c]">{year}</span>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${year >= 2020 ? 'bg-emerald-100 text-emerald-800' : year >= 2016 ? 'bg-blue-100 text-blue-800' : year >= 2008 ? 'bg-amber-100 text-amber-800' : 'bg-red-100 text-red-800'}`}>
+                  {year >= 2020 ? 'SVAMITVA Drone Era' : year >= 2016 ? 'DILRMP 2.0 Resurvey' : year >= 2008 ? 'NLRMP Pilot Launch' : 'Pre-DILRMP Manual'}
+                </span>
+              </div>
+              <div className="text-[10px] text-slate-500 mt-1 flex justify-between">
+                <span>{filteredDistricts.length} Districts Plotted</span>
+                <span className="font-semibold text-[#287449]">{temporalStats.cadastral_digitization_pct}% Modernized</span>
+              </div>
+            </div>
+
             <LayerControl layers={layers} onToggle={toggleLayer} onOpacity={setLayerOpacity} />
-            <div className="absolute bottom-3 right-3 z-[1000] flex items-center gap-3 border border-slate-400 bg-white/95 px-3 py-2 text-[10px] text-slate-700 shadow-sm">
-              <span className="font-bold">Legend</span>
-              <span className="flex items-center gap-1"><span className="h-2 w-2 bg-[#287449]" />Low Risk</span>
-              <span className="flex items-center gap-1"><span className="h-2 w-2 bg-[#f2b134]" />Moderate</span>
-              <span className="flex items-center gap-1"><span className="h-2 w-2 bg-[#b23b32]" />High Risk</span>
-              <span className="flex items-center gap-1"><span className="h-2 w-2 bg-[#9b6300]" />Climate Hazard</span>
+
+            {/* Dynamic Metric Switcher & Legend */}
+            <div className="absolute bottom-3 right-3 z-[1000] border border-slate-400 bg-white/95 px-3 py-2 text-[10px] text-slate-700 shadow-sm max-w-sm">
+              <div className="flex items-center justify-between gap-3 mb-1.5 pb-1 border-b border-slate-200">
+                <span className="font-bold text-[#132f4c]">Display Metric</span>
+                <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded border border-slate-200">
+                  <button
+                    type="button"
+                    onClick={() => setColorMode('modernization')}
+                    className={`px-2 py-0.5 rounded font-bold transition-colors ${colorMode === 'modernization' ? 'bg-[#244562] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                  >
+                    Digitization
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setColorMode('dispute')}
+                    className={`px-2 py-0.5 rounded font-bold transition-colors ${colorMode === 'dispute' ? 'bg-[#244562] text-white shadow-xs' : 'text-slate-600 hover:text-slate-900'}`}
+                  >
+                    Dispute Risk
+                  </button>
+                </div>
+              </div>
+              {colorMode === 'modernization' ? (
+                <div className="flex items-center gap-3">
+                  <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#287449]" />Digitized (≥70%)</span>
+                  <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#f2b134]" />In-Progress (35-69%)</span>
+                  <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#b23b32]" />Legacy Paper (&lt;35%)</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-3">
+                  <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#287449]" />Low Risk (&lt;25)</span>
+                  <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#f2b134]" />Moderate (25-45)</span>
+                  <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-full bg-[#b23b32]" />High Risk (&gt;45)</span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -519,10 +618,10 @@ export default function MapPage() {
                 />
               </div>
 
-              <div className="max-h-44 overflow-y-auto divide-y divide-slate-100 text-xs border border-slate-100">
-                {filteredDistricts.map((d, i) => (
+              <div className="max-h-48 overflow-y-auto divide-y divide-slate-100 text-xs border border-slate-100">
+                {filteredDistricts.slice(0, 100).map((d, i) => (
                   <button
-                    key={i}
+                    key={`${d.state}-${d.district}-${i}`}
                     type="button"
                     onClick={() => setSelectedDistrict(d)}
                     className="w-full text-left py-1.5 px-2 hover:bg-slate-50 flex items-center justify-between transition-colors"
@@ -531,12 +630,18 @@ export default function MapPage() {
                       <span className="font-semibold text-slate-800 block text-xs">{d.district}</span>
                       <span className="text-[10px] text-slate-500">{d.state}</span>
                     </div>
-                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${d.risk === 'High' ? 'bg-red-100 text-red-700' : d.risk === 'Moderate' ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700'}`}>
-                      {d.disputes}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-mono text-[10px] text-slate-500">{d.modernization}%</span>
+                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${d.digitization_status === 'Digitized' || d.modernization >= 70 ? 'bg-emerald-100 text-emerald-700' : d.modernization >= 35 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
+                        {d.digitization_status || (d.modernization >= 70 ? 'Digitized' : d.modernization >= 35 ? 'In-Progress' : 'Legacy Paper')}
+                      </span>
+                    </div>
                   </button>
                 ))}
               </div>
+              {filteredDistricts.length > 100 && (
+                <p className="text-[9px] text-slate-400 text-center pt-0.5">Showing top 100 of {filteredDistricts.length} districts (use search to filter)</p>
+              )}
             </div>
           </div>
 

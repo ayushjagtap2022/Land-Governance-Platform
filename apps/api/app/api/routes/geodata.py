@@ -21,10 +21,11 @@ def get_gis_layers():
 @router.get("/districts", summary="List Districts with Spatial Coordinates & Demographics")
 def list_spatial_districts(
     state: Optional[str] = Query(None, description="Optional state filter"),
+    year: int = Query(2024, ge=1999, le=2025, description="Year for multi-temporal land governance indicators (1999-2025)"),
     limit: int = Query(640, ge=1, le=1000, description="District limit")
 ):
     """Returns real Indian districts with lat/lng, Census population, modernization %, and dispute risk."""
-    return geodata_service.list_districts(state=state, limit=limit)
+    return geodata_service.list_districts(state=state, year=year, limit=limit)
 
 @router.get("/temporal-stats", summary="Get National Land Transitions & Digitization Progress for Year")
 def get_temporal_statistics(
