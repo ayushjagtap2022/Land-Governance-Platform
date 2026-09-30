@@ -24,12 +24,13 @@ import {
   X,
   ZoomIn,
   ZoomOut,
+  
 } from 'lucide-react';
 import { Circle, CircleMarker, MapContainer, Polygon, Popup, ScaleControl, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import { Link } from 'wouter';
 import type { LatLng, LeafletMouseEvent } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-
+ 
 type LayerKey = 'cadastral' | 'lulc' | 'dispute' | 'climate' | 'satellite';
 
 type LayerState = {
@@ -130,7 +131,7 @@ function MapNavigation({ onReset }: { onReset: () => void }) {
     <div className="absolute bottom-16 left-3 z-[1000] flex flex-col border border-slate-400 bg-white shadow-sm">
       <button className="focus-ring p-2 hover:bg-slate-100" data-testid="button-map-zoom-in" type="button" aria-label="Zoom in" onClick={() => map.zoomIn()}><ZoomIn className="h-4 w-4 text-[#244562]" /></button>
       <button className="focus-ring border-t border-slate-300 p-2 hover:bg-slate-100" data-testid="button-map-zoom-out" type="button" aria-label="Zoom out" onClick={() => map.zoomOut()}><ZoomOut className="h-4 w-4 text-[#244562]" /></button>
-      <button className="focus-ring border-t border-slate-300 p-2 hover:bg-slate-100" data-testid="button-map-reset-control" type="button" aria-label="Reset map extent" onClick={onReset}><RotateCcw className="h-4 w-4 text-[#244562]" /></button>
+      <button className="focus-ring border-t border-slate-300 p-2 hover:bg-slate-100" data-testid="button-map-reset-control" type="button" aria-label="Reset map extent" onClick={() => { map.setView(indiaCenter, 5); onReset(); }}><RotateCcw className="h-4 w-4 text-[#244562]" /></button>
     </div>
   );
 }
@@ -315,6 +316,43 @@ export default function MapPage() {
     return list.slice(0, 75);
   }, [districtsList, districtSearch, selectedStateFilter]);
 
+  const scaleLabel = zoom >= 6 ? '100 km' : zoom === 5 ? '250 km' : '500 km';
+  const distanceKm = measurePoints.length === 2
+    ? Math.round(haversine(measurePoints[0], measurePoints[1]))
+    : 0;
+
+  const toggleLayer = (key: LayerKey) => {
+    setLayers((current) => ({
+      ...current,
+      [key]: { ...current[key], visible: !current[key].visible },
+    }));
+  };
+
+  const setLayerOpacity = (key: LayerKey, value: number) => {
+    setLayers((current) => ({
+      ...current,
+      [key]: { ...current[key], opacity: value },
+    }));
+  };
+
+  const resetExtent = () => {
+    setNotice('Map extent reset to India national view.');
+    setMode('idle');
+    setMeasurePoints([]);
+    setAoiPoints([]);
+  };
+
+  const handleCoordinate = (event: LeafletMouseEvent) => {
+    if (!event?.latlng) return;
+    setCoords(event.latlng);
+    if (event.type !== 'click') return;
+    if (mode === 'measure') {
+      setMeasurePoints((current) => (current.length >= 2 ? [[event.latlng.lat, event.latlng.lng]] : [...current, [event.latlng.lat, event.latlng.lng]]));
+    }
+    if (mode === 'aoi') {
+      setAoiPoints((current) => (current.length >= 5 ? [[event.latlng.lat, event.latlng.lng]] : [...current, [event.latlng.lat, event.latlng.lng]]));
+    }
+  };
 
   return (
     <section className="w-full px-4 py-5 md:px-8 md:py-7">
