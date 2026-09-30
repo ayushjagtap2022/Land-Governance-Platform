@@ -21,6 +21,7 @@ import {
   YAxis,
 } from 'recharts';
 import { analyticsTrendData, climateRadarData, comparativeStateData, initialStates } from '@/data/mockData';
+import { toast } from 'sonner';
 
 // Theme Colors
 const colors = {
@@ -62,7 +63,7 @@ function PageFrame({ title, kicker, description, children, actions }: { title: s
 function Panel({ title, children, className = '' }: { title: string; children: React.ReactNode; className?: string }) {
   return (
     <div className={`border border-slate-300 bg-white ${className}`}>
-      <div className="border-b border-slate-200 px-4 py-3 md:px-5">
+      <div className="border-b border-slate-200 px-4 py-3 md:px-5 bg-slate-50">
         <h2 className="text-sm font-bold text-[#1E293B]">{title}</h2>
       </div>
       {children}
@@ -119,6 +120,49 @@ export default function AnalyticsPage() {
 
   const showAnomaly = primaryRegion === 'Maharashtra' || comparisonRegion === 'Maharashtra';
 
+  const handleExportCsv = () => {
+    let exportRows: any[] = [];
+    let filename = `Analytics_${tabs[activeTab].replace(/\s+/g, '_')}.csv`;
+
+    if (activeTab === 3) {
+      exportRows = climateRadar;
+    } else if (activeTab === 4 || activeTab === 6) {
+      exportRows = comparativeData;
+    } else {
+      exportRows = trendData;
+    }
+
+    if (!exportRows || exportRows.length === 0) {
+      toast.error('No analytics records available to export.');
+      return;
+    }
+
+    const headers = Object.keys(exportRows[0]);
+    const csvContent = [
+      headers.join(','),
+      ...exportRows.map(row => headers.map(h => JSON.stringify(row[h] ?? '')).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    toast.success(`Exported ${exportRows.length} rows to ${filename}`);
+  };
+
+  const handlePrintBriefing = () => {
+    window.print();
+  };
+
+  const handleDownloadPdf = () => {
+    toast.info('Preparing executive briefing document...');
+    setTimeout(() => {
+      window.print();
+    }, 400);
+  };
+
   return (
     <PageFrame
       kicker="Programme intelligence / official view"
@@ -126,13 +170,25 @@ export default function AnalyticsPage() {
       description="Compare policy performance, cadastral modernization progress, and land dispute resolution metrics across participating regions."
       actions={
         <div className="flex gap-2">
-          <button className="focus-ring flex items-center gap-2 border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50" type="button">
+          <button 
+            onClick={handleExportCsv}
+            className="focus-ring flex items-center gap-2 border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors" 
+            type="button"
+          >
             <Table2 className="h-3.5 w-3.5" /> Export CSV
           </button>
-          <button className="focus-ring flex items-center gap-2 border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50" type="button">
+          <button 
+            onClick={handlePrintBriefing}
+            className="focus-ring flex items-center gap-2 border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors" 
+            type="button"
+          >
             <Printer className="h-3.5 w-3.5" /> Print Briefing
           </button>
-          <button className="focus-ring flex items-center gap-2 border border-[#1E293B] bg-[#1E293B] px-3 py-2 text-xs font-bold text-white hover:bg-slate-800" type="button">
+          <button 
+            onClick={handleDownloadPdf}
+            className="focus-ring flex items-center gap-2 border border-[#1E293B] bg-[#1E293B] px-3 py-2 text-xs font-bold text-white hover:bg-slate-800 transition-colors" 
+            type="button"
+          >
             <Download className="h-3.5 w-3.5" /> Download PDF
           </button>
         </div>
@@ -153,7 +209,7 @@ export default function AnalyticsPage() {
           <div className="flex-1">
             <label className="block text-xs font-semibold text-slate-700">Primary Region</label>
             <select
-              className="focus-ring mt-1 block w-full border border-slate-300 px-3 py-2 text-sm"
+              className="focus-ring mt-1 block w-full border border-slate-300 px-3 py-2 text-xs bg-white"
               value={primaryRegion}
               onChange={(e) => setPrimaryRegion(e.target.value)}
             >
@@ -165,7 +221,7 @@ export default function AnalyticsPage() {
           <div className="flex-1">
             <label className="block text-xs font-semibold text-slate-700">Comparison Region</label>
             <select
-              className="focus-ring mt-1 block w-full border border-slate-300 px-3 py-2 text-sm"
+              className="focus-ring mt-1 block w-full border border-slate-300 px-3 py-2 text-xs bg-white"
               value={comparisonRegion}
               onChange={(e) => setComparisonRegion(e.target.value)}
             >
@@ -198,7 +254,7 @@ export default function AnalyticsPage() {
           <Panel title="Research Output Trends">
             <div className="h-[400px] p-4">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={analyticsTrendData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                <BarChart data={trendData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} vertical={false} />
                   <XAxis dataKey="year" tick={{ fontSize: 12, fill: colors.slate }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 12, fill: colors.slate }} axisLine={false} tickLine={false} />
@@ -217,7 +273,7 @@ export default function AnalyticsPage() {
           <Panel title="Policy Performance & Compliance">
             <div className="h-[400px] p-4">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={analyticsTrendData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                <LineChart data={trendData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} vertical={false} />
                   <XAxis dataKey="year" tick={{ fontSize: 12, fill: colors.slate }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 12, fill: colors.slate }} axisLine={false} tickLine={false} />
@@ -234,7 +290,7 @@ export default function AnalyticsPage() {
           <Panel title="Land Use Change Trends (Aggregated)">
             <div className="h-[400px] p-4">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={analyticsTrendData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                <AreaChart data={trendData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} vertical={false} />
                   <XAxis dataKey="year" tick={{ fontSize: 12, fill: colors.slate }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 12, fill: colors.slate }} axisLine={false} tickLine={false} />
@@ -336,7 +392,7 @@ export default function AnalyticsPage() {
               </div>
               <div className="h-[250px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={analyticsTrendData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                  <BarChart data={trendData} margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} vertical={false} />
                     <XAxis dataKey="year" tick={{ fontSize: 12, fill: colors.slate }} axisLine={false} tickLine={false} />
                     <YAxis tick={{ fontSize: 12, fill: colors.slate }} axisLine={false} tickLine={false} />
@@ -355,14 +411,14 @@ export default function AnalyticsPage() {
           <Panel title="Geospatial Insights (Cadastral Digitization %)">
             <div className="h-[400px] p-4">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={comparativeStateData.filter(d => d.category.includes('%'))} layout="vertical" margin={{ top: 20, right: 30, left: 40, bottom: 0 }}>
+                <BarChart data={comparativeData.filter(d => d.category.includes('%'))} layout="vertical" margin={{ top: 20, right: 30, left: 40, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke={colors.grid} horizontal={false} />
                   <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 12, fill: colors.slate }} axisLine={false} tickLine={false} />
                   <YAxis dataKey="category" type="category" tick={{ fontSize: 11, fill: colors.navy, fontWeight: 'bold' }} axisLine={false} tickLine={false} width={120} />
                   <Tooltip contentStyle={{ backgroundColor: '#fff', border: '1px solid #CBD5E1', fontSize: '12px', borderRadius: '0' }} />
                   <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
-                  <Bar dataKey="Maharashtra" name={primaryRegion} fill={colors.navy} radius={[0, 2, 2, 0]} />
-                  <Bar dataKey="Madhya Pradesh" name={comparisonRegion} fill={colors.amber} radius={[0, 2, 2, 0]} />
+                  <Bar dataKey={primaryRegion} name={primaryRegion} fill={colors.navy} radius={[0, 2, 2, 0]} />
+                  <Bar dataKey={comparisonRegion} name={comparisonRegion} fill={colors.amber} radius={[0, 2, 2, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
