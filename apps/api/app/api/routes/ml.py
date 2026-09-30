@@ -53,3 +53,32 @@ def predict_urban_conversion(payload: UrbanConversionRequest):
     if "error" in res:
         raise HTTPException(status_code=500, detail=res["error"])
     return res
+
+class ClimatePredictionRequest(BaseModel):
+    state_name: str = Field(default="MAHARASHTRA", description="Indian state name")
+    district_name: Optional[str] = Field(default=None, description="Optional specific district")
+
+class PolicySimulationRequest(BaseModel):
+    policy_lever: str = Field(default="DIGITAL_TITLING_EXPANSION", description="Policy intervention type")
+    state_name: str = Field(default="MAHARASHTRA", description="State name for scenario evaluation")
+    delta_pct: float = Field(default=15.0, description="Percentage shift in policy lever")
+
+@router.post("/predict-climate")
+def predict_climate_vulnerability(payload: ClimatePredictionRequest):
+    """Executes RandomForestRegressor inference for climate & moisture distress vulnerability."""
+    res = ml_service.predict_climate_vulnerability(
+        state_name=payload.state_name,
+        district_name=payload.district_name
+    )
+    if "error" in res:
+        raise HTTPException(status_code=500, detail=res["error"])
+    return res
+
+@router.post("/simulate")
+def simulate_policy_scenario(payload: PolicySimulationRequest):
+    """Executes Module 7 Scenario Modeling with multi-target baseline vs projected deltas."""
+    return ml_service.simulate_policy_scenario(
+        policy_lever=payload.policy_lever,
+        state_name=payload.state_name,
+        delta_pct=payload.delta_pct
+    )

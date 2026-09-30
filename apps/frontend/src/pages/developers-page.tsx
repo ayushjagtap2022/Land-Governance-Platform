@@ -57,32 +57,53 @@ const ENDPOINTS = [
   {
     method: 'GET',
     path: '/api/v1/repository/documents',
-    desc: 'Search and filter repository records',
+    desc: 'Search and filter repository records via full-text & pgvector cosine similarity',
     params: [
-      { name: 'query', type: 'string', req: false, desc: 'Full-text search query.' },
-      { name: 'state', type: 'string', req: false, desc: 'ISO 3166-2:IN state code.' },
-      { name: 'category', type: 'string', req: false, desc: 'Document category (e.g., POLICY, RESEARCH).' },
+      { name: 'query', type: 'string', req: false, desc: 'Natural language search query.' },
+      { name: 'state', type: 'string', req: false, desc: 'Indian State name or Pan-India.' },
+      { name: 'document_type', type: 'string', req: false, desc: 'Document category (ACT, POLICY, RESEARCH, REPORT).' },
     ],
-    example: 'curl -H "Authorization: Bearer <TOKEN>" \\\n  "https://api.land.gov.in/v1/repository/documents?state=IN-MH&query=cadastral"'
+    example: 'curl -H "Authorization: Bearer <TOKEN>" \\\n  "http://127.0.0.1:8000/api/v1/repository/documents?state=Maharashtra&query=cadastral"'
   },
   {
     method: 'GET',
-    path: '/api/v1/geodata/layers',
-    desc: 'Query state/district boundary GeoJSON',
+    path: '/api/v1/geodata/districts',
+    desc: 'Query 640 Indian districts with GPS coordinates, Land Use %, and ML dispute risks',
     params: [
-      { name: 'level', type: 'string', req: true, desc: 'Resolution level: STATE, DISTRICT, TEHSIL.' },
-      { name: 'format', type: 'string', req: false, desc: 'Response format (geojson by default).' },
+      { name: 'state', type: 'string', req: false, desc: 'Optional state filter name.' },
+      { name: 'limit', type: 'number', req: false, desc: 'Max districts returned (default 640).' },
     ],
-    example: 'curl -H "Authorization: Bearer <TOKEN>" \\\n  "https://api.land.gov.in/v1/geodata/layers?level=DISTRICT"'
+    example: 'curl "http://127.0.0.1:8000/api/v1/geodata/districts?state=Maharashtra&limit=10"'
+  },
+  {
+    method: 'GET',
+    path: '/api/v1/analytics/compare',
+    desc: 'Compute real empirical comparative statistics between any 2 Indian states',
+    params: [
+      { name: 'state_a', type: 'string', req: true, desc: 'Primary state name (e.g., Maharashtra).' },
+      { name: 'state_b', type: 'string', req: true, desc: 'Comparison state name (e.g., Madhya Pradesh).' },
+    ],
+    example: 'curl "http://127.0.0.1:8000/api/v1/analytics/compare?state_a=Maharashtra&state_b=Madhya%20Pradesh"'
+  },
+  {
+    method: 'POST',
+    path: '/api/v1/ml/predict-dispute',
+    desc: 'Execute Scikit-Learn RandomForest inference on district land litigation risk',
+    params: [
+      { name: 'state_name', type: 'string', req: true, desc: 'Target state name.' },
+      { name: 'district_name', type: 'string', req: false, desc: 'Optional specific district.' },
+      { name: 'policy_adjustments', type: 'object', req: false, desc: 'Counterfactual adjustments (titling_coverage_pct).' },
+    ],
+    example: 'curl -X POST -H "Content-Type: application/json" \\\n  -d \'{"state_name": "MAHARASHTRA", "policy_adjustments": {"titling_coverage_pct": 20}}\' \\\n  "http://127.0.0.1:8000/api/v1/ml/predict-dispute"'
   },
   {
     method: 'POST',
     path: '/api/v1/simulate/evaluate',
-    desc: 'Run headless policy simulation algorithms',
+    desc: 'Run headless policy simulation algorithms with confidence intervals and trajectories',
     params: [
-      { name: 'payload', type: 'object', req: true, desc: 'JSON body with simulation parameters (ceiling, tax, budget, window).' },
+      { name: 'payload', type: 'object', req: true, desc: 'JSON body with simulation parameters (state, ceiling, tax, budget, window).' },
     ],
-    example: 'curl -X POST -H "Authorization: Bearer <TOKEN>" \\\n  -H "Content-Type: application/json" \\\n  -d \'{"ceiling": 54, "tax": 8, "budget": 120, "window": 180}\' \\\n  "https://api.land.gov.in/v1/simulate/evaluate"'
+    example: 'curl -X POST -H "Content-Type: application/json" \\\n  -d \'{"state": "Maharashtra", "ceiling": 54, "tax": 8, "budget": 120, "window": 180}\' \\\n  "http://127.0.0.1:8000/api/v1/simulate/evaluate"'
   }
 ];
 
