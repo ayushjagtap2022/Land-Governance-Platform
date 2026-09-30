@@ -30,6 +30,7 @@ import {
   X,
   ZoomIn,
   ZoomOut,
+  Upload,
 } from 'lucide-react';
 import { Circle, CircleMarker, MapContainer, Polygon, Polyline, Popup, ScaleControl, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import { Link } from 'wouter';
@@ -266,12 +267,16 @@ function Breadcrumb() {
   return <div className="mb-4 flex items-center gap-2 text-xs text-slate-500" data-testid="text-breadcrumb"><span>National Land Governance Platform</span><ChevronRight className="h-3 w-3" /><span className="font-semibold text-[#244562]">GIS Map</span></div>;
 }
 
-function MapToolbar({ mode, onModeChange, onExport, onReset }: { mode: 'idle' | 'measure' | 'aoi'; onModeChange: (mode: 'idle' | 'measure' | 'aoi') => void; onExport: () => void; onReset: () => void }) {
+function MapToolbar({ mode, onModeChange, onExport, onReset, onUploadGeoJSON }: { mode: 'idle' | 'measure' | 'aoi'; onModeChange: (mode: 'idle' | 'measure' | 'aoi') => void; onExport: () => void; onReset: () => void; onUploadGeoJSON: (file: File) => void }) {
   const buttonClass = (active: boolean) => `focus-ring flex items-center gap-2 border px-3 py-2 text-[11px] font-bold ${active ? 'border-[#f2b134] bg-[#fff8e8] text-[#7b4c00]' : 'border-[#244562] text-[#244562] hover:bg-slate-50'}`;
   return (
     <div className="flex flex-wrap gap-2">
       <button className={buttonClass(mode === 'measure')} data-testid="button-map-measure" type="button" onClick={() => onModeChange(mode === 'measure' ? 'idle' : 'measure')}><Ruler className="h-3.5 w-3.5" />Measure Distance (km)</button>
       <button className={buttonClass(mode === 'aoi')} data-testid="button-map-aoi" type="button" onClick={() => onModeChange(mode === 'aoi' ? 'idle' : 'aoi')}><Pentagon className="h-3.5 w-3.5" />Draw Polygon of Interest (AOI)</button>
+      <label className="cursor-pointer focus-ring flex items-center gap-2 border border-[#244562] bg-[#f0f7ff] px-3 py-2 text-[11px] font-bold text-[#1d4ed8] hover:bg-blue-100">
+        <Upload className="h-3.5 w-3.5" />Upload Real GeoJSON Polygons
+        <input type="file" accept=".json,.geojson" className="hidden" onChange={(e) => { if (e.target.files?.[0]) onUploadGeoJSON(e.target.files[0]); }} />
+      </label>
       <button className={buttonClass(false)} data-testid="button-map-export" type="button" onClick={onExport}><Download className="h-3.5 w-3.5" />Export Map View (PNG/PDF)</button>
       <button className={buttonClass(false)} data-testid="button-map-reset-extent" type="button" onClick={onReset}><RotateCcw className="h-3.5 w-3.5" />Reset Extent</button>
     </div>
@@ -352,7 +357,7 @@ export default function MapPage() {
   const [selectedCorridor, setSelectedCorridor] = useState<InfrastructureCorridor | null>(null);
   const [spectralMode, setSpectralMode] = useState<SpectralMode>('standard');
   const [notice, setNotice] = useState('');
-  const [districtsList, setDistrictsList] = useState<DistrictFact[]>(districtFacts);
+  const [districtsList, setDistrictsList] = useState<DistrictFact[]>([]);
   const [districtSearch, setDistrictSearch] = useState('');
   const [selectedStateFilter, setSelectedStateFilter] = useState<string>('ALL');
   const [cadastralFeatures, setCadastralFeatures] = useState<{ id: string; points: [number, number][]; properties: any }[]>([]);
@@ -385,7 +390,7 @@ export default function MapPage() {
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
           const mapped: DistrictFact[] = data
-            .filter((d: any) => d && (d.lat != null || d.coordinates != null))
+            .filter((d: any) => d && (d.lat != null || d.coordinates != null) && d.district && d.state)
             .map((d: any) => ({
               district: d.district || '',
               state: d.state || '',
@@ -393,12 +398,12 @@ export default function MapPage() {
                 Number(d.lat ?? d.coordinates?.[0] ?? 20.5937),
                 Number(d.lng ?? d.coordinates?.[1] ?? 78.9629)
               ],
-              villages: d.villages || `${(Math.floor((d.population || 500000) / 750)).toLocaleString()}`,
-              modernization: d.modernization_index ?? d.modernization ?? 78,
-              disputes: d.dispute_risk ?? d.disputes ?? 24.5,
-              cards: d.svamitva_cards_issued ?? d.cards ?? '145,000',
+              villages: d.villages || 'Not reported',
+              modernization: d.modernization_index ?? d.modernization ?? 0,
+              disputes: d.dispute_risk ?? d.disputes ?? 0,
+              cards: d.svamitva_cards_issued ?? d.cards ?? 'Not reported',
               risk: (d.risk_category || d.risk || 'Moderate') as 'Low' | 'Moderate' | 'High',
-              digitization_status: d.digitization_status || (d.modernization_index >= 70 ? 'Digitized' : d.modernization_index >= 35 ? 'In-Progress' : 'Legacy Paper Records'),
+              digitization_status: d.digitization_status || 'Not reported',
               population: d.population,
               economic_density: d.economic_density_index,
               forest_cover_pct: d.forest_cover_pct,
@@ -544,6 +549,40 @@ export default function MapPage() {
     }
   };
 
+  const handleUploadGeoJSON = async (file: File) => {
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/v1/geodata/upload-geojson?layer_key=cadastral', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (data.status === 'success') {
+        setNotice(`Successfully ingested ${data.feature_count} real GeoJSON features into Cadastral layer.`);
+        // Reload cadastral features
+        fetch(`/api/v1/geodata/geojson/cadastral?year=${year}`)
+          .then(r => r.json())
+          .then(geo => {
+            if (geo?.features) {
+              const polys = geo.features
+                .filter((f: any) => f?.geometry?.coordinates?.[0])
+                .map((f: any) => ({
+                  id: f.id || `cadastral-${Math.random()}`,
+                  points: f.geometry.coordinates[0].map((coord: [number, number]) => [coord[1], coord[0]] as [number, number]),
+                  properties: f.properties || {}
+                }));
+              setCadastralFeatures(polys);
+            }
+          });
+      } else {
+        setNotice(data.message || 'GeoJSON upload failed');
+      }
+    } catch (err: any) {
+      setNotice('Error uploading GeoJSON: ' + err.message);
+    }
+  };
+
   return (
     <section className="w-full px-4 py-5 md:px-8 md:py-7">
       <Breadcrumb />
@@ -553,7 +592,7 @@ export default function MapPage() {
           <h1 className="font-serif text-3xl font-semibold tracking-tight text-[#132f4c] md:text-4xl" data-testid="text-page-title-gis-map">Geospatial GIS Visualization Engine</h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Explore cadastral modernization, land-use classification, disputes and climate exposure across all 640 Indian districts through an accountable temporal map.</p>
         </div>
-        <MapToolbar mode={mode} onModeChange={(nextMode) => { setMode(nextMode); setMeasurePoints([]); setAoiPoints([]); }} onExport={() => setNotice('Map view export queued as PNG/PDF.')} onReset={resetExtent} />
+        <MapToolbar mode={mode} onModeChange={(nextMode) => { setMode(nextMode); setMeasurePoints([]); setAoiPoints([]); }} onExport={() => setNotice('Map view export queued as PNG/PDF.')} onReset={resetExtent} onUploadGeoJSON={handleUploadGeoJSON} />
       </div>
       {notice && <div className="mb-4 flex items-center justify-between border border-[#b7d4c1] bg-[#f0f8f1] p-3 text-xs font-semibold text-[#287449]" data-testid="status-map-action"><span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4" />{notice}</span><button className="focus-ring" type="button" aria-label="Dismiss map notice" onClick={() => setNotice('')}><X className="h-4 w-4" /></button></div>}
 

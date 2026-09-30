@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'wouter';
 import { CitationModal } from '@/components/common/CitationModal';
-import { documents, type LandDocument } from '@/data/mockData';
+import type { LandDocument } from '@/types/repository';
 import { useEffect } from 'react';
 const quickQueries = [
   'Ceiling limits across MP vs Maharashtra',
@@ -25,48 +25,11 @@ const quickQueries = [
   'Procedures for agricultural land conversion to industrial use',
 ];
 
-const trendRadar = [
-  { keyword: 'Drone Cadastral Survey', change: '+24%', direction: 'up' as const, search: 'Cadastral' },
-  { keyword: 'Digital Title Registry', change: '+18%', direction: 'up' as const, search: 'National Land Records' },
-  { keyword: 'Forest Rights Act', change: '+11%', direction: 'up' as const, search: 'Rights' },
-  { keyword: 'Land Resurvey Disputes', change: '-8%', direction: 'down' as const, search: 'Dispute' },
-];
-
 type AssistantResponse = {
   query: string;
   bullets: string[];
   sourceIds: string[];
 };
-
-const responseLibrary: AssistantResponse[] = [
-  {
-    query: 'Ceiling limits across MP vs Maharashtra',
-    bullets: [
-      'The indexed records distinguish ceiling administration by state statute rather than by a single national threshold.',
-      'Maharashtra’s current record is an amendment instrument; confirm the notified schedule and land-classification provisions before applying a limit.',
-      'The repository does not contain a verified Madhya Pradesh ceiling notification in this first index, so the comparison should be treated as incomplete.',
-    ],
-    sourceIds: ['DOC-26019-002', 'DOC-26019-003'],
-  },
-  {
-    query: 'SVAMITVA property card distribution guidelines',
-    bullets: [
-      'The SVAMITVA guidance places drone survey, village-level verification, and property card generation in a linked operational sequence.',
-      'Disputed entries should follow the local verification and escalation process before a card is treated as a final record.',
-      'The current published guidance is version v1.3, dated 18 Jun 2024.',
-    ],
-    sourceIds: ['DOC-26019-001', 'DOC-26019-004'],
-  },
-  {
-    query: 'Procedures for agricultural land conversion to industrial use',
-    bullets: [
-      'The indexed catalogue does not yet contain a verified state conversion order that supports a complete legal answer.',
-      'Use the model mutation workflow only as process context; it does not replace the competent state authority’s conversion notification.',
-      'A formal brief should identify the applicable state, district, land class, and conversion authority before recommending next steps.',
-    ],
-    sourceIds: ['DOC-26019-005', 'DOC-26019-002'],
-  },
-];
 
 function Breadcrumb({ current }: { current: string }) {
   return (
@@ -140,8 +103,9 @@ export default function AssistantPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [copied, setCopied] = useState(false);
   const [selectedTrend, setSelectedTrend] = useState('');
-  const [allDocs, setAllDocs] = useState<LandDocument[]>(documents);
-  const [trends, setTrends] = useState(trendRadar);
+  const [allDocs, setAllDocs] = useState<LandDocument[]>([]);
+  const [trends, setTrends] = useState<{ keyword: string; change: string; direction: 'up' | 'down'; search: string }[]>([]);
+  const [serviceError, setServiceError] = useState('');
   const [citationDoc, setCitationDoc] = useState<LandDocument | null>(null);
 
   useEffect(() => {
@@ -196,6 +160,7 @@ export default function AssistantPage() {
     if (!trimmed || isSearching) return;
     setQuestion(trimmed);
     setIsSearching(true);
+    setServiceError('');
     try {
       const res = await fetch('/api/v1/ai/assistant/chat', {
         method: 'POST',
@@ -213,23 +178,11 @@ export default function AssistantPage() {
         return;
       }
     } catch (err) {
-      console.warn('AI Assistant API call failed, falling back to local library', err);
+      console.warn('AI Assistant API call failed', err);
     }
-
-    // Local library fallback
-    window.setTimeout(() => {
-      const matching = responseLibrary.find((item) => item.query.toLowerCase() === trimmed.toLowerCase());
-      setResponse(matching ?? {
-        query: trimmed,
-        bullets: [
-          'The indexed registry can support a grounded answer only where a verified DoLR source is available for the question.',
-          'No single source in the current catalogue provides a complete determination for this query; review the linked records before preparing an official note.',
-          'For a reliable comparison, specify the state, administrative level, land class, and relevant publication period.',
-        ],
-        sourceIds: ['DOC-26019-001', 'DOC-26019-005'],
-      });
-      setIsSearching(false);
-    }, 450);
+    setResponse(null);
+    setServiceError('The grounded assistant is currently unavailable. No answer has been generated.');
+    setIsSearching(false);
   };
 
   const copyBrief = () => {
@@ -285,6 +238,7 @@ export default function AssistantPage() {
                 </div>
                 <button className="focus-ring flex items-center gap-2 bg-[#244562] px-4 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-60" data-testid="button-ask-platform" type="button" disabled={isSearching || !question.trim()} onClick={() => ask()}><Bot className="h-4 w-4" />{isSearching ? 'Searching' : 'Ask'}</button>
               </div>
+              {serviceError && <p className="mt-3 text-xs text-red-700" role="alert">{serviceError}</p>}
               <div className="mt-5">
                 <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">Quick query chips</p>
                 <div className="flex flex-wrap gap-2">

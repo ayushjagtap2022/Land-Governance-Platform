@@ -95,7 +95,6 @@ import {
   XAxis,
   YAxis,
 } from 'recharts';
-import { analyticsTrendData, climateRadarData, comparativeStateData, initialStates } from '@/data/mockData';
 import { toast } from 'sonner';
 
 // Theme Colors
@@ -153,12 +152,12 @@ export default function AnalyticsPage() {
   const [activeTab, setActiveTab] = useState(0);
   const [primaryRegion, setPrimaryRegion] = useState('Maharashtra');
   const [comparisonRegion, setComparisonRegion] = useState('Madhya Pradesh');
-  const [comparativeData, setComparativeData] = useState<any[]>(comparativeStateData);
-  const [climateRadar, setClimateRadar] = useState<any[]>(climateRadarData);
-  const [trendData, setTrendData] = useState<any[]>(analyticsTrendData);
+  const [comparativeData, setComparativeData] = useState<any[]>([]);
+  const [climateRadar, setClimateRadar] = useState<any[]>([]);
+  const [trendData, setTrendData] = useState<any[]>([]);
 
   const [dashboardData, setDashboardData] = useState<any | null>(null);
-  const [availableStates, setAvailableStates] = useState<string[]>(initialStates.map(s => s.name));
+  const [availableStates, setAvailableStates] = useState<string[]>([]);
 
   useEffect(() => {
     fetch('/api/v1/analytics/states')

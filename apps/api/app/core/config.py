@@ -18,10 +18,11 @@ class Settings(BaseSettings):
     # Redis for WebSockets (Use memory:// for local dev, redis:// for production)
     REDIS_URL: str = "memory://"
 
-    # Google Gemini API (Using latest gemini-3-flash-preview)
+    # Google Gemini API
     GEMINI_API_KEY: str = ""
     GEMINI_MODEL: str = "gemini-3-flash-preview"
-    GEMINI_EMBEDDING_MODEL: str = "text-embedding-004"
+    # Must produce 1,024 dimensions to match the pgvector column in Document.
+    GEMINI_EMBEDDING_MODEL: str = "gemini-embedding-001"
 
     # AWS S3 Storage
     AWS_ACCESS_KEY_ID: str = ""

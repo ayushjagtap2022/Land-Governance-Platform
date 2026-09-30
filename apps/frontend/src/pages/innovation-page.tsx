@@ -185,7 +185,7 @@ const DEFAULT_PILOTS: PilotItem[] = [
 
 export default function InnovationPage() {
   const [showSubmitModal, setShowSubmitModal] = useState(false);
-  const [pilotsList, setPilotsList] = useState<PilotItem[]>(DEFAULT_PILOTS);
+  const [pilotsList, setPilotsList] = useState<PilotItem[]>([]);
   const [votedIds, setVotedIds] = useState<Record<string, boolean>>({});
   const [evaluatingPilot, setEvaluatingPilot] = useState<PilotItem | null>(null);
   const [rubricScores, setRubricScores] = useState({
@@ -195,10 +195,7 @@ export default function InnovationPage() {
     impact: 22,
   });
   const [juryNotes, setJuryNotes] = useState('');
-  const [pilotEvaluations, setPilotEvaluations] = useState<Record<string, { total: number; recommendation: string; date: string }>>({
-    'PLT-8821': { total: 88, recommendation: 'Recommended for Fast-Track Grant & Pilot Sandbox', date: '2025-08-14' },
-    'PLT-7412': { total: 84, recommendation: 'Recommended for Phase 1 Sandbox Testing', date: '2025-08-20' },
-  });
+  const [pilotEvaluations, setPilotEvaluations] = useState<Record<string, { total: number; recommendation: string; date: string }>>({});
   const queryClient = useQueryClient();
 
   const totalRubricScore = rubricScores.scalability + rubricScores.feasibility + rubricScores.regulatory + rubricScores.impact;
@@ -249,7 +246,23 @@ export default function InnovationPage() {
     queryFn: () => api.get('/innovation/challenges').then(r => r.data).catch(() => []),
   });
 
-  const challenges: ChallengeItem[] = apiChallenges.length > 0 ? apiChallenges : DEFAULT_CHALLENGES;
+  const challenges: ChallengeItem[] = apiChallenges;
+
+  useQuery({
+    queryKey: ['pilot-showcase'],
+    queryFn: () => api.get('/innovation/showcase').then(r => r.data).then((items: any[]) => {
+      setPilotsList(items.map((item) => ({
+        id: String(item.id),
+        title: item.title,
+        lead_name: item.team_members?.[0]?.name || 'Not specified',
+        organization: item.team_members?.[0]?.organization || 'Not specified',
+        funding_lakhs: item.funding_amount || item.requested_funding || 0,
+        votes: item.vote_count || 0,
+        status: item.status,
+      })));
+      return items;
+    }).catch(() => []),
+  });
 
   const proposalSchema = z.object({
     challenge_id: z.string().min(1, 'Challenge selection is required'),
@@ -287,39 +300,12 @@ export default function InnovationPage() {
       toast.success('Proposal Submitted Successfully', {
         description: 'Your research pilot has been registered for evaluation by the Technical Committee.'
       });
-      // Add optimistically to pilots table
-      const newPilot: PilotItem = {
-        id: `PLT-${Math.floor(1000 + Math.random() * 9000)}`,
-        title: vars.title,
-        lead_name: vars.team_members.split(',')[0],
-        organization: 'Independent Research Consortium',
-        funding_lakhs: vars.requested_funding,
-        votes: 1,
-        status: 'Proposal Under Review',
-      };
-      setPilotsList(prev => [newPilot, ...prev]);
       reset();
       setShowSubmitModal(false);
-      queryClient.invalidateQueries({ queryKey: ['pilots'] });
+      queryClient.invalidateQueries({ queryKey: ['pilot-showcase'] });
     },
     onError: () => {
-      // Fallback optimistic submission if API route is unauthenticated or mock
-      const values = watch();
-      const newPilot: PilotItem = {
-        id: `PLT-${Math.floor(1000 + Math.random() * 9000)}`,
-        title: values.title || 'Innovative Cadastral Project',
-        lead_name: (values.team_members || 'Lead Investigator').split(',')[0],
-        organization: 'National Research Cohort',
-        funding_lakhs: values.requested_funding || 20,
-        votes: 1,
-        status: 'Proposal Under Review',
-      };
-      setPilotsList(prev => [newPilot, ...prev]);
-      toast.success('Proposal Submitted for Technical Review', {
-        description: 'Logged to local registry pending formal gazette verification.'
-      });
-      reset();
-      setShowSubmitModal(false);
+      toast.error('Proposal could not be submitted. No local record was created.');
     }
   });
 

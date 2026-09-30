@@ -36,7 +36,6 @@ import {
   YAxis,
   ComposedChart
 } from 'recharts';
-import { initialStates } from '@/data/mockData';
 import { toast } from 'sonner';
 
 function Breadcrumb({ current }: { current: string }) {
@@ -92,21 +91,17 @@ type ScenarioResult = {
   revenue: number;
 };
 
+// Empty values prevent the screen from presenting a fabricated baseline before
+// the simulation service returns a calibrated source dataset.
 const BASELINE: ScenarioParams & ScenarioResult = {
-  ceiling: 54,
-  tax: 8,
-  budget: 120,
-  window: 180,
-  disputeRate: 38.2,
-  urbanPace: 4.5,
-  climateScore: 62,
-  revenue: 840,
+  ceiling: 0, tax: 0, budget: 0, window: 0,
+  disputeRate: 0, urbanPace: 0, climateScore: 0, revenue: 0,
 };
 
 export default function SimulatePage() {
   const [activeTab, setActiveTab] = useState<'policy' | 'infrastructure'>('policy');
   const [state, setState] = useState('Maharashtra');
-  const [availableStates, setAvailableStates] = useState<string[]>(initialStates.map(s => s.name));
+  const [availableStates, setAvailableStates] = useState<string[]>([]);
   const [params, setParams] = useState<ScenarioParams>({
     ceiling: 54,
     tax: 8,
@@ -216,23 +211,11 @@ export default function SimulatePage() {
         return;
       }
     } catch (err) {
-      console.warn('API simulation call failed, falling back to local model', err);
+      console.warn('API simulation call failed', err);
     }
-
-    setTimeout(() => {
-      const newDisputeRate = Math.max(12, 38.2 - (simParams.budget / 50) - ((180 - simParams.window) / 10));
-      const newUrbanPace = Math.max(1.5, 4.5 - (simParams.tax / 10));
-      const newClimateScore = Math.min(100, 62 + (simParams.ceiling < 50 ? 5 : 0) + (simParams.budget / 30));
-      const newRevenue = 840 + (simParams.tax * 15) - (simParams.budget * 0.8);
-
-      setProjected({
-        disputeRate: Number(newDisputeRate.toFixed(1)),
-        urbanPace: Number(newUrbanPace.toFixed(1)),
-        climateScore: Number(newClimateScore.toFixed(0)),
-        revenue: Number(newRevenue.toFixed(0)),
-      });
-      setIsSimulating(false);
-    }, 600);
+    setProjected(null);
+    toast.error('Simulation service unavailable. No projection was generated.');
+    setIsSimulating(false);
   };
 
   const runSimulation = () => runSimulationWithParams(params);
@@ -262,16 +245,7 @@ export default function SimulatePage() {
     }
   };
 
-  const chartData = trajectoryData || [
-    { year: '2020 (Hist)', baseline: 42.1, projected: null },
-    { year: '2021 (Hist)', baseline: 40.5, projected: null },
-    { year: '2022 (Hist)', baseline: 39.8, projected: null },
-    { year: '2023 (Hist)', baseline: 39.0, projected: null },
-    { year: '2024 (Base)', baseline: 38.2, projected: 38.2 },
-    { year: '2025 (Proj)', baseline: 37.8, projected: projected ? projected.disputeRate + 3 : null },
-    { year: '2026 (Proj)', baseline: 37.5, projected: projected ? projected.disputeRate + 1 : null },
-    { year: '2027 (Proj)', baseline: 37.1, projected: projected ? projected.disputeRate : null },
-  ];
+  const chartData = trajectoryData || [];
 
   const [saveStatus, setSaveStatus] = useState('');
 

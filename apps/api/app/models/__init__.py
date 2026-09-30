@@ -14,4 +14,4 @@ from app.models.message import Message
 from app.models.notification import Notification
 
 # Module 2 (Repository - pgvector & PostGIS)
-from app.models.document import Document
+from app.models.document import Document, DocumentChunk

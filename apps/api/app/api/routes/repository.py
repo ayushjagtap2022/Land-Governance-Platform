@@ -1,19 +1,29 @@
 import os
 import uuid
-import hashlib
 import numpy as np
+import logging
 from datetime import datetime, timezone
-from fastapi import APIRouter, File, UploadFile, HTTPException, Depends
+from fastapi import APIRouter, File, UploadFile, HTTPException, Depends, Form, status
 from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 from sqlmodel import select, func
 from sqlmodel.ext.asyncio.session import AsyncSession
 from app.api.dependencies import get_db
-from app.models.document import Document
+from app.models.document import Document, DocumentChunk
 from app.services.storage_service import storage_service
 from app.services.ocr_service import ocr_service, ExtractedMetadata
+from app.core.config import settings
+from app.core.permissions import Permission
+from app.api.dependencies import require_permission
+from app.services.document_ingestion_service import (
+    DocumentIngestionError,
+    chunk_pages,
+    extract_pages,
+    sha256,
+)
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 class CommitRecordRequest(BaseModel):
     title: str
@@ -24,15 +34,39 @@ class CommitRecordRequest(BaseModel):
     file_name: str
     file_url: str
 
-def generate_embedding(text: str) -> List[float]:
-    """Generates a normalized 1024-dim embedding vector for pgvector."""
-    seed = int(hashlib.sha256(text.encode("utf-8")).hexdigest(), 16) % (2**32)
-    rng = np.random.default_rng(seed)
-    vec = rng.standard_normal(1024)
-    norm = np.linalg.norm(vec)
-    if norm > 0:
-        vec = vec / norm
-    return vec.tolist()
+
+class ReviewDocumentRequest(BaseModel):
+    decision: str
+    review_note: Optional[str] = None
+
+async def generate_embedding(text: str) -> Optional[List[float]]:
+    """Generate a real Gemini embedding, or leave the vector unset.
+
+    We intentionally do not fabricate vectors.  Documents can still be listed and
+    exact-searched without an embedding provider; semantic search is simply unavailable
+    until ``GEMINI_API_KEY`` is configured and existing records are re-indexed.
+    """
+    if not settings.GEMINI_API_KEY or not text.strip():
+        return None
+    try:
+        from google import genai
+        from google.genai import types
+
+        client = genai.Client(api_key=settings.GEMINI_API_KEY)
+        result = client.models.embed_content(
+            model=settings.GEMINI_EMBEDDING_MODEL,
+            contents=text,
+            config=types.EmbedContentConfig(output_dimensionality=1024),
+        )
+        embeddings = result.embeddings or []
+        values = list(embeddings[0].values) if embeddings else []
+        if len(values) != 1024:
+            logger.warning("Embedding provider returned %s dimensions; expected 1024.", len(values))
+            return None
+        return values
+    except Exception:
+        logger.exception("Could not generate document embedding; storing document without a vector.")
+        return None
 
 SEED_DOCUMENTS = [
     {
@@ -427,7 +461,7 @@ async def ensure_seed_documents(db: AsyncSession):
                     summary=seed["summary"],
                     status="Verified",
                     metadata_json=seed["metadata_json"],
-                    embedding=generate_embedding(seed["title"] + " " + seed["summary"] + " " + seed["metadata_json"].get("state_region", ""))
+                    embedding=await generate_embedding(seed["title"] + " " + seed["summary"] + " " + seed["metadata_json"].get("state_region", ""))
                 )
                 db.add(doc)
                 existing_refs.add(ref)
@@ -453,6 +487,127 @@ async def upload_document(file: UploadFile = File(...)):
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Upload processing failed: {str(e)}")
+
+
+@router.post("/ingest", status_code=status.HTTP_201_CREATED)
+async def ingest_document(
+    file: UploadFile = File(...),
+    title: str = Form(...),
+    authority: str = Form(...),
+    source_url: str = Form(...),
+    source_license: str = Form(...),
+    category: str = Form("Policy"),
+    theme: str = Form("Unclassified"),
+    state_region: str = Form("All India"),
+    administrative_level: str = Form("National"),
+    publication_year: Optional[int] = Form(None),
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(require_permission(Permission.UPLOAD_DOCS)),
+):
+    """Stage an evidence document with mandatory provenance for administrator review."""
+    if not all(value.strip() for value in (title, authority, source_url, source_license)):
+        raise HTTPException(status_code=422, detail="Title, authority, source URL, and source licence are required.")
+    if not source_url.lower().startswith(("https://", "http://")):
+        raise HTTPException(status_code=422, detail="Source URL must use http:// or https://.")
+
+    content = await file.read()
+    try:
+        pages = extract_pages(file.filename or "upload", content)
+        chunks = chunk_pages(pages)
+    except DocumentIngestionError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    file_hash = sha256(content)
+    existing_result = await db.execute(select(Document))
+    for existing in existing_result.scalars().all():
+        if (existing.metadata_json or {}).get("content_sha256") == file_hash:
+            raise HTTPException(status_code=409, detail="This exact file has already been staged in the repository.")
+
+    storage_path, storage_type = storage_service.save_file(content, f"{file_hash[:12]}_{file.filename}")
+    now = datetime.now(timezone.utc)
+    metadata = {
+        "ref_id": f"STG-{str(uuid.uuid4())[:8].upper()}",
+        "source_url": source_url.strip(),
+        "source_license": source_license.strip(),
+        "source_authority": authority.strip(),
+        "content_sha256": file_hash,
+        "original_filename": file.filename,
+        "file_url": storage_path,
+        "storage_type": storage_type,
+        "format": file.filename.rsplit(".", 1)[-1].upper() if "." in file.filename else "UNKNOWN",
+        "pages": len(pages),
+        "publication_year": publication_year,
+        "state_region": state_region,
+        "administrative_level": administrative_level,
+        "theme": theme,
+        "review_status": "pending",
+        "submitted_by": str(current_user.id),
+        "submitted_at": now.isoformat(),
+        "source_required": True,
+    }
+    document = Document(
+        title=title.strip(),
+        department=authority.strip(),
+        category=category.strip(),
+        status="Pending review",
+        summary=chunks[0].content[:500],
+        metadata_json=metadata,
+    )
+    db.add(document)
+    await db.flush()
+    for chunk in chunks:
+        db.add(DocumentChunk(
+            document_id=document.id,
+            page_number=chunk.page_number,
+            chunk_index=chunk.chunk_index,
+            content=chunk.content,
+            content_sha256=chunk.content_sha256,
+        ))
+    await db.commit()
+    await db.refresh(document)
+    return {
+        "success": True,
+        "document": format_document_dict(document),
+        "review_status": "pending",
+        "page_count": len(pages),
+        "chunk_count": len(chunks),
+        "message": "Document staged with provenance and awaits administrator review.",
+    }
+
+
+@router.post("/documents/{doc_id}/review")
+async def review_document(
+    doc_id: str,
+    payload: ReviewDocumentRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(require_permission(Permission.MODERATE_CONTENT)),
+):
+    """Approve or reject a staged document; only approved documents may be indexed."""
+    decision = payload.decision.lower().strip()
+    if decision not in {"approved", "rejected"}:
+        raise HTTPException(status_code=422, detail="Decision must be 'approved' or 'rejected'.")
+    try:
+        document_id = uuid.UUID(doc_id)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail="Document ID must be a UUID.") from exc
+    result = await db.execute(select(Document).where(Document.id == document_id))
+    document = result.scalar_one_or_none()
+    if not document:
+        raise HTTPException(status_code=404, detail="Document not found.")
+
+    metadata = dict(document.metadata_json or {})
+    metadata.update({
+        "review_status": decision,
+        "reviewed_by": str(current_user.id),
+        "reviewed_at": datetime.now(timezone.utc).isoformat(),
+        "review_note": payload.review_note,
+    })
+    document.metadata_json = metadata
+    document.status = "Verified" if decision == "approved" else "Rejected"
+    document.updated_at = datetime.now(timezone.utc)
+    await db.commit()
+    await db.refresh(document)
+    return {"success": True, "document": format_document_dict(document), "review_status": decision}
 
 @router.post("/commit")
 async def commit_document(record: CommitRecordRequest, db: AsyncSession = Depends(get_db)):
@@ -492,7 +647,7 @@ async def commit_document(record: CommitRecordRequest, db: AsyncSession = Depend
             "file_url": record.file_url
         }
 
-        embedding_vector = generate_embedding(f"{record.title} {record.authority} {record.theme}")
+        embedding_vector = await generate_embedding(f"{record.title} {record.authority} {record.theme}")
 
         db_doc = Document(
             id=new_id,
@@ -529,12 +684,11 @@ async def get_documents(
     db: AsyncSession = Depends(get_db)
 ) -> List[Dict[str, Any]]:
     try:
-        await ensure_seed_documents(db)
         stmt = select(Document).order_by(Document.created_at.desc())
         result = await db.execute(stmt)
         docs = result.scalars().all()
 
-        query_vec = generate_embedding(query.strip()) if (query and search_mode == "semantic") else None
+        query_vec = await generate_embedding(query.strip()) if (query and search_mode == "semantic") else None
 
         scored_docs = []
         for d in docs:
@@ -578,16 +732,6 @@ async def get_documents(
                         continue
 
             formatted.append(doc_dict)
-
-        # Fallback: if query was provided but no specific local record matched,
-        # provide the National/Pan-India overarching statutory frameworks so the user always has
-        # legal and cadastral acts applicable to that district/state
-        if len(formatted) == 0 and query and query.strip():
-            for d, sim in scored_docs:
-                doc_dict = format_document_dict(d, similarity=sim)
-                if doc_dict.get("state_region") == "All India" or doc_dict.get("administrative_level") == "National":
-                    doc_dict["is_national_fallback"] = True
-                    formatted.append(doc_dict)
 
         # Sort by similarity score if semantic mode
         if search_mode == "semantic" and query_vec is not None:
@@ -681,7 +825,6 @@ async def get_recommended_documents(
     Tailors discovery feed based on user role and policy priorities.
     """
     try:
-        await ensure_seed_documents(db)
         stmt = select(Document)
         res = await db.execute(stmt)
         all_docs = res.scalars().all()

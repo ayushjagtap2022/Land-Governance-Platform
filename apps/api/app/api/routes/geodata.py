@@ -42,3 +42,20 @@ def get_geojson_layer(
     """Returns GeoJSON FeatureCollection for cadastral survey plots, LULC zones, or climate risks."""
     return geodata_service.get_geojson_layer(layer_key=layer_key, year=year)
 
+
+from fastapi import File, UploadFile, HTTPException
+
+@router.post("/upload-geojson", summary="Upload Custom GeoJSON Layer for GIS Map")
+async def upload_custom_geojson(
+    layer_key: str = Query("cadastral", description="Layer to attach: cadastral, lulc, or climate"),
+    file: UploadFile = File(...)
+):
+    """Uploads a custom GeoJSON file to be dynamically rendered on the GIS map."""
+    if not (file.filename.endswith(".json") or file.filename.endswith(".geojson")):
+        raise HTTPException(status_code=400, detail="Only .json or .geojson files are supported")
+    
+    content = await file.read()
+    result = geodata_service.save_uploaded_geojson(layer_key=layer_key, filename=file.filename, content=content)
+    return result
+
+

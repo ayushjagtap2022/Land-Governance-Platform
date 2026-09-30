@@ -60,4 +60,10 @@ def get_available_states() -> List[str]:
         return ["Maharashtra", "Karnataka", "Uttar Pradesh", "Madhya Pradesh", "Gujarat", "Odisha", "Tamil Nadu", "Bihar", "Rajasthan", "Punjab"]
     return sorted(analytics_service.df["state_name"].str.title().unique().tolist())
 
+@router.get("/nlgi", summary="Get National Land Governance Index (NLGI) Leaderboard")
+def get_nlgi_leaderboard():
+    """Returns composite NLGI scores and rankings for all 35 Indian States and Union Territories."""
+    return analytics_service.get_nlgi_leaderboard()
+
+
 

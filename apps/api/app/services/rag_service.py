@@ -167,9 +167,55 @@ def cosine_similarity(a: List[float], b: List[float]) -> float:
 
 class RAGService:
     def __init__(self):
-        self.chunks = SEED_CHUNKS
+        # Seed excerpts are retained only as legacy development fixtures.  They are
+        # never served as evidence in production; populate this corpus from the
+        # verified document ingestion pipeline before enabling assistant answers.
+        self.chunks: List[DocumentChunk] = []
 
-    def retrieve_relevant_chunks(self, query: str, top_k: int = 3) -> List[DocumentChunk]:
+    async def load_db_chunks(self) -> List[DocumentChunk]:
+        """Fetch indexed documents from PostgreSQL and format them as RAG context chunks."""
+        db_chunks: List[DocumentChunk] = []
+        try:
+            from app.core.database import AsyncSessionLocal
+            from app.models.document import Document
+            from sqlmodel import select
+
+            async with AsyncSessionLocal() as session:
+                res = await session.exec(select(Document))
+                docs = res.all()
+
+                for doc in docs:
+                    meta = doc.metadata_json or {}
+                    ref_id = meta.get("refId") or meta.get("ref_id") or f"DOC-{str(doc.id)[:8]}"
+                    pages = meta.get("pages", 1)
+
+                    chunk = DocumentChunk(
+                        id=f"CHK-{ref_id}-1",
+                        doc_id=ref_id,
+                        title=doc.title,
+                        department=doc.department or "Department of Land Resources",
+                        page=min(14, max(1, pages // 4)),
+                        text=f"{doc.title}. Department: {doc.department}. Summary: {doc.summary}. Ref: {ref_id}.",
+                        embedding=doc.embedding if isinstance(doc.embedding, list) else None
+                    )
+                    db_chunks.append(chunk)
+
+                    if len(doc.summary) > 50:
+                        db_chunks.append(DocumentChunk(
+                            id=f"CHK-{ref_id}-2",
+                            doc_id=ref_id,
+                            title=doc.title,
+                            department=doc.department or "Department of Land Resources",
+                            page=min(42, max(2, pages // 2)),
+                            text=doc.summary,
+                            embedding=None
+                        ))
+        except Exception as err:
+            logger.warning(f"Could not load PostgreSQL documents for RAG: {err}")
+
+        return db_chunks
+
+    async def retrieve_relevant_chunks(self, query: str, top_k: int = 3) -> List[DocumentChunk]:
         """
         Retrieves top relevant chunks using multilingual expansion and token overlap.
         """
@@ -178,7 +224,7 @@ class RAGService:
         
         # Keyword scoring fallback
         scored = []
-        for chunk in self.chunks:
+        for chunk in (await self.load_db_chunks() or self.chunks):
             chunk_words = set(chunk.text.lower().split())
             overlap = len(query_words.intersection(chunk_words))
             # Bonus if doc title or department matches
@@ -192,7 +238,15 @@ class RAGService:
 
 
     async def answer_query(self, query: str) -> AssistantResponse:
-        relevant = self.retrieve_relevant_chunks(query, top_k=3)
+        relevant = await self.retrieve_relevant_chunks(query, top_k=3)
+        if not relevant:
+            return AssistantResponse(
+                query=query,
+                bullets=["No verified source passages are indexed for this question. Upload or ingest an authoritative document before relying on an answer."],
+                source_ids=[],
+                citations=[],
+                grounded=False,
+            )
         citations: List[Citation] = [
             Citation(
                 doc_id=c.doc_id,

@@ -7,22 +7,14 @@ metadata, versions, summaries, and 1024-dimension pgvector semantic embeddings.
 import asyncio
 import uuid
 from datetime import datetime, timezone
-import numpy as np
 from sqlalchemy.future import select
 
 from app.core.database import AsyncSessionLocal
 from app.models.document import Document
-import hashlib
-
-def generate_embedding(text: str) -> list[float]:
-    """Generates a normalized 1024-dim embedding vector for pgvector."""
-    seed = int(hashlib.sha256(text.encode("utf-8")).hexdigest(), 16) % (2**32)
-    rng = np.random.default_rng(seed)
-    vec = rng.standard_normal(1024)
-    norm = np.linalg.norm(vec)
-    if norm > 0:
-        vec = vec / norm
-    return vec.tolist()
+async def generate_embedding(text: str) -> list[float] | None:
+    """Generate a provider embedding; never seed a fabricated random vector."""
+    from app.api.routes.repository import generate_embedding as generate_live_embedding
+    return await generate_live_embedding(text)
 
 
 REAL_GOVERNMENT_DOCUMENTS = [
@@ -185,7 +177,7 @@ async def seed_documents():
 
             print(f"Generating 1024-dim embedding for: {doc_data['title']}...")
             text_to_embed = f"{doc_data['title']} {doc_data['summary']} {doc_data['department']} {doc_data['category']}"
-            embedding = generate_embedding(text_to_embed)
+            embedding = await generate_embedding(text_to_embed)
 
             doc = Document(
                 id=uuid.uuid4(),

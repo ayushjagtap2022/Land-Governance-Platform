@@ -12,7 +12,6 @@ import {
 import { Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
-import { documents, type LandDocument } from '@/data/mockData';
 
 function Breadcrumb({ current }: { current: string }) {
   return (
@@ -113,7 +112,7 @@ export default function SynthesisPage() {
         theme: d.theme || 'Land Administration'
       }));
     }
-    return documents;
+    return [];
   }, [realDocs]);
 
   useEffect(() => {
@@ -159,9 +158,10 @@ export default function SynthesisPage() {
         return;
       }
     } catch (err) {
-      console.warn('Synthesis API call failed, falling back to local synthesis', err);
+      console.warn('Synthesis API call failed', err);
     }
-    setSynthesized(true);
+    setSynthesisResult(null);
+    setSynthesized(false);
     setSynthesizing(false);
   };
 

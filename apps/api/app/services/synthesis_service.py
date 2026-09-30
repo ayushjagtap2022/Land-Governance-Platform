@@ -22,7 +22,11 @@ class SynthesisResponse(BaseModel):
 class SynthesisService:
     def synthesize(self, doc_ids: List[str]) -> SynthesisResponse:
         # Match chunks for selected documents
-        matched_chunks = [c for c in SEED_CHUNKS if c.doc_id in doc_ids]
+        # Legacy seed excerpts must not be presented as verified evidence.
+        # This service is enabled once ingestion persists extracted source passages.
+        matched_chunks = []
+        if not matched_chunks:
+            raise ValueError("No verified source passages are indexed for the selected documents.")
         titles = list(dict.fromkeys([c.title for c in matched_chunks]))
         
         if not titles:
