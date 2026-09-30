@@ -413,9 +413,9 @@ export default function MapPage() {
                 <Polygon key={zone.id} positions={zone.points} pathOptions={{ color: layers.cadastral.color, weight: 1.5, opacity: layers.cadastral.opacity, fillOpacity: 0.12 }} />
               ))}
               {layers.lulc.visible && lulcFeatures.map((zone, index) => <Polygon key={`lulc-${index}`} positions={zone.points} pathOptions={{ color: zone.color, weight: 1, opacity: layers.lulc.opacity, fillOpacity: layers.lulc.opacity * 0.35 }} />)}
-              {layers.dispute.visible && filteredDistricts.filter(d => d.disputes > 26).map((district) => (
+              {layers.dispute.visible && filteredDistricts.filter(d => d.disputes > 26).map((district, idx) => (
                 district?.coordinates && district.coordinates[0] != null ? (
-                  <Circle key={`dispute-${district.district}`} center={district.coordinates} radius={Math.min(65000, Math.max(25000, district.disputes * 1400))} pathOptions={{ color: '#b23b32', fillColor: '#b23b32', opacity: layers.dispute.opacity, fillOpacity: layers.dispute.opacity * 0.4 }} />
+                  <Circle key={`dispute-${district.state}-${district.district}-${idx}`} center={district.coordinates} radius={Math.min(65000, Math.max(25000, district.disputes * 1400))} pathOptions={{ color: '#b23b32', fillColor: '#b23b32', opacity: layers.dispute.opacity, fillOpacity: layers.dispute.opacity * 0.4 }} />
                 ) : null
               ))}
               {layers.climate.visible && climateFeatures.map((zone) => (
@@ -426,7 +426,7 @@ export default function MapPage() {
                   eventHandlers={{ click: () => setSelectedClimateZone(zone) }}
                 />
               ))}
-              {filteredDistricts.map((district) => {
+              {filteredDistricts.map((district, idx) => {
                 if (!district?.coordinates || district.coordinates[0] == null) return null;
                 const isDigitized = (district.digitization_status === 'Digitized' || district.modernization >= 70);
                 const isProgress = (district.digitization_status === 'In-Progress' || (district.modernization >= 35 && district.modernization < 70));
@@ -436,7 +436,7 @@ export default function MapPage() {
                 return (
                   <CircleMarker
                     center={district.coordinates}
-                    key={district.district}
+                    key={`marker-${district.state}-${district.district}-${idx}`}
                     radius={zoom >= 7 ? 6 : 4}
                     pathOptions={{
                       color: '#ffffff',

@@ -228,15 +228,11 @@ export function Header() {
                     </>
                   ) : (
                     <>
-                      <Link href="/login" onClick={() => setProfileOpen(false)}>
-                        <a className="focus-ring flex w-full items-center gap-2 px-4 py-2.5 text-left text-xs hover:bg-slate-100 text-[#132f4c] font-bold">
-                          <LogIn className="h-3.5 w-3.5" /> Sign In
-                        </a>
+                      <Link href="/login" onClick={() => setProfileOpen(false)} className="focus-ring flex w-full items-center gap-2 px-4 py-2.5 text-left text-xs hover:bg-slate-100 text-[#132f4c] font-bold">
+                        <LogIn className="h-3.5 w-3.5" /> Sign In
                       </Link>
-                      <Link href="/register" onClick={() => setProfileOpen(false)}>
-                        <a className="focus-ring flex w-full items-center gap-2 px-4 py-2.5 text-left text-xs hover:bg-slate-100 text-slate-600">
-                          Create Account
-                        </a>
+                      <Link href="/register" onClick={() => setProfileOpen(false)} className="focus-ring flex w-full items-center gap-2 px-4 py-2.5 text-left text-xs hover:bg-slate-100 text-slate-600">
+                        Create Account
                       </Link>
                     </>
                   )}
