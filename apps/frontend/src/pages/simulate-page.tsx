@@ -1,17 +1,27 @@
 import { useState, useEffect } from 'react';
 import {
   AlertTriangle,
+  ArrowRight,
+  Building2,
   CheckCircle2,
   ChevronRight,
+  Clock,
+  Coins,
+  Cpu,
+  Database,
   Download,
+  FileSpreadsheet,
   Info,
+  Landmark,
+  Layers,
   Loader2,
   Play,
   Save,
-  SplitSquareHorizontal,
-  Cpu,
-  Database,
+  Scale,
+  ShieldCheck,
   Sparkles,
+  SplitSquareHorizontal,
+  TrendingUp,
 } from 'lucide-react';
 import {
   Bar,
@@ -93,6 +103,7 @@ const BASELINE: ScenarioParams & ScenarioResult = {
 };
 
 export default function SimulatePage() {
+  const [activeTab, setActiveTab] = useState<'policy' | 'infrastructure'>('policy');
   const [state, setState] = useState('Maharashtra');
   const [availableStates, setAvailableStates] = useState<string[]>(initialStates.map(s => s.name));
   const [params, setParams] = useState<ScenarioParams>({
@@ -101,6 +112,21 @@ export default function SimulatePage() {
     budget: 120,
     window: 180,
   });
+
+  const [presets, setPresets] = useState<any[]>([]);
+  const [selectedPresetId, setSelectedPresetId] = useState<string | null>(null);
+
+  // Infrastructure Delay Estimator State (PS 25017 & PS 26016)
+  const [infraForm, setInfraForm] = useState({
+    project_name: 'NHAI 6-Lane Economic Corridor Expansion',
+    project_type: 'Highway / Expressway',
+    state: 'Maharashtra',
+    land_area_hectares: 350,
+    private_land_pct: 80,
+    irrigated_multi_crop_pct: 25,
+  });
+  const [isCalculatingInfra, setIsCalculatingInfra] = useState(false);
+  const [infraResult, setInfraResult] = useState<any | null>(null);
 
   useEffect(() => {
     fetch('/api/v1/simulate/baselines')
@@ -114,6 +140,15 @@ export default function SimulatePage() {
         }
       })
       .catch(err => console.warn('Could not load dynamic state baselines', err));
+
+    fetch('/api/v1/simulate/presets')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setPresets(data);
+        }
+      })
+      .catch(err => console.warn('Could not load policy presets', err));
 
     fetch('/api/v1/ml/models')
       .then(res => res.json())
@@ -135,13 +170,14 @@ export default function SimulatePage() {
   const [mlCatalog, setMlCatalog] = useState<any | null>(null);
   const [mlInsights, setMlInsights] = useState<any | null>(null);
 
-  const runSimulation = async () => {
+  const runSimulationWithParams = async (simParams: ScenarioParams, targetState?: string) => {
     setIsSimulating(true);
+    const runState = targetState || state;
     try {
       const res = await fetch('/api/v1/simulate/evaluate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ state, ...params }),
+        body: JSON.stringify({ state: runState, ...simParams }),
       });
       if (res.ok) {
         const data = await res.json();
@@ -162,12 +198,11 @@ export default function SimulatePage() {
       console.warn('API simulation call failed, falling back to local model', err);
     }
 
-    // Local fallback if server is offline
     setTimeout(() => {
-      const newDisputeRate = Math.max(12, 38.2 - (params.budget / 50) - ((180 - params.window) / 10));
-      const newUrbanPace = Math.max(1.5, 4.5 - (params.tax / 10));
-      const newClimateScore = Math.min(100, 62 + (params.ceiling < 50 ? 5 : 0) + (params.budget / 30));
-      const newRevenue = 840 + (params.tax * 15) - (params.budget * 0.8);
+      const newDisputeRate = Math.max(12, 38.2 - (simParams.budget / 50) - ((180 - simParams.window) / 10));
+      const newUrbanPace = Math.max(1.5, 4.5 - (simParams.tax / 10));
+      const newClimateScore = Math.min(100, 62 + (simParams.ceiling < 50 ? 5 : 0) + (simParams.budget / 30));
+      const newRevenue = 840 + (simParams.tax * 15) - (simParams.budget * 0.8);
 
       setProjected({
         disputeRate: Number(newDisputeRate.toFixed(1)),
@@ -176,7 +211,34 @@ export default function SimulatePage() {
         revenue: Number(newRevenue.toFixed(0)),
       });
       setIsSimulating(false);
-    }, 800);
+    }, 600);
+  };
+
+  const runSimulation = () => runSimulationWithParams(params);
+
+  const applyPreset = (preset: any) => {
+    setSelectedPresetId(preset.id);
+    setParams(preset.params);
+    runSimulationWithParams(preset.params);
+  };
+
+  const calculateInfraDelay = async () => {
+    setIsCalculatingInfra(true);
+    try {
+      const res = await fetch('/api/v1/simulate/infrastructure-delay', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(infraForm),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setInfraResult(data);
+      }
+    } catch (err) {
+      console.error('Failed to calculate infrastructure delay', err);
+    } finally {
+      setIsCalculatingInfra(false);
+    }
   };
 
   const chartData = trajectoryData || [
@@ -260,29 +322,112 @@ export default function SimulatePage() {
           {saveStatus}
         </div>
       )}
-      <div className="mb-6 flex items-start gap-3 border-l-4 border-[#B45309] bg-[#FFFBEB] p-4 text-sm text-[#92400E]">
-        <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-[#B45309]" />
-        <div>
-          <p className="font-bold text-[#92400E]">Statutory Disclaimer: Decision Support Model</p>
-          <p className="mt-1 font-medium">Estimates are calculated via multivariable regression using historical DoLR and State Revenue records (2015–2025). Outputs indicate confidence ranges, not definitive outcomes.</p>
-        </div>
+
+      {/* Primary Mode Tabs */}
+      <div className="mb-6 flex border-b border-slate-300">
+        <button
+          type="button"
+          data-testid="tab-policy-simulator"
+          onClick={() => setActiveTab('policy')}
+          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-xs font-bold transition-colors ${
+            activeTab === 'policy'
+              ? 'border-[#1E293B] text-[#1E293B] bg-slate-50'
+              : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          <Landmark className="h-4 w-4 text-[#1E293B]" />
+          National Land Policy Reform Simulator (PS 26019)
+        </button>
+        <button
+          type="button"
+          data-testid="tab-infrastructure-delay"
+          onClick={() => {
+            setActiveTab('infrastructure');
+            if (!infraResult) calculateInfraDelay();
+          }}
+          className={`flex items-center gap-2 border-b-2 px-5 py-3 text-xs font-bold transition-colors ${
+            activeTab === 'infrastructure'
+              ? 'border-[#B45309] text-[#B45309] bg-amber-50/50'
+              : 'border-transparent text-slate-500 hover:text-slate-700'
+          }`}
+        >
+          <Building2 className="h-4 w-4 text-[#B45309]" />
+          Infrastructure Land Acquisition Delay Estimator (PS 25017 &amp; 26016)
+        </button>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
-        {/* Left Column: Input Controls */}
-        <div className="space-y-6">
-          <Panel title="Policy Variable Manipulation">
-            <div className="p-5 space-y-6">
+      {activeTab === 'policy' ? (
+        <>
+          {/* 1-Click Policy Presets Banner */}
+          <div className="mb-6 border border-slate-300 bg-white p-4 shadow-2xs">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 mb-3">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Baseline State Selector</label>
-                <select
-                  className="focus-ring block w-full border border-slate-300 bg-white px-3 py-2 text-sm"
-                  value={state}
-                  onChange={(e) => setState(e.target.value)}
-                >
-                  {availableStates.map(s => <option key={s} value={s}>{s}</option>)}
-                </select>
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Government Templates</p>
+                <h3 className="text-sm font-bold text-[#1E293B]">1-Click National Policy Reform Presets</h3>
               </div>
+              <span className="text-[11px] text-slate-500">Click any preset to auto-populate levers &amp; simulate downstream outcomes</span>
+            </div>
+            <div className="grid gap-3 md:grid-cols-3">
+              {presets.map((preset) => (
+                <div
+                  key={preset.id}
+                  onClick={() => applyPreset(preset)}
+                  className={`cursor-pointer border p-3 transition-all hover:border-[#1E293B] hover:shadow-xs ${
+                    selectedPresetId === preset.id
+                      ? 'border-[#1E293B] bg-slate-50 ring-1 ring-[#1E293B]'
+                      : 'border-slate-200 bg-white'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="rounded bg-slate-100 px-2 py-0.5 text-[9px] font-bold text-slate-700 uppercase">
+                      {preset.authority}
+                    </span>
+                    <span className="text-[9px] font-bold text-[#15803D] bg-emerald-50 px-1.5 py-0.5 rounded">
+                      {preset.badge}
+                    </span>
+                  </div>
+                  <h4 className="text-xs font-bold text-[#1E293B] mb-1">{preset.title}</h4>
+                  <p className="text-[11px] text-slate-600 line-clamp-2 leading-relaxed mb-2.5">
+                    {preset.description}
+                  </p>
+                  <div className="flex items-center justify-between border-t border-slate-100 pt-2 text-[10px] text-slate-500 font-mono">
+                    <span>Ceil: {preset.params.ceiling}ac</span>
+                    <span>Tax: {preset.params.tax}%</span>
+                    <span>Budg: ₹{preset.params.budget}Cr</span>
+                    <span className="text-[#1E293B] font-bold">Apply →</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="mb-6 flex items-start gap-3 border-l-4 border-[#B45309] bg-[#FFFBEB] p-4 text-sm text-[#92400E]">
+            <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-[#B45309]" />
+            <div>
+              <p className="font-bold text-[#92400E]">Statutory Disclaimer: Decision Support Model</p>
+              <p className="mt-1 font-medium">Estimates are calculated via multivariable regression using historical DoLR and State Revenue records (2015–2025). Outputs indicate confidence ranges, not definitive outcomes.</p>
+            </div>
+          </div>
+
+          <div className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
+            {/* Left Column: Input Controls */}
+            <div className="space-y-6">
+              <Panel title="Policy Variable Manipulation">
+                <div className="p-5 space-y-6">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Baseline State Selector</label>
+                    <select
+                      className="focus-ring block w-full border border-slate-300 bg-white px-3 py-2 text-sm"
+                      value={state}
+                      onChange={(e) => {
+                        setState(e.target.value);
+                        runSimulationWithParams(params, e.target.value);
+                      }}
+                    >
+                      {availableStates.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </div>
+
 
               <div className="space-y-6 border-t border-slate-200 pt-5">
                 <div>
@@ -686,6 +831,267 @@ export default function SimulatePage() {
           </Panel>
         </div>
       </div>
+    </>
+  ) : (
+        /* Infrastructure Project Land Acquisition Delay Estimator (PS 25017 & 26016) */
+        <div className="space-y-6" data-testid="panel-infrastructure-delay-estimator">
+          <div className="flex items-start gap-3 border-l-4 border-[#B45309] bg-[#FFFBEB] p-4 text-sm text-[#92400E]">
+            <Building2 className="mt-0.5 h-5 w-5 shrink-0 text-[#B45309]" />
+            <div>
+              <p className="font-bold text-[#92400E]">Statutory Compliance Engine: RFCTLARR Act, 2013</p>
+              <p className="mt-1 font-medium">
+                Predicts clearance bottlenecks, litigation propensity, and financial cost escalation across National Highways, Dedicated Freight Corridors, Industrial SEZs, and Urban Transit corridors.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
+            {/* Left Column: Infrastructure Parameters */}
+            <div className="space-y-6">
+              <Panel title="Infrastructure Project Parameters">
+                <div className="p-5 space-y-5">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Project Designation / Name</label>
+                    <input
+                      type="text"
+                      data-testid="input-infra-project-name"
+                      className="focus-ring block w-full border border-slate-300 bg-white px-3 py-2 text-xs font-medium"
+                      value={infraForm.project_name}
+                      onChange={(e) => setInfraForm({ ...infraForm, project_name: e.target.value })}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Infrastructure Sector</label>
+                    <select
+                      className="focus-ring block w-full border border-slate-300 bg-white px-3 py-2 text-xs font-medium"
+                      value={infraForm.project_type}
+                      onChange={(e) => setInfraForm({ ...infraForm, project_type: e.target.value })}
+                    >
+                      <option value="Highway / Expressway">Highway / Expressway (NHAI / MoRTH)</option>
+                      <option value="Railway / Dedicated Freight Corridor">Railway / Dedicated Freight Corridor (DFCCIL / MoR)</option>
+                      <option value="Industrial Park / SEZ">Industrial Park / SEZ (NICDC / DPIIT)</option>
+                      <option value="Solar / Wind Renewable Park">Solar / Wind Renewable Park (MNRE / SECI)</option>
+                      <option value="Urban Metro / Transit">Urban Metro / Transit Rail (MoHUA)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1">Target State / UT</label>
+                    <select
+                      className="focus-ring block w-full border border-slate-300 bg-white px-3 py-2 text-xs font-medium"
+                      value={infraForm.state}
+                      onChange={(e) => setInfraForm({ ...infraForm, state: e.target.value })}
+                    >
+                      {availableStates.map(s => <option key={s} value={s}>{s}</option>)}
+                    </select>
+                  </div>
+
+                  <div className="border-t border-slate-200 pt-4 space-y-4">
+                    <div>
+                      <div className="flex justify-between text-xs font-bold text-[#1E293B] mb-1.5">
+                        <label>Required Land Area (Hectares)</label>
+                        <span className="font-mono text-[#B45309]">{infraForm.land_area_hectares} Ha</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="25"
+                        max="2500"
+                        step="25"
+                        value={infraForm.land_area_hectares}
+                        onChange={(e) => setInfraForm({ ...infraForm, land_area_hectares: Number(e.target.value) })}
+                        className="w-full accent-[#B45309]"
+                      />
+                      <div className="flex justify-between text-[10px] text-slate-500 mt-1"><span>25 Ha</span><span>2,500 Ha</span></div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between text-xs font-bold text-[#1E293B] mb-1.5">
+                        <label>Private Title Share (%)</label>
+                        <span className="font-mono text-[#B45309]">{infraForm.private_land_pct}%</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="10"
+                        max="100"
+                        step="5"
+                        value={infraForm.private_land_pct}
+                        onChange={(e) => setInfraForm({ ...infraForm, private_land_pct: Number(e.target.value) })}
+                        className="w-full accent-[#B45309]"
+                      />
+                      <div className="flex justify-between text-[10px] text-slate-500 mt-1"><span>10% (Govt Land)</span><span>100% (All Private)</span></div>
+                    </div>
+
+                    <div>
+                      <div className="flex justify-between text-xs font-bold text-[#1E293B] mb-1.5">
+                        <label>Multi-Crop Irrigated Share (%)</label>
+                        <span className="font-mono text-[#B45309]">{infraForm.irrigated_multi_crop_pct}%</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="80"
+                        step="5"
+                        value={infraForm.irrigated_multi_crop_pct}
+                        onChange={(e) => setInfraForm({ ...infraForm, irrigated_multi_crop_pct: Number(e.target.value) })}
+                        className="w-full accent-[#B45309]"
+                      />
+                      <div className="flex justify-between text-[10px] text-slate-500 mt-1"><span>0% (Rainfed/Barren)</span><span>80% (Prime Farmland)</span></div>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    data-testid="button-calculate-infra-delay"
+                    className="w-full flex justify-center items-center gap-2 bg-[#B45309] text-white font-bold py-3 text-xs uppercase tracking-wider focus-ring hover:bg-amber-800 disabled:opacity-70 transition-colors shadow-xs"
+                    onClick={calculateInfraDelay}
+                    disabled={isCalculatingInfra}
+                  >
+                    {isCalculatingInfra ? (
+                      <><Loader2 className="h-4 w-4 animate-spin" /> Evaluating Statutory Risk...</>
+                    ) : (
+                      <><Scale className="h-4 w-4" /> Calculate Clearance Timeline &amp; Cost</>
+                    )}
+                  </button>
+                </div>
+              </Panel>
+            </div>
+
+            {/* Right Column: Clearance & Cost Overrun Projections */}
+            <div className="space-y-6">
+              {infraResult ? (
+                <>
+                  <Panel title="Clearance Timeline &amp; Cost Escalation Matrix">
+                    <div className="p-5">
+                      <div className="grid gap-4 md:grid-cols-3 mb-6">
+                        <div className="border border-slate-200 p-4 bg-[#F8FAFC]">
+                          <p className="text-[11px] uppercase font-bold text-slate-500 mb-1 flex items-center gap-1.5">
+                            <Clock className="h-3.5 w-3.5 text-slate-500" />
+                            Total Projected Clearance
+                          </p>
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-2xl font-bold font-mono text-[#1E293B]">
+                              {infraResult.total_projected_clearance_months}
+                            </span>
+                            <span className="text-xs text-slate-500 font-medium">Months</span>
+                          </div>
+                          <p className="mt-2 text-[10px] text-amber-700 font-medium leading-tight">
+                            {infraResult.baseline_clearance_months} Mo Statutory Base + {infraResult.litigation_delay_months} Mo Litigation Delay
+                          </p>
+                        </div>
+
+                        <div className="border border-slate-200 p-4 bg-[#F8FAFC]">
+                          <p className="text-[11px] uppercase font-bold text-slate-500 mb-1 flex items-center gap-1.5">
+                            <AlertTriangle className="h-3.5 w-3.5 text-slate-500" />
+                            Litigation Risk Profile
+                          </p>
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-2xl font-bold font-mono text-[#B45309]">
+                              {infraResult.risk_score}
+                            </span>
+                            <span className="text-xs text-slate-500 font-medium">/ 100</span>
+                          </div>
+                          <span className={`mt-2 inline-block px-2 py-0.5 text-[10px] font-bold uppercase rounded ${
+                            infraResult.risk_level === 'Critical' 
+                              ? 'bg-red-100 text-red-800' 
+                              : infraResult.risk_level === 'High' 
+                              ? 'bg-amber-100 text-amber-800' 
+                              : 'bg-emerald-100 text-emerald-800'
+                          }`}>
+                            {infraResult.risk_level} Risk Level
+                          </span>
+                        </div>
+
+                        <div className="border border-slate-200 p-4 bg-[#F8FAFC]">
+                          <p className="text-[11px] uppercase font-bold text-slate-500 mb-1 flex items-center gap-1.5">
+                            <Coins className="h-3.5 w-3.5 text-slate-500" />
+                            Total Land Acquisition Outlay
+                          </p>
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-2xl font-bold font-mono text-[#15803D]">
+                              ₹{infraResult.total_estimated_land_cost_cr}
+                            </span>
+                            <span className="text-xs text-slate-500 font-medium">Cr</span>
+                          </div>
+                          <p className="mt-2 text-[10px] text-red-700 font-medium leading-tight">
+                            Includes +₹{infraResult.delay_cost_escalation_cr} Cr delay cost overrun
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Financial Stack Breakdown */}
+                      <div className="border border-slate-200 p-4 bg-white mb-6">
+                        <h4 className="text-xs font-bold text-[#1E293B] mb-2 uppercase tracking-wide">
+                          Financial Compensation Breakdown (RFCTLARR Section 26–30)
+                        </h4>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                          <div className="border border-slate-100 p-3 bg-slate-50">
+                            <span className="text-slate-500 block text-[11px]">Base Statutory Award:</span>
+                            <span className="font-mono font-bold text-sm text-[#1E293B]">₹{infraResult.estimated_base_compensation_cr} Cr</span>
+                            <span className="text-[10px] text-slate-400 block mt-0.5">Circle rate × Multiplier + 100% Solatium</span>
+                          </div>
+                          <div className="border border-amber-100 p-3 bg-amber-50/50">
+                            <span className="text-amber-800 block text-[11px]">Delay Escalation Overrun:</span>
+                            <span className="font-mono font-bold text-sm text-[#B45309]">+₹{infraResult.delay_cost_escalation_cr} Cr</span>
+                            <span className="text-[10px] text-amber-700 block mt-0.5">12.5% compound capital interest penalty</span>
+                          </div>
+                          <div className="border border-emerald-100 p-3 bg-emerald-50/50">
+                            <span className="text-emerald-800 block text-[11px]">Final Estimated Land Budget:</span>
+                            <span className="font-mono font-bold text-sm text-[#15803D]">₹{infraResult.total_estimated_land_cost_cr} Cr</span>
+                            <span className="text-[10px] text-emerald-700 block mt-0.5">Disbursement requirement for possession</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Statutory Bottlenecks & Prescriptive Mitigations */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="border border-red-200 bg-red-50/40 p-4">
+                          <h4 className="text-xs font-bold text-red-900 mb-2.5 flex items-center gap-1.5 uppercase tracking-wide">
+                            <AlertTriangle className="h-4 w-4 text-red-700" />
+                            Identified RFCTLARR Bottlenecks
+                          </h4>
+                          <ul className="space-y-2 text-xs text-slate-700">
+                            {infraResult.bottlenecks.map((b: string, i: number) => (
+                              <li key={i} className="flex items-start gap-2 leading-relaxed">
+                                <span className="h-1.5 w-1.5 rounded-full bg-red-600 mt-1.5 shrink-0" />
+                                <span>{b}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+
+                        <div className="border border-emerald-200 bg-emerald-50/40 p-4">
+                          <h4 className="text-xs font-bold text-emerald-900 mb-2.5 flex items-center gap-1.5 uppercase tracking-wide">
+                            <ShieldCheck className="h-4 w-4 text-emerald-700" />
+                            Prescriptive Fast-Track Mitigations
+                          </h4>
+                          <ul className="space-y-2 text-xs text-slate-700">
+                            {infraResult.mitigations.map((m: string, i: number) => (
+                              <li key={i} className="flex items-start gap-2 leading-relaxed">
+                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 mt-1.5 shrink-0" />
+                                <span>{m}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+                  </Panel>
+                </>
+              ) : (
+                <div className="border border-slate-300 bg-white p-12 text-center text-slate-500">
+                  <Building2 className="mx-auto h-8 w-8 text-slate-400 mb-3" />
+                  <h3 className="text-sm font-bold text-slate-700 mb-1">No Infrastructure Evaluation Active</h3>
+                  <p className="text-xs max-w-sm mx-auto">
+                    Select your infrastructure project parameters on the left and click "Calculate Clearance Timeline &amp; Cost" to run the RFCTLARR statutory model.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </PageFrame>
   );
 }
+
