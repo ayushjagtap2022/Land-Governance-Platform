@@ -1,6 +1,6 @@
-export type DocumentCategory = 'Schemes & programmes' | 'Legislation' | 'Standards & guidelines' | 'Research & evidence';
-export type RepositoryRecordType = 'Policy Drafts' | 'Research Studies' | 'Acts / Gazettes' | 'Datasets';
-export type RepositoryDocumentType = 'Policy Paper' | 'Legal Act' | 'Research Study' | 'Geodata File';
+export type DocumentCategory = 'Schemes & programmes' | 'Legislation' | 'Standards & guidelines' | 'Research & evidence' | 'Case Studies';
+export type RepositoryRecordType = 'Policy Drafts' | 'Research Studies' | 'Acts / Gazettes' | 'Datasets' | 'Field Case Studies';
+export type RepositoryDocumentType = 'Policy Paper' | 'Legal Act' | 'Research Study' | 'Geodata File' | 'Case Study Report';
 export type RepositoryVisibility = 'Public' | 'Confidential / Intra-Ministry';
 export type AdministrativeLevel = 'National' | 'State' | 'District' | 'Tehsil/Taluk';
 
@@ -46,6 +46,7 @@ export const documentCategories = [
   { label: 'Legislation', count: 96, key: 'Legislation' as DocumentCategory },
   { label: 'Standards & guidelines', count: 72, key: 'Standards & guidelines' as DocumentCategory },
   { label: 'Research & evidence', count: 48, key: 'Research & evidence' as DocumentCategory },
+  { label: 'Field Case Studies', count: 34, key: 'Case Studies' as DocumentCategory },
 ];
 
 export const documents: LandDocument[] = [
@@ -249,6 +250,78 @@ export const documents: LandDocument[] = [
     updated: '04 Jul 2024',
     status: 'Verified',
     summary: 'Statutory rules for digitizing Jamabandi (RoR) records, drone cadastral survey integration, and sub-registrar deed registration linkage.',
+  },
+  {
+    id: 'DOC-26019-CS01',
+    refId: 'CASE-2024-SVAMITVA-HARDA',
+    title: 'Harda District Pilot: 100% Saturation of Drone Resurvey & SVAMITVA Property Cards',
+    category: 'Case Studies',
+    recordType: 'Field Case Studies',
+    documentType: 'Case Study Report',
+    department: 'Ministry of Panchayati Raj & Govt. of Madhya Pradesh',
+    stateRegion: 'Madhya Pradesh',
+    administrativeLevel: 'District',
+    theme: 'SVAMITVA Scheme',
+    year: 2024,
+    published: '18 Mar 2024',
+    version: 'v1.0',
+    visibility: 'Public',
+    versions: [
+      { label: 'v1.0 · Published', date: '18 Mar 2024', detail: 'Completed pilot evaluation report on rural Abadi saturation.', kind: 'Published' },
+    ],
+    format: 'PDF',
+    pages: 28,
+    updated: '18 Mar 2024',
+    status: 'Verified',
+    summary: 'Comprehensive field case study evaluating drone orthomosaic generation, Gram Sabha verification, dispute mediation, and 100% property card saturation across 402 revenue villages in Harda.',
+  },
+  {
+    id: 'DOC-26019-CS02',
+    refId: 'CASE-2024-ECHAWDI-PUNE',
+    title: 'Pune Collectorate: Automated Mutation & e-Chawdi Modern Record Room Integration',
+    category: 'Case Studies',
+    recordType: 'Field Case Studies',
+    documentType: 'Case Study Report',
+    department: 'Department of Revenue, Govt. of Maharashtra',
+    stateRegion: 'Maharashtra',
+    administrativeLevel: 'District',
+    theme: 'Land Dispute Resolution',
+    year: 2024,
+    published: '10 May 2024',
+    version: 'v1.2',
+    visibility: 'Public',
+    versions: [
+      { label: 'v1.2 · Published', date: '10 May 2024', detail: 'Published operational case study on mutation cycle compression.', kind: 'Published' },
+    ],
+    format: 'PDF',
+    pages: 42,
+    updated: '12 Jun 2024',
+    status: 'Verified',
+    summary: 'Implementation analysis of linking sub-registrar deed registration directly to computerized 7/12 mutation notices, reducing pendency from 180 days to 21 days across Haveli and Pune city taluks.',
+  },
+  {
+    id: 'DOC-26019-CS03',
+    refId: 'CASE-2024-CADASTRE-BLR',
+    title: 'Bengaluru Peri-Urban Tenancy & Encroachment Resolution via Web-GIS Cadastre',
+    category: 'Case Studies',
+    recordType: 'Field Case Studies',
+    documentType: 'Case Study Report',
+    department: 'Karnataka Revenue Department & Survey Settlement Directorate',
+    stateRegion: 'Karnataka',
+    administrativeLevel: 'District',
+    theme: 'Tenancy Rights',
+    year: 2023,
+    published: '22 Nov 2023',
+    version: 'v1.0',
+    visibility: 'Public',
+    versions: [
+      { label: 'v1.0 · Published', date: '22 Nov 2023', detail: 'Technical field case study on resolving British-era survey discrepancies.', kind: 'Published' },
+    ],
+    format: 'PDF',
+    pages: 36,
+    updated: '15 Jan 2024',
+    status: 'Verified',
+    summary: 'Case study on resolving boundary disputes in high-value peri-urban transition corridors by reconciling legacy British-era tipan survey sketches with modern satellite ortho-imagery.',
   },
 ];
 

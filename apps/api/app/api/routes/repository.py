@@ -307,6 +307,69 @@ SEED_DOCUMENTS = [
             "version": "v1.3",
             "visibility": "Public / Verified Citation"
         }
+    },
+    {
+        "title": "Harda District Pilot: 100% Saturation of Drone Resurvey & SVAMITVA Property Cards",
+        "department": "Ministry of Panchayati Raj & Govt. of Madhya Pradesh",
+        "category": "Case Studies",
+        "summary": "Comprehensive field case study evaluating drone orthomosaic generation, Gram Sabha verification, dispute mediation, and 100% property card saturation across 402 revenue villages in Harda.",
+        "metadata_json": {
+            "ref_id": "CASE-2024-SVAMITVA-HARDA",
+            "theme": "SVAMITVA Scheme",
+            "state_region": "Madhya Pradesh",
+            "administrative_level": "District",
+            "document_type": "Case Study Report",
+            "record_type": "Field Case Studies",
+            "year": 2024,
+            "published": "18 Mar 2024",
+            "updated": "18 Mar 2024",
+            "format": "PDF",
+            "pages": 28,
+            "version": "v1.0",
+            "visibility": "Public / Verified Citation"
+        }
+    },
+    {
+        "title": "Pune Collectorate: Automated Mutation & e-Chawdi Modern Record Room Integration",
+        "department": "Department of Revenue, Govt. of Maharashtra",
+        "category": "Case Studies",
+        "summary": "Implementation analysis of linking sub-registrar deed registration directly to computerized 7/12 mutation notices, reducing pendency from 180 days to 21 days across Haveli and Pune city taluks.",
+        "metadata_json": {
+            "ref_id": "CASE-2024-ECHAWDI-PUNE",
+            "theme": "Land Dispute Resolution",
+            "state_region": "Maharashtra",
+            "administrative_level": "District",
+            "document_type": "Case Study Report",
+            "record_type": "Field Case Studies",
+            "year": 2024,
+            "published": "10 May 2024",
+            "updated": "12 Jun 2024",
+            "format": "PDF",
+            "pages": 42,
+            "version": "v1.2",
+            "visibility": "Public / Verified Citation"
+        }
+    },
+    {
+        "title": "Bengaluru Peri-Urban Tenancy & Encroachment Resolution via Web-GIS Cadastre",
+        "department": "Karnataka Revenue Department & Survey Settlement Directorate",
+        "category": "Case Studies",
+        "summary": "Technical field case study on resolving boundary disputes in high-value peri-urban transition corridors by reconciling legacy British-era tipan survey sketches with modern satellite ortho-imagery.",
+        "metadata_json": {
+            "ref_id": "CASE-2024-CADASTRE-BLR",
+            "theme": "Tenancy Rights",
+            "state_region": "Karnataka",
+            "administrative_level": "District",
+            "document_type": "Case Study Report",
+            "record_type": "Field Case Studies",
+            "year": 2023,
+            "published": "22 Nov 2023",
+            "updated": "15 Jan 2024",
+            "format": "PDF",
+            "pages": 36,
+            "version": "v1.0",
+            "visibility": "Public / Verified Citation"
+        }
     }
 ]
 
@@ -605,3 +668,61 @@ async def get_related_documents(doc_id: str, limit: int = 3, db: AsyncSession = 
     except Exception as e:
         print(f"Warning: Failed to retrieve related documents: {e}")
         return []
+
+
+@router.get("/recommendations")
+async def get_recommended_documents(
+    role: Optional[str] = "Researcher",
+    limit: int = 4,
+    db: AsyncSession = Depends(get_db)
+) -> List[Dict[str, Any]]:
+    """
+    AI-Powered personalized document recommendations (PS point 8).
+    Tailors discovery feed based on user role and policy priorities.
+    """
+    try:
+        await ensure_seed_documents(db)
+        stmt = select(Document)
+        res = await db.execute(stmt)
+        all_docs = res.scalars().all()
+        if not all_docs:
+            return []
+
+        formatted = [format_document_dict(d) for d in all_docs]
+        r = (role or "Researcher").lower()
+
+        if "official" in r or "admin" in r:
+            preferred_themes = ["Cadastral Mapping", "Land Dispute Resolution"]
+            scored = sorted(
+                formatted,
+                key=lambda x: (
+                    1 if x.get("theme") in preferred_themes else 0,
+                    1 if x.get("category") in ["Legislation", "Standards & guidelines"] else 0,
+                    x.get("year", 2020)
+                ),
+                reverse=True
+            )
+        elif "public" in r:
+            scored = sorted(
+                formatted,
+                key=lambda x: (
+                    1 if "SVAMITVA" in x.get("title", "") or "Compensation" in x.get("title", "") else 0,
+                    x.get("year", 2020)
+                ),
+                reverse=True
+            )
+        else:
+            scored = sorted(
+                formatted,
+                key=lambda x: (
+                    1 if x.get("category") in ["Case Studies", "Research & evidence"] else 0,
+                    x.get("year", 2020)
+                ),
+                reverse=True
+            )
+
+        return scored[:limit]
+    except Exception as e:
+        print(f"Warning: Failed to fetch recommendations: {e}")
+        return []
+

@@ -18,8 +18,10 @@ import {
   Sparkles,
   UploadCloud,
   X,
+  Quote,
 } from 'lucide-react';
 import { useRole } from '@/context/RoleContext';
+import { CitationModal } from '@/components/common/CitationModal';
 import {
   documents,
   type LandDocument,
@@ -67,8 +69,8 @@ const states = [
 ];
 const administrativeLevels = ['All Levels', 'National', 'State', 'District', 'Tehsil/Taluk'];
 const themes = ['All Themes', 'Cadastral Mapping', 'Land Dispute Resolution', 'SVAMITVA Scheme', 'Climate Resilience', 'Tenancy Rights'];
-const documentTypes: RepositoryDocumentType[] = ['Policy Paper', 'Legal Act', 'Research Study', 'Geodata File'];
-const recordTypes: RepositoryRecordType[] = ['Policy Drafts', 'Research Studies', 'Acts / Gazettes', 'Datasets'];
+const documentTypes: RepositoryDocumentType[] = ['Policy Paper', 'Legal Act', 'Research Study', 'Geodata File', 'Case Study Report'];
+const recordTypes: RepositoryRecordType[] = ['Policy Drafts', 'Research Studies', 'Acts / Gazettes', 'Datasets', 'Field Case Studies'];
 const years = Array.from({ length: 17 }, (_, index) => String(2010 + index));
 
 const recordTypeClass: Record<RepositoryRecordType, string> = {
@@ -76,6 +78,7 @@ const recordTypeClass: Record<RepositoryRecordType, string> = {
   'Research Studies': 'border-[#b7d4c1] bg-[#f0f8f1] text-[#287449]',
   'Acts / Gazettes': 'border-[#b9cce0] bg-[#eef4fa] text-[#244562]',
   Datasets: 'border-slate-300 bg-slate-100 text-slate-700',
+  'Field Case Studies': 'border-[#c084fc] bg-[#faf5ff] text-[#7e22ce]',
 };
 
 type UploadStage = 'idle' | 'uploading' | 'ocr' | 'metadata' | 'review' | 'committed';
@@ -417,7 +420,7 @@ function VersionDrawer({ document, onClose }: { document: LandDocument; onClose:
   );
 }
 
-function PreviewDrawer({ document, onClose }: { document: LandDocument; onClose: () => void }) {
+function PreviewDrawer({ document, onClose, onCite }: { document: LandDocument; onClose: () => void; onCite?: (doc: LandDocument) => void }) {
   const [aiSummary, setAiSummary] = useState<any | null>(null);
   const [summarizing, setSummarizing] = useState(false);
   const [relatedDocs, setRelatedDocs] = useState<any[]>([]);
@@ -470,15 +473,27 @@ function PreviewDrawer({ document, onClose }: { document: LandDocument; onClose:
                 <p className="mt-1 text-xs text-slate-500">{document.pages} pages · {document.version} · {document.published}</p>
               </div>
             </div>
-            <button
-              className="focus-ring flex items-center gap-1.5 bg-[#244562] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#132f4c]"
-              type="button"
-              disabled={summarizing}
-              onClick={handleGenerateSummary}
-            >
-              <Sparkles className="h-3.5 w-3.5" />
-              {summarizing ? 'Summarizing...' : 'AI Summary'}
-            </button>
+            <div className="flex items-center gap-2">
+              {onCite && (
+                <button
+                  className="focus-ring flex items-center gap-1.5 border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-bold text-[#244562] hover:bg-slate-100"
+                  type="button"
+                  onClick={() => onCite(document)}
+                >
+                  <Quote className="h-3.5 w-3.5" />
+                  Cite
+                </button>
+              )}
+              <button
+                className="focus-ring flex items-center gap-1.5 bg-[#244562] px-3 py-1.5 text-xs font-bold text-white hover:bg-[#132f4c]"
+                type="button"
+                disabled={summarizing}
+                onClick={handleGenerateSummary}
+              >
+                <Sparkles className="h-3.5 w-3.5" />
+                {summarizing ? 'Summarizing...' : 'AI Summary'}
+              </button>
+            </div>
           </div>
 
           {aiSummary && (
@@ -600,6 +615,42 @@ export default function RepositoryPage() {
   const [selectedPreview, setSelectedPreview] = useState<LandDocument | null>(null);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [downloadNotice, setDownloadNotice] = useState('');
+  const [citationDoc, setCitationDoc] = useState<LandDocument | null>(null);
+  const [recommendations, setRecommendations] = useState<LandDocument[]>([]);
+
+  useEffect(() => {
+    fetch(`/api/v1/repository/recommendations?role=${encodeURIComponent(activeRole)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          const mapped: LandDocument[] = data.map((d: any) => ({
+            id: d.id,
+            refId: d.ref_id,
+            title: d.title,
+            department: d.department,
+            category: d.category,
+            theme: d.theme,
+            stateRegion: d.state_region,
+            administrativeLevel: d.administrative_level,
+            documentType: (d.document_type || 'Policy Paper') as RepositoryDocumentType,
+            recordType: (d.record_type || 'Policy Drafts') as RepositoryRecordType,
+            year: d.year,
+            published: d.published,
+            updated: d.updated,
+            status: d.status,
+            format: d.format,
+            pages: d.pages,
+            version: d.version,
+            versions: d.versions || [],
+            visibility: d.visibility,
+            summary: d.summary,
+            fileUrl: d.file_url,
+          }));
+          setRecommendations(mapped);
+        }
+      })
+      .catch(() => {});
+  }, [activeRole]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -701,6 +752,37 @@ export default function RepositoryPage() {
         </aside>
 
         <div className="min-w-0">
+          {recommendations.length > 0 && (
+            <div className="mb-5 border border-[#b9cce0] bg-[#f0f4f8] p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-[#d97706]" />
+                  <span className="text-xs font-bold text-[#132f4c]">Recommended for You ({activeRole} Profile)</span>
+                </div>
+                <span className="text-[10px] text-slate-500 font-medium">AI discovery based on administrative role</span>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {recommendations.slice(0, 4).map((rec) => (
+                  <button
+                    key={rec.id}
+                    onClick={() => setSelectedPreview(rec)}
+                    className="focus-ring flex flex-col justify-between border border-slate-200 bg-white p-3 text-left hover:border-[#244562] hover:shadow-xs transition-all"
+                    type="button"
+                  >
+                    <div>
+                      <span className="font-mono text-[9px] font-bold text-[#244562] bg-[#eef4fa] px-1.5 py-0.5 border border-[#b9cce0] truncate block max-w-fit">{rec.refId}</span>
+                      <p className="mt-2 font-bold text-xs text-[#132f4c] line-clamp-2 leading-snug">{rec.title}</p>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-2 text-[10px] text-slate-500">
+                      <span className="truncate max-w-[100px]">{rec.theme}</span>
+                      <span className="font-bold text-[#244562]">Preview &rarr;</span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           <Panel className="mb-5">
             <div className="border-b border-slate-200 p-4">
               <div className="flex flex-col gap-3 lg:flex-row">
@@ -790,6 +872,7 @@ export default function RepositoryPage() {
                         <td className="border-b border-slate-200 px-4 py-3 align-top">
                           <div className="flex justify-end gap-1.5">
                             <button className="focus-ring flex items-center gap-1 border border-slate-300 px-2 py-1.5 text-[10px] font-bold text-[#244562] hover:bg-slate-100" data-testid={`button-inline-preview-${document.id}`} type="button" onClick={() => setSelectedPreview(document)}><Eye className="h-3 w-3" />Preview</button>
+                            <button className="focus-ring flex items-center gap-1 border border-slate-300 px-2 py-1.5 text-[10px] font-bold text-[#244562] hover:bg-slate-100" type="button" onClick={() => setCitationDoc(document)}><Quote className="h-3 w-3" />Cite</button>
                             <button className="focus-ring flex items-center gap-1 border border-slate-300 px-2 py-1.5 text-[10px] font-bold text-[#244562] hover:bg-slate-100" data-testid={`button-version-history-${document.id}`} type="button" onClick={() => setSelectedVersion(document)}><History className="h-3 w-3" />History</button>
                             <button className="focus-ring flex items-center gap-1 border border-[#244562] px-2 py-1.5 text-[10px] font-bold text-[#244562] hover:bg-slate-100 disabled:cursor-not-allowed disabled:border-slate-300 disabled:text-slate-400" data-testid={`button-download-${document.id}`} type="button" disabled={restricted} onClick={() => downloadDocument(document)}>
                               {restricted ? <LockKeyhole className="h-3 w-3" /> : <Download className="h-3 w-3" />}{restricted ? 'Restricted' : 'Download'}
@@ -821,8 +904,9 @@ export default function RepositoryPage() {
         </div>
       </div>
       {selectedVersion && <VersionDrawer document={selectedVersion} onClose={() => setSelectedVersion(null)} />}
-      {selectedPreview && <PreviewDrawer document={selectedPreview} onClose={() => setSelectedPreview(null)} />}
+      {selectedPreview && <PreviewDrawer document={selectedPreview} onClose={() => setSelectedPreview(null)} onCite={(doc) => setCitationDoc(doc)} />}
       {uploadOpen && <UploadModal onClose={() => setUploadOpen(false)} onCommitSuccess={fetchDocuments} />}
+      {citationDoc && <CitationModal document={citationDoc} onClose={() => setCitationDoc(null)} />}
     </PageFrame>
   );
 }

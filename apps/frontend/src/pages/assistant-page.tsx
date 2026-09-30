@@ -13,8 +13,10 @@ import {
   ShieldCheck,
   TrendingDown,
   TrendingUp,
+  Quote,
 } from 'lucide-react';
 import { Link } from 'wouter';
+import { CitationModal } from '@/components/common/CitationModal';
 import { documents, type LandDocument } from '@/data/mockData';
 import { useEffect } from 'react';
 const quickQueries = [
@@ -94,7 +96,7 @@ function Panel({ title, eyebrow, children, className = '' }: { title?: string; e
   );
 }
 
-function SourceReference({ document }: { document: LandDocument }) {
+function SourceReference({ document, onCite }: { document: LandDocument; onCite?: (doc: LandDocument) => void }) {
   const page = document.id === 'DOC-26019-001' ? '14' : document.id === 'DOC-26019-002' ? '22' : document.id === 'DOC-26019-005' ? '10' : '7';
   const excerpt = document.id === 'DOC-26019-001'
     ? '“Property cards shall be prepared after completion of the drone survey and village-level verification process.”'
@@ -114,9 +116,20 @@ function SourceReference({ document }: { document: LandDocument }) {
         <FileText className="h-4 w-4 shrink-0 text-[#244562]" />
       </div>
       <p className="mt-3 border-l-2 border-[#f2b134] bg-white p-3 text-xs leading-5 text-slate-700">{excerpt}</p>
-      <Link className="focus-ring mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#244562] underline underline-offset-2" data-testid={`link-view-source-${document.id}`} href={`/repository#${document.id}`}>
-        View Source Document <ExternalLink className="h-3 w-3" />
-      </Link>
+      <div className="mt-3 flex items-center justify-between">
+        <Link className="focus-ring inline-flex items-center gap-1 text-xs font-bold text-[#244562] underline underline-offset-2" data-testid={`link-view-source-${document.id}`} href={`/repository#${document.id}`}>
+          View Source Document <ExternalLink className="h-3 w-3" />
+        </Link>
+        {onCite && (
+          <button
+            onClick={() => onCite(document)}
+            className="focus-ring inline-flex items-center gap-1 border border-slate-300 bg-white px-2 py-1 text-[11px] font-bold text-[#244562] hover:bg-slate-100"
+            type="button"
+          >
+            <Quote className="h-3 w-3" /> Cite (BibTeX/APA)
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -129,6 +142,7 @@ export default function AssistantPage() {
   const [selectedTrend, setSelectedTrend] = useState('');
   const [allDocs, setAllDocs] = useState<LandDocument[]>(documents);
   const [trends, setTrends] = useState(trendRadar);
+  const [citationDoc, setCitationDoc] = useState<LandDocument | null>(null);
 
   useEffect(() => {
     fetch('/api/v1/ai/trends')
@@ -310,7 +324,7 @@ export default function AssistantPage() {
                 </div>
                 <div className="mt-5 border border-slate-300">
                   <div className="border-b border-slate-200 bg-[#eef2f5] px-4 py-3"><p className="flex items-center gap-2 text-xs font-bold text-[#244562]"><FileText className="h-4 w-4" />Cited Source References</p><p className="mt-1 text-[11px] text-slate-500">Verbatim excerpts from indexed records used for this answer.</p></div>
-                  <div className="space-y-3 p-4">{sourceDocuments.map((document) => <SourceReference document={document} key={document.id} />)}</div>
+                  <div className="space-y-3 p-4">{sourceDocuments.map((document) => <SourceReference document={document} key={document.id} onCite={(doc) => setCitationDoc(doc)} />)}</div>
                 </div>
               </div>
             </Panel>
@@ -344,6 +358,7 @@ export default function AssistantPage() {
           </Panel>
         </aside>
       </div>
+      {citationDoc && <CitationModal document={citationDoc} onClose={() => setCitationDoc(null)} />}
     </PageFrame>
   );
 }
