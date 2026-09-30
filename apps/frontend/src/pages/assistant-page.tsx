@@ -8,6 +8,7 @@ import {
   ExternalLink,
   FileCheck2,
   FileText,
+  Scale,
   Search,
   ShieldCheck,
   TrendingDown,
@@ -180,13 +181,30 @@ export default function AssistantPage() {
 
   return (
     <PageFrame>
+      {/* Unified AI Suite Navigation Tabs */}
+      <div className="mb-6 flex border-b border-slate-300 gap-2">
+        <div
+          className="flex items-center gap-2 border-b-2 border-[#244562] bg-[#f0f4f8] px-4 py-2 text-xs font-bold text-[#244562]"
+        >
+          <Bot className="h-4 w-4 text-[#244562]" />
+          Policy Q&amp;A Assistant
+        </div>
+        <Link
+          href="/synthesis"
+          className="flex items-center gap-2 border-b-2 border-transparent px-4 py-2 text-xs font-semibold text-slate-500 hover:border-slate-300 hover:text-slate-800 transition-colors"
+        >
+          <Scale className="h-4 w-4" />
+          Cross-Document Policy Synthesis
+        </Link>
+      </div>
+
       <div className="mb-6 flex flex-col justify-between gap-4 border-b border-slate-300 pb-5 lg:flex-row lg:items-end">
         <div>
           <p className="section-kicker mb-2">Research support / statutory decision aid</p>
           <h1 className="font-serif text-3xl font-semibold tracking-tight text-[#132f4c] md:text-4xl" data-testid="text-page-title-ai-assistant">AI Assistant</h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Ask policy questions and receive structured, traceable answers grounded in the indexed land-governance repository.</p>
         </div>
-        <Link className="focus-ring flex items-center gap-2 border border-[#244562] px-3 py-2 text-xs font-bold text-[#244562] hover:bg-slate-50" data-testid="link-open-synthesis" href="/synthesis"><FileCheck2 className="h-3.5 w-3.5" />Open synthesis tool</Link>
+        <Link className="focus-ring flex items-center gap-2 border border-[#244562] px-3 py-2 text-xs font-bold text-[#244562] hover:bg-slate-50" data-testid="link-open-synthesis" href="/synthesis"><FileCheck2 className="h-3.5 w-3.5" />Switch to Cross-Doc Synthesis</Link>
       </div>
 
       <div className="mb-5 flex items-start gap-3 border border-[#b9cce0] bg-[#eef4fa] p-4 text-xs leading-5 text-[#244562]" data-testid="banner-ai-statutory">
