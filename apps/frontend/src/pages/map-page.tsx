@@ -158,7 +158,22 @@ export default function MapPage() {
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data) && data.length > 0) {
-          setDistrictsList(data);
+          const mapped: DistrictFact[] = data
+            .filter((d: any) => d && (d.lat != null || d.coordinates != null))
+            .map((d: any) => ({
+              district: d.district || '',
+              state: d.state || '',
+              coordinates: [
+                Number(d.lat ?? d.coordinates?.[0] ?? 20.5937),
+                Number(d.lng ?? d.coordinates?.[1] ?? 78.9629)
+              ],
+              villages: d.villages || `${(Math.floor((d.population || 500000) / 750)).toLocaleString()}`,
+              modernization: d.modernization_index ?? d.modernization ?? 78,
+              disputes: d.dispute_risk ?? d.disputes ?? 24.5,
+              cards: d.svamitva_cards_issued ?? d.cards ?? '145,000',
+              risk: (d.risk_category || d.risk || 'Moderate') as 'Low' | 'Moderate' | 'High',
+            }));
+          setDistrictsList(mapped);
         }
       })
       .catch(err => console.warn('Could not load real geodata districts, using fallback', err));
@@ -169,10 +184,12 @@ export default function MapPage() {
       .then(res => res.json())
       .then(data => {
         if (data && data.features) {
-          const polys = data.features.map((f: any) => ({
-            points: f.geometry.coordinates[0].map((coord: [number, number]) => [coord[1], coord[0]] as [number, number]),
-            color: f.properties.color || '#6e9c66'
-          }));
+          const polys = data.features
+            .filter((f: any) => f?.geometry?.coordinates?.[0])
+            .map((f: any) => ({
+              points: f.geometry.coordinates[0].map((coord: [number, number]) => [coord[1], coord[0]] as [number, number]),
+              color: f.properties?.color || '#6e9c66'
+            }));
           setLulcFeatures(polys);
         }
       })
@@ -199,6 +216,7 @@ export default function MapPage() {
   const setLayerOpacity = (key: LayerKey, value: number) => setLayers((current) => ({ ...current, [key]: { ...current[key], opacity: value } }));
   const resetExtent = () => setNotice('Map extent reset to India view.');
   const handleCoordinate = (event: LeafletMouseEvent) => {
+    if (!event?.latlng) return;
     setCoords(event.latlng);
     if (event.type !== 'click') return;
     if (mode === 'measure') setMeasurePoints((current) => current.length >= 2 ? [[event.latlng.lat, event.latlng.lng]] : [...current, [event.latlng.lat, event.latlng.lng]]);
@@ -231,9 +249,17 @@ export default function MapPage() {
               {layers.satellite.visible ? <TileLayer attribution="Tiles © Esri" url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}" opacity={layers.satellite.opacity} /> : <TileLayer attribution="&copy; OpenStreetMap contributors" url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" opacity={0.8} />}
               {layers.cadastral.visible && cadastralPolygons.map((points, index) => <Polygon key={`cadastral-${index}`} positions={points} pathOptions={{ color: layers.cadastral.color, weight: 1, opacity: layers.cadastral.opacity, fillOpacity: 0.08 }} />)}
               {layers.lulc.visible && lulcFeatures.map((zone, index) => <Polygon key={`lulc-${index}`} positions={zone.points} pathOptions={{ color: zone.color, weight: 1, opacity: layers.lulc.opacity, fillOpacity: layers.lulc.opacity * 0.35 }} />)}
-              {layers.dispute.visible && filteredDistricts.slice(0, 15).map((district) => <Circle key={`dispute-${district.district}`} center={district.coordinates} radius={55000} pathOptions={{ color: '#b23b32', fillColor: '#b23b32', opacity: layers.dispute.opacity, fillOpacity: layers.dispute.opacity * 0.45 }} />)}
+              {layers.dispute.visible && filteredDistricts.slice(0, 15).map((district) => (
+                district?.coordinates && district.coordinates[0] != null ? (
+                  <Circle key={`dispute-${district.district}`} center={district.coordinates} radius={55000} pathOptions={{ color: '#b23b32', fillColor: '#b23b32', opacity: layers.dispute.opacity, fillOpacity: layers.dispute.opacity * 0.45 }} />
+                ) : null
+              ))}
               {layers.climate.visible && riskZones.map((zone, index) => <Polygon key={`risk-${index}`} positions={zone.points} pathOptions={{ color: zone.color, weight: 1, opacity: layers.climate.opacity, fillOpacity: layers.climate.opacity * 0.45 }} />)}
-              {filteredDistricts.map((district) => <CircleMarker center={district.coordinates} key={district.district} radius={6} pathOptions={{ color: '#132f4c', weight: 2, fillColor: district.risk === 'High' ? '#b23b32' : district.risk === 'Moderate' ? '#f2b134' : '#287449', fillOpacity: 1 }} eventHandlers={{ click: () => setSelectedDistrict(district) }}><span /></CircleMarker>)}
+              {filteredDistricts.map((district) => (
+                district?.coordinates && district.coordinates[0] != null ? (
+                  <CircleMarker center={district.coordinates} key={district.district} radius={6} pathOptions={{ color: '#132f4c', weight: 2, fillColor: district.risk === 'High' ? '#b23b32' : district.risk === 'Moderate' ? '#f2b134' : '#287449', fillOpacity: 1 }} eventHandlers={{ click: () => setSelectedDistrict(district) }}><span /></CircleMarker>
+                ) : null
+              ))}
               {aoiPoints.length >= 3 && <Polygon positions={aoiPoints} pathOptions={{ color: '#9b6300', weight: 2, dashArray: '5 4', fillColor: '#f2b134', fillOpacity: 0.18 }} />}
               {aoiPoints.map((point, index) => <CircleMarker center={point} key={`aoi-point-${index}`} radius={4} pathOptions={{ color: '#9b6300', fillColor: '#f2b134', fillOpacity: 1 }} />)}
               <MapPointer mode={mode} onCoordinate={handleCoordinate} onZoom={setZoom} />
@@ -250,7 +276,7 @@ export default function MapPage() {
             </div>
           </div>
           <div className="flex flex-wrap items-center justify-between gap-2 border border-slate-400 border-t-0 bg-[#132f4c] px-3 py-2 text-[10px] text-white shadow-sm">
-            <div className="flex items-center gap-3 font-mono"><span>LAT {coords ? coords.lat.toFixed(4) : '20.5937'}</span><span>LON {coords ? coords.lng.toFixed(4) : '78.9629'}</span><span>ZOOM {zoom}</span><span>SCALE {scaleLabel}</span></div>
+            <div className="flex items-center gap-3 font-mono"><span>LAT {coords?.lat != null ? coords.lat.toFixed(4) : '20.5937'}</span><span>LON {coords?.lng != null ? coords.lng.toFixed(4) : '78.9629'}</span><span>ZOOM {zoom}</span><span>SCALE {scaleLabel}</span></div>
             <div className="flex items-center gap-2">{mode === 'measure' && <span className="text-[#f2b134]">{measurePoints.length < 2 ? 'Click two points to measure' : `${distanceKm} km measured`}</span>}{mode === 'aoi' && <span className="text-[#f2b134]">{aoiPoints.length < 3 ? 'Click 3–5 points to draw AOI' : 'AOI polygon active'}</span>}<span className="text-slate-300">India · {year}</span></div>
           </div>
           {mode === 'measure' && measurePoints.length === 2 && <div className="mt-3 border border-[#b9cce0] bg-[#eef4fa] p-3 text-xs text-[#244562]" data-testid="status-map-measure-result"><span className="font-bold">Distance measurement:</span> {distanceKm} km between the selected coordinates.</div>}
@@ -314,21 +340,107 @@ export default function MapPage() {
       </div>
 
       {selectedDistrict && (
-        <div className="fixed inset-0 z-40 flex justify-end bg-[#132f4c]/30" role="dialog" aria-modal="true" aria-label="District technical factsheet">
-          <div className="h-full w-full max-w-md overflow-y-auto border-l border-slate-300 bg-white shadow-xl">
-            <div className="flex items-start justify-between border-b border-slate-300 bg-[#eef2f5] p-5">
-              <div><p className="section-kicker mb-2">Administrative factsheet / technical view</p><h2 className="text-xl font-bold text-[#132f4c]">District: {selectedDistrict.district}</h2><p className="mt-1 text-xs text-slate-600">State: {selectedDistrict.state}</p></div>
-              <button className="focus-ring border border-slate-400 px-2 py-1 text-xs font-bold" data-testid="button-close-district-factsheet" type="button" onClick={() => setSelectedDistrict(null)}><X className="h-4 w-4" /></button>
-            </div>
-            <div className="space-y-5 p-5">
-              <div className="grid grid-cols-2 gap-3 text-xs">
-                <div className="border border-slate-200 p-3"><p className="text-slate-500">Revenue villages</p><p className="mt-2 font-mono text-xl font-bold text-[#132f4c]">{selectedDistrict.villages}</p></div>
-                <div className="border border-slate-200 p-3"><p className="text-slate-500">Cadastral modernization</p><p className="mt-2 font-mono text-xl font-bold text-[#287449]">{selectedDistrict.modernization}%</p></div>
-                <div className="border border-slate-200 p-3"><p className="text-slate-500">Disputes / 1,000 owners</p><p className="mt-2 font-mono text-xl font-bold text-[#9b6300]">{selectedDistrict.disputes}</p></div>
-                <div className="border border-slate-200 p-3"><p className="text-slate-500">SVAMITVA cards issued</p><p className="mt-2 font-mono text-xl font-bold text-[#244562]">{selectedDistrict.cards}</p></div>
+        <div
+          className="fixed inset-0 z-[1200] flex justify-end bg-slate-900/40 backdrop-blur-xs transition-opacity duration-200"
+          role="dialog"
+          aria-modal="true"
+          aria-label="District technical factsheet"
+          onClick={() => setSelectedDistrict(null)}
+        >
+          <div
+            className="flex h-full w-full max-w-md flex-col border-l border-slate-300 bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Sticky Header */}
+            <div className="flex shrink-0 items-start justify-between border-b border-slate-200 bg-[#eef2f5] p-5">
+              <div>
+                <p className="section-kicker mb-1">Administrative Factsheet / Technical View</p>
+                <h2 className="font-serif text-xl font-bold text-[#132f4c]">District: {selectedDistrict.district}</h2>
+                <p className="mt-1 text-xs text-slate-600">
+                  <span className="font-semibold text-[#244562]">State / UT:</span> {selectedDistrict.state}
+                </p>
               </div>
-              <div className={`border p-4 ${selectedDistrict.risk === 'High' ? 'border-[#e7b6ad] bg-[#fff4f1]' : selectedDistrict.risk === 'Moderate' ? 'border-[#e9c68a] bg-[#fff8e8]' : 'border-[#b7d4c1] bg-[#f0f8f1]'}`}><p className="text-xs font-bold text-[#244562]">Climate &amp; drought risk</p><p className="mt-2 flex items-center gap-2 text-sm font-bold text-[#244562]"><span className="h-2.5 w-2.5 bg-current" />{selectedDistrict.risk}</p></div>
-              <Link className="focus-ring flex items-center justify-center gap-2 bg-[#244562] px-4 py-3 text-xs font-bold text-white" data-testid="link-district-repository-records" href={`/repository?search=${encodeURIComponent(selectedDistrict.district)}`}><FileTextIcon />Open District Legal &amp; Cadastral Records in Repository</Link>
+              <button
+                className="focus-ring border border-slate-300 bg-white p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-colors"
+                data-testid="button-close-district-factsheet"
+                type="button"
+                aria-label="Close factsheet"
+                onClick={() => setSelectedDistrict(null)}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            {/* Scrollable Body */}
+            <div className="flex-1 overflow-y-auto p-5 space-y-4">
+              <div className="grid grid-cols-2 gap-3 text-xs">
+                <div className="border border-slate-200 bg-slate-50/50 p-3 shadow-2xs">
+                  <p className="text-[11px] text-slate-500 font-medium">Revenue villages</p>
+                  <p className="mt-2 font-mono text-xl font-bold text-[#132f4c]">{selectedDistrict.villages}</p>
+                </div>
+                <div className="border border-slate-200 bg-slate-50/50 p-3 shadow-2xs">
+                  <p className="text-[11px] text-slate-500 font-medium">Cadastral modernization</p>
+                  <p className="mt-2 font-mono text-xl font-bold text-[#287449]">{selectedDistrict.modernization}%</p>
+                </div>
+                <div className="border border-slate-200 bg-slate-50/50 p-3 shadow-2xs">
+                  <p className="text-[11px] text-slate-500 font-medium">Disputes / 1,000 owners</p>
+                  <p className="mt-2 font-mono text-xl font-bold text-[#9b6300]">{selectedDistrict.disputes}</p>
+                </div>
+                <div className="border border-slate-200 bg-slate-50/50 p-3 shadow-2xs">
+                  <p className="text-[11px] text-slate-500 font-medium">SVAMITVA cards issued</p>
+                  <p className="mt-2 font-mono text-xl font-bold text-[#244562]">{selectedDistrict.cards}</p>
+                </div>
+              </div>
+
+              <div
+                className={`border p-4 shadow-2xs ${
+                  selectedDistrict.risk === 'High'
+                    ? 'border-[#e7b6ad] bg-[#fff4f1]'
+                    : selectedDistrict.risk === 'Moderate'
+                    ? 'border-[#e9c68a] bg-[#fff8e8]'
+                    : 'border-[#b7d4c1] bg-[#f0f8f1]'
+                }`}
+              >
+                <p className="text-xs font-bold text-[#244562]">Climate &amp; Drought Vulnerability</p>
+                <p className="mt-2 flex items-center gap-2 text-sm font-bold text-[#244562]">
+                  <span
+                    className={`h-2.5 w-2.5 rounded-full ${
+                      selectedDistrict.risk === 'High'
+                        ? 'bg-[#b23b32]'
+                        : selectedDistrict.risk === 'Moderate'
+                        ? 'bg-[#f2b134]'
+                        : 'bg-[#287449]'
+                    }`}
+                  />
+                  {selectedDistrict.risk} Risk Profile
+                </p>
+                <p className="mt-1.5 text-[11px] leading-relaxed text-slate-600">
+                  {selectedDistrict.risk === 'High'
+                    ? 'Elevated drought and water scarcity index. Soil moisture monitoring prioritized.'
+                    : selectedDistrict.risk === 'Moderate'
+                    ? 'Seasonal irrigation dependency with moderate groundwater recharge.'
+                    : 'High groundwater resilience and low severe drought exposure.'}
+                </p>
+              </div>
+
+              <div className="border border-slate-200 bg-slate-50 p-3.5 text-xs">
+                <p className="font-bold text-[#244562] mb-1">Cadastral Resurvey Status</p>
+                <p className="text-slate-600 text-[11px] leading-relaxed">
+                  Sub-5cm drone survey and CORS base station network integration in progress under DILRMP / SVAMITVA protocols.
+                </p>
+              </div>
+            </div>
+
+            {/* Sticky Action Footer */}
+            <div className="shrink-0 border-t border-slate-200 bg-slate-50 p-4">
+              <Link
+                className="focus-ring flex w-full items-center justify-center gap-2 bg-[#244562] px-4 py-3 text-xs font-bold text-white hover:bg-[#132f4c] shadow-sm transition-colors"
+                data-testid="link-district-repository-records"
+                href={`/repository?search=${encodeURIComponent(selectedDistrict.district)}&state=${encodeURIComponent(selectedDistrict.state)}`}
+              >
+                <MapPin className="h-4 w-4" />
+                Open District Legal &amp; Cadastral Records in Repository
+              </Link>
             </div>
           </div>
         </div>

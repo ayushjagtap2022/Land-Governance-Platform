@@ -1,9 +1,9 @@
 """
 Land Governance Platform - Geodata Service (Module 5)
 Provides geospatial data, 640-district spatial indicators, and GeoJSON layers:
-  1. District spatial points with real Census & ML Dispute Risk attributes
+  1. District spatial points with real Census, Land Use & ML Dispute Risk attributes
   2. Cadastral Survey Parcel boundary polygons
-  3. LULC (Land Use / Land Cover) classification polygons
+  3. LULC (Land Use / Land Cover) classification polygons from ISRO IndiaSat Remote Sensing
   4. Climate vulnerability and inundation zones
   5. Bhuvan / ISRO Satellite WMS layer configurations
 """
@@ -53,6 +53,7 @@ STATE_CENTROIDS: Dict[str, tuple[float, float]] = {
 }
 
 CACHE_FILE = Path(__file__).resolve().parent.parent / "ml_models" / "district_features_cache.csv"
+INDIASAT_GEOJSON = Path(__file__).resolve().parent.parent / "data" / "indiasat_landcover.geojson"
 
 class GeodataService:
     _instance = None
@@ -61,7 +62,16 @@ class GeodataService:
         self.districts_df = pd.DataFrame()
         if CACHE_FILE.exists():
             self.districts_df = pd.read_csv(CACHE_FILE)
-            self._compute_coordinates()
+            self._ensure_coordinates()
+
+        self.indiasat_features = []
+        if INDIASAT_GEOJSON.exists():
+            try:
+                with open(INDIASAT_GEOJSON, "r", encoding="utf-8") as f:
+                    data = json.load(f)
+                    self.indiasat_features = data.get("features", [])
+            except Exception:
+                self.indiasat_features = []
 
     @classmethod
     def get_instance(cls) -> "GeodataService":
@@ -69,24 +79,27 @@ class GeodataService:
             cls._instance = cls()
         return cls._instance
 
-    def _compute_coordinates(self):
-        """Assign geographic lat/lng coordinates to all districts based on state centroids and deterministic spatial dispersion."""
+    def _ensure_coordinates(self):
+        """Ensure all districts have valid latitude/longitude coordinates."""
         latitudes = []
         longitudes = []
 
         for idx, row in self.districts_df.iterrows():
-            state = str(row.get("state_name", "")).strip().upper()
-            d_name = str(row.get("district_name", "")).strip().upper()
-
-            center = STATE_CENTROIDS.get(state, (20.5937, 78.9629))
+            lat = row.get("latitude")
+            lng = row.get("longitude")
             
-            # Deterministic offset within state span
-            h = int(hashlib.md5(f"{state}:{d_name}".encode()).hexdigest()[:6], 16)
-            lat_offset = ((h % 1000) / 1000.0 - 0.5) * 2.2
-            lon_offset = (((h // 1000) % 1000) / 1000.0 - 0.5) * 2.5
-
-            latitudes.append(round(center[0] + lat_offset, 4))
-            longitudes.append(round(center[1] + lon_offset, 4))
+            if pd.notna(lat) and pd.notna(lng) and float(lat) != 0 and float(lng) != 0:
+                latitudes.append(round(float(lat), 4))
+                longitudes.append(round(float(lng), 4))
+            else:
+                state = str(row.get("state_name", "")).strip().upper()
+                d_name = str(row.get("district_name", "")).strip().upper()
+                center = STATE_CENTROIDS.get(state, (20.5937, 78.9629))
+                h = int(hashlib.md5(f"{state}:{d_name}".encode()).hexdigest()[:6], 16)
+                lat_offset = ((h % 1000) / 1000.0 - 0.5) * 2.2
+                lon_offset = (((h // 1000) % 1000) / 1000.0 - 0.5) * 2.5
+                latitudes.append(round(center[0] + lat_offset, 4))
+                longitudes.append(round(center[1] + lon_offset, 4))
 
         self.districts_df["latitude"] = latitudes
         self.districts_df["longitude"] = longitudes
@@ -112,11 +125,11 @@ class GeodataService:
                 "color": "#287449"
             },
             "lulc": {
-                "label": "Land Use / Land Cover (LULC)",
-                "description": "Classification: Agriculture, Built-up Urban, Forest, Water Body",
+                "label": "Land Use / Land Cover (IndiaSat)",
+                "description": "ISRO Remote-Sensing Classification: Buildings, Bare Land, Green Cover, Water",
                 "type": "vector",
                 "visible": True,
-                "opacity": 0.55,
+                "opacity": 0.70,
                 "color": "#d49333"
             },
             "dispute": {
@@ -159,29 +172,51 @@ class GeodataService:
             results.append({
                 "district": str(row.get("district_name", "")).title(),
                 "state": str(row.get("state_name", "")).title(),
-                "coordinates": [float(row["latitude"]), float(row["longitude"])],
-                "population": f"{pop:,}",
-                "villages": f"{max(120, int(pop / 1800)):,}",
-                "modernization": modernization,
-                "disputes": round(dispute, 1),
-                "cards": cards,
-                "risk": "High" if dispute > 60 else ("Moderate" if dispute > 40 else "Low"),
-                "urban_ratio": round(float(row.get("urban_household_ratio", 0.2)) * 100, 1),
-                "nightlight_mean": round(float(row.get("nl_mean", 1.5)), 2),
+                "lat": float(row.get("latitude", 20.0)),
+                "lng": float(row.get("longitude", 78.0)),
+                "population": pop,
+                "dispute_risk": round(dispute, 1),
+                "modernization_index": modernization,
+                "svamitva_cards_issued": cards,
+                "economic_density_index": round(float(row.get("economic_density_index", 45.0)), 1),
+                "forest_cover_pct": round(float(row.get("forest_cover_pct", 18.0)), 1),
+                "net_sown_pct": round(float(row.get("net_sown_pct", 45.0)), 1),
+                "non_agri_land_pct": round(float(row.get("non_agri_land_pct", 12.0)), 1),
+                "irrigation_coverage_pct": round(float(row.get("irrigation_intensity_pct", 35.0)), 1),
+                "canal_share_pct": round(float(row.get("canal_share_pct", 25.0)), 1),
+                "well_share_pct": round(float(row.get("well_share_pct", 60.0)), 1),
+                "risk_category": "High" if dispute > 50 else ("Medium" if dispute > 30 else "Low")
             })
 
         return results
 
     def get_geojson_layer(self, layer_key: str, year: int = 2024) -> Dict[str, Any]:
-        """
-        Returns dynamic GeoJSON FeatureCollection for Cadastral parcels, LULC zones, or Risk boundaries.
-        Supports time-slider shift across years (2015 to 2024).
-        """
+        """Provides GeoJSON feature collection for a specific spatial layer and year."""
         features = []
         year_factor = (year - 2015) / 9.0  # 0.0 at 2015, 1.0 at 2024
 
+        if layer_key == "lulc" and self.indiasat_features:
+            # Return real satellite remote sensing polygons from IndiaSat
+            color_map = {
+                "green": "#287449",
+                "buildings": "#c4a35a",
+                "bare_land": "#d49333",
+                "water": "#1D4ED8"
+            }
+            # Sample up to 400 polygons for smooth frontend web map rendering
+            sampled = self.indiasat_features[:400]
+            for f in sampled:
+                cat = f.get("properties", {}).get("category", "green")
+                f["properties"]["color"] = color_map.get(cat, "#287449")
+                f["properties"]["year"] = year
+            return {
+                "type": "FeatureCollection",
+                "layer": "lulc",
+                "year": year,
+                "features": sampled
+            }
+
         if layer_key == "cadastral":
-            # Real representative cadastral boundary grids across key pilot regions
             coords_sets = [
                 [[73.2, 19.8], [73.8, 20.6], [74.7, 20.3], [74.2, 19.5], [73.2, 19.8]],
                 [[75.1, 21.1], [75.9, 21.8], [76.7, 21.4], [76.1, 20.7], [75.1, 21.1]],
@@ -205,55 +240,6 @@ class GeodataService:
                         "coordinates": [c]
                     }
                 })
-
-        elif layer_key == "lulc":
-            # Land-use polygons showing urban expansion velocity over time-slider
-            # Agricultural zone converts partially to urban
-            urban_expansion = 0.05 * year_factor
-            features = [
-                {
-                    "type": "Feature",
-                    "id": "lulc-agri",
-                    "properties": {
-                        "classification": "Agricultural Cropland",
-                        "color": "#6e9c66",
-                        "year": year,
-                        "area_share_pct": round(68.5 - 4.5 * year_factor, 1)
-                    },
-                    "geometry": {
-                        "type": "Polygon",
-                        "coordinates": [[[74.2, 17.2], [74.9, 18.1], [76.0, 17.7], [75.3, 16.8], [74.2, 17.2]]]
-                    }
-                },
-                {
-                    "type": "Feature",
-                    "id": "lulc-urban",
-                    "properties": {
-                        "classification": "Built-up Urban Fringe",
-                        "color": "#c4a35a",
-                        "year": year,
-                        "area_share_pct": round(18.2 + 6.8 * year_factor, 1)
-                    },
-                    "geometry": {
-                        "type": "Polygon",
-                        "coordinates": [[[76.7, 20.6], [77.5 + urban_expansion, 21.4 + urban_expansion], [78.3, 20.8], [77.6, 20.1], [76.7, 20.6]]]
-                    }
-                },
-                {
-                    "type": "Feature",
-                    "id": "lulc-forest",
-                    "properties": {
-                        "classification": "Reserved Forest / Water Catchment",
-                        "color": "#287449",
-                        "year": year,
-                        "area_share_pct": round(13.3 - 0.3 * year_factor, 1)
-                    },
-                    "geometry": {
-                        "type": "Polygon",
-                        "coordinates": [[[80.1, 23.9], [80.7, 24.7], [81.5, 24.4], [80.9, 23.7], [80.1, 23.9]]]
-                    }
-                }
-            ]
 
         elif layer_key == "climate":
             features = [

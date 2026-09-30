@@ -27,9 +27,26 @@ import {
   type RepositoryRecordType,
 } from '@/data/mockData';
 
-const states = ['All India', 'Maharashtra', 'Madhya Pradesh', 'Uttar Pradesh', 'Karnataka', 'Gujarat'];
-const administrativeLevels = ['National', 'State', 'District', 'Tehsil/Taluk'];
-const themes = ['Cadastral Mapping', 'Land Dispute Resolution', 'SVAMITVA Scheme', 'Climate Resilience', 'Tenancy Rights'];
+const states = [
+  'All India',
+  'Chandigarh',
+  'Delhi',
+  'Maharashtra',
+  'Punjab',
+  'Haryana',
+  'Madhya Pradesh',
+  'Uttar Pradesh',
+  'Karnataka',
+  'Gujarat',
+  'Rajasthan',
+  'Tamil Nadu',
+  'Telangana',
+  'West Bengal',
+  'Bihar',
+  'Odisha',
+];
+const administrativeLevels = ['All Levels', 'National', 'State', 'District', 'Tehsil/Taluk'];
+const themes = ['All Themes', 'Cadastral Mapping', 'Land Dispute Resolution', 'SVAMITVA Scheme', 'Climate Resilience', 'Tenancy Rights'];
 const documentTypes: RepositoryDocumentType[] = ['Policy Paper', 'Legal Act', 'Research Study', 'Geodata File'];
 const recordTypes: RepositoryRecordType[] = ['Policy Drafts', 'Research Studies', 'Acts / Gazettes', 'Datasets'];
 const years = Array.from({ length: 17 }, (_, index) => String(2010 + index));
@@ -554,8 +571,8 @@ export default function RepositoryPage() {
   const [searchMode, setSearchMode] = useState<'exact' | 'semantic'>('exact');
   const [language, setLanguage] = useState<'English' | 'हिन्दी'>('English');
   const [state, setState] = useState('All India');
-  const [level, setLevel] = useState('National');
-  const [theme, setTheme] = useState('Cadastral Mapping');
+  const [level, setLevel] = useState('All Levels');
+  const [theme, setTheme] = useState('All Themes');
   const [documentType, setDocumentType] = useState<RepositoryDocumentType | 'All types'>('All types');
   const [yearFrom, setYearFrom] = useState('2010');
   const [yearTo, setYearTo] = useState('2026');
@@ -565,8 +582,13 @@ export default function RepositoryPage() {
   const [downloadNotice, setDownloadNotice] = useState('');
 
   useEffect(() => {
-    const search = new URLSearchParams(window.location.search).get('search');
+    const params = new URLSearchParams(window.location.search);
+    const search = params.get('search');
+    const stateParam = params.get('state');
     if (search) setQuery(search);
+    if (stateParam && states.includes(stateParam)) {
+      setState(stateParam);
+    }
   }, []);
 
   useEffect(() => {
@@ -577,36 +599,37 @@ export default function RepositoryPage() {
   }, [query, searchMode]);
 
   const filtered = useMemo(() => docList.filter((document) => {
-    if (searchMode === 'semantic' && query.trim()) {
-      return (state === 'All India' || document.stateRegion === state)
-        && (level === 'National' || document.administrativeLevel === level)
-        && (theme === 'Cadastral Mapping' || document.theme === theme)
-        && (documentType === 'All types' || document.documentType === documentType)
-        && document.year >= Number(yearFrom)
-        && document.year <= Number(yearTo);
-    }
     const normalizedQuery = query.trim().toLowerCase();
-    const searchText = `${document.refId} ${document.title} ${document.department} ${document.stateRegion} ${document.theme}`.toLowerCase();
+    const searchText = `${document.refId} ${document.title} ${document.department} ${document.stateRegion} ${document.theme} ${document.summary}`.toLowerCase();
     const queryWords = normalizedQuery.split(/\s+/).filter(Boolean);
+
     const matchesSearch = !normalizedQuery || (searchMode === 'exact'
-      ? searchText.includes(normalizedQuery)
+      ? searchText.includes(normalizedQuery) || queryWords.some((word) => searchText.includes(word)) || document.stateRegion.toLowerCase().includes(normalizedQuery)
       : queryWords.every((word) => searchText.includes(word)) || document.theme.toLowerCase().includes(normalizedQuery));
-    return matchesSearch
-      && (state === 'All India' || document.stateRegion === state)
-      && (level === 'National' || document.administrativeLevel === level)
-      && (theme === 'Cadastral Mapping' || document.theme === theme)
-      && (documentType === 'All types' || document.documentType === documentType)
-      && document.year >= Number(yearFrom)
-      && document.year <= Number(yearTo);
+
+    const matchesState = state === 'All India' || document.stateRegion === state || document.stateRegion === 'All India';
+    const matchesLevel = level === 'All Levels' || document.administrativeLevel === level;
+    const matchesTheme = theme === 'All Themes' || document.theme === theme;
+    const matchesDocType = documentType === 'All types' || document.documentType === documentType;
+    const matchesYear = document.year >= Number(yearFrom) && document.year <= Number(yearTo);
+
+    return matchesSearch && matchesState && matchesLevel && matchesTheme && matchesDocType && matchesYear;
   }), [docList, documentType, level, query, searchMode, state, theme, yearFrom, yearTo]);
+
+  const fallbackNational = useMemo(() => {
+    return docList.filter((d) => d.stateRegion === 'All India' || d.administrativeLevel === 'National');
+  }, [docList]);
+
+  const isFallback = filtered.length === 0 && query.trim().length > 0 && fallbackNational.length > 0;
+  const displayRecords = isFallback ? fallbackNational : filtered;
 
   const clearFilters = () => {
     setQuery('');
     setSearchMode('exact');
     setLanguage('English');
     setState('All India');
-    setLevel('National');
-    setTheme('Cadastral Mapping');
+    setLevel('All Levels');
+    setTheme('All Themes');
     setDocumentType('All types');
     setYearFrom('2010');
     setYearTo('2026');
@@ -664,7 +687,7 @@ export default function RepositoryPage() {
                 <div className="relative min-w-0 flex-1">
                   <label className="sr-only" htmlFor="repository-search">Search repository</label>
                   <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
-                  <input className="focus-ring h-10 w-full border border-slate-300 pl-9 pr-3 text-sm" data-testid="input-repository-search" id="repository-search" placeholder={language === 'English' ? 'Search by reference, title, authority or theme' : 'संदर्भ, शीर्षक, प्राधिकरण या विषय खोजें'} value={query} onChange={(event) => setQuery(event.target.value)} />
+                  <input className="focus-ring h-10 w-full border border-slate-300 pl-9 pr-3 text-sm" data-testid="input-repository-search" id="repository-search" placeholder={language === 'English' ? 'Search by reference, title, authority, state or theme' : 'संदर्भ, शीर्षक, प्राधिकरण या विषय खोजें'} value={query} onChange={(event) => setQuery(event.target.value)} />
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
                   <SearchModeButton active={searchMode === 'exact'} onClick={() => setSearchMode('exact')} testId="button-search-exact">Exact Match</SearchModeButton>
@@ -678,10 +701,38 @@ export default function RepositoryPage() {
               </div>
             </div>
             <div className="flex flex-col gap-2 border-t border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-600 md:flex-row md:items-center md:justify-between">
-              <span data-testid="text-repository-result-count">{filtered.length} of {docList.length} registry records shown</span>
+              <span data-testid="text-repository-result-count">
+                {isFallback 
+                  ? `Showing ${displayRecords.length} applicable National Frameworks for "${query}"`
+                  : `${filtered.length} of ${docList.length} registry records shown`
+                }
+              </span>
               <span className="flex items-center gap-1 text-[11px]"><Map className="h-3.5 w-3.5" />Metadata index refreshed 18 Jun 2024</span>
             </div>
           </Panel>
+
+          {isFallback && (
+            <div className="mb-5 flex items-start justify-between gap-3 border border-[#e9c68a] bg-[#fff8e8] p-4 text-xs shadow-xs">
+              <div className="flex items-start gap-3">
+                <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-[#9b6300]" />
+                <div>
+                  <p className="font-bold text-[#8a5a0a]">
+                    Showing Pan-India and National Regulatory Frameworks applicable across &quot;{query}&quot;
+                  </p>
+                  <p className="mt-1 text-slate-700 leading-relaxed">
+                    No district-specific gazette is directly titled &quot;{query}&quot;. Displaying the overarching Union statutory acts (SVAMITVA, DILRMP 2024, RFCTLARR Act 2013, and Survey of India Drone Mapping SOPs) that govern land administration in this area.
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={clearFilters}
+                className="focus-ring shrink-0 border border-[#e9c68a] bg-white px-3 py-1.5 text-xs font-bold text-[#8a5a0a] hover:bg-[#fff4dd]"
+                type="button"
+              >
+                Clear search
+              </button>
+            </div>
+          )}
 
           <Panel>
             <div className="overflow-x-auto">
@@ -698,7 +749,7 @@ export default function RepositoryPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((document) => {
+                  {displayRecords.map((document) => {
                     const restricted = isPublic && document.visibility === 'Confidential / Intra-Ministry';
                     return (
                       <tr className="hover:bg-[#f8fafb]" data-testid={`row-registry-document-${document.id}`} key={document.id}>
@@ -729,12 +780,21 @@ export default function RepositoryPage() {
                       </tr>
                     );
                   })}
-                  {!filtered.length && <tr><td className="px-4 py-12 text-center text-slate-500" colSpan={7}>No registry records match these filters.</td></tr>}
+                  {!displayRecords.length && (
+                    <tr>
+                      <td className="px-4 py-12 text-center text-slate-500" colSpan={7}>
+                        No registry records match these filters.
+                        <button onClick={clearFilters} className="ml-2 font-bold text-[#244562] underline hover:text-[#132f4c]" type="button">
+                          Reset all filters
+                        </button>
+                      </td>
+                    </tr>
+                  )}
                 </tbody>
               </table>
             </div>
             <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-4 py-3 text-[11px] text-slate-500">
-              <span>Showing {filtered.length} of {docList.length} records</span>
+              <span>Showing {displayRecords.length} of {docList.length} records</span>
               <span className="flex items-center gap-1"><FileArchive className="h-3.5 w-3.5" />Supported source formats: PDF · CSV · GeoJSON · SHP</span>
             </div>
           </Panel>

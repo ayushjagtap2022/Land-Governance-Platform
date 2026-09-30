@@ -60,12 +60,12 @@ SEED_DOCUMENTS = [
         "title": "SVAMITVA Scheme Guidelines: Drone Survey & Property Validation",
         "department": "Ministry of Panchayati Raj",
         "category": "Standard",
-        "summary": "Technical and operational protocol for drone survey, Gram Sabha validation, and issuance of legal property cards.",
+        "summary": "Technical and operational protocol for drone survey, Gram Sabha validation, and issuance of legal property cards across rural inhabited (Abadi) areas.",
         "metadata_json": {
             "ref_id": "SVAMITVA-2024-014",
             "theme": "SVAMITVA Scheme",
-            "state_region": "Maharashtra",
-            "administrative_level": "State",
+            "state_region": "All India",
+            "administrative_level": "National",
             "document_type": "Policy Paper",
             "record_type": "Policy Drafts",
             "year": 2024,
@@ -74,6 +74,132 @@ SEED_DOCUMENTS = [
             "format": "PDF",
             "pages": 64,
             "version": "v1.3",
+            "visibility": "Public / Verified Citation"
+        }
+    },
+    {
+        "title": "Chandigarh UT Urban Land Records & Tenancy Harmonization Framework",
+        "department": "Department of Revenue, Chandigarh Administration",
+        "category": "Policy",
+        "summary": "Comprehensive statutory framework for digital land records, urban title verification, cadastral modernization, and tenancy protections in Chandigarh Union Territory.",
+        "metadata_json": {
+            "ref_id": "CHD-REV-2024-001",
+            "theme": "Cadastral Mapping",
+            "state_region": "Chandigarh",
+            "administrative_level": "District",
+            "document_type": "Policy Paper",
+            "record_type": "Policy Drafts",
+            "year": 2024,
+            "published": "15 Feb 2024",
+            "updated": "10 Aug 2024",
+            "format": "PDF",
+            "pages": 38,
+            "version": "v1.1",
+            "visibility": "Public / Verified Citation"
+        }
+    },
+    {
+        "title": "Punjab Land Revenue (Digitization of Jamabandi & Cadastral Resurvey) Guidelines",
+        "department": "Department of Revenue & Rehabilitation, Punjab",
+        "category": "Legislation",
+        "summary": "Statutory rules for digitizing Jamabandi (RoR) records, drone cadastral survey integration, and sub-registrar deed registration linkage.",
+        "metadata_json": {
+            "ref_id": "PB-REV-2024-005",
+            "theme": "Cadastral Mapping",
+            "state_region": "Punjab",
+            "administrative_level": "State",
+            "document_type": "Legal Act",
+            "record_type": "Acts / Gazettes",
+            "year": 2024,
+            "published": "28 Mar 2024",
+            "updated": "04 Jul 2024",
+            "format": "PDF",
+            "pages": 56,
+            "version": "v2.0",
+            "visibility": "Public / Verified Citation"
+        }
+    },
+    {
+        "title": "Haryana Land Record Information System (Web-HALRIS) & Drone Mapping Protocol",
+        "department": "Revenue & Disaster Management Department, Haryana",
+        "category": "Standard",
+        "summary": "Standard operating procedures for drone survey in rural Lal Dora areas and issuance of title property cards via Web-HALRIS.",
+        "metadata_json": {
+            "ref_id": "HR-HALRIS-2024-003",
+            "theme": "SVAMITVA Scheme",
+            "state_region": "Haryana",
+            "administrative_level": "State",
+            "document_type": "Policy Paper",
+            "record_type": "Policy Drafts",
+            "year": 2024,
+            "published": "16 Apr 2024",
+            "updated": "12 Jul 2024",
+            "format": "PDF",
+            "pages": 42,
+            "version": "v1.4",
+            "visibility": "Public / Verified Citation"
+        }
+    },
+    {
+        "title": "Right to Fair Compensation & Transparency in Land Acquisition (RFCTLARR 2013)",
+        "department": "Ministry of Rural Development",
+        "category": "Legislation",
+        "summary": "National legal statutory framework regulating land acquisition, social impact assessment, fair compensation, and mandatory rehabilitation & resettlement across India.",
+        "metadata_json": {
+            "ref_id": "RFCTLARR-2013-001",
+            "theme": "Land Dispute Resolution",
+            "state_region": "All India",
+            "administrative_level": "National",
+            "document_type": "Legal Act",
+            "record_type": "Acts / Gazettes",
+            "year": 2023,
+            "published": "14 Oct 2023",
+            "updated": "05 Jan 2024",
+            "format": "PDF",
+            "pages": 78,
+            "version": "v2.4",
+            "visibility": "Public / Verified Citation"
+        }
+    },
+    {
+        "title": "Survey of India National Drone Cadastral Mapping SOP (Sub-5cm GSD)",
+        "department": "Survey of India, Department of Science & Technology",
+        "category": "Standard",
+        "summary": "Technical standard operating procedure for CORS network drone surveying, GCP validation, orthomosaic generation, and feature extraction for cadastral parcel demarcation.",
+        "metadata_json": {
+            "ref_id": "SOI-2024-008",
+            "theme": "Cadastral Mapping",
+            "state_region": "All India",
+            "administrative_level": "National",
+            "document_type": "Policy Paper",
+            "record_type": "Policy Drafts",
+            "year": 2024,
+            "published": "02 May 2024",
+            "updated": "28 Aug 2024",
+            "format": "PDF",
+            "pages": 62,
+            "version": "v1.8",
+            "visibility": "Public / Verified Citation"
+        }
+    },
+    {
+        "title": "Bhuvan ISRO Geo-Portal Cadastral & Land Use Integration Guidelines",
+        "department": "National Remote Sensing Centre (NRSC / ISRO)",
+        "category": "Standard",
+        "summary": "Interoperability specifications for publishing state cadastral vectors onto the ISRO Bhuvan geo-spatial platform and Open Geospatial Consortium (OGC) WMS/WFS services.",
+        "metadata_json": {
+            "ref_id": "ISRO-BHUVAN-2024",
+            "theme": "Cadastral Mapping",
+            "state_region": "All India",
+            "administrative_level": "National",
+            "document_type": "Policy Paper",
+            "record_type": "Datasets",
+            "year": 2024,
+            "published": "18 Jan 2024",
+            "updated": "15 May 2024",
+            "format": "PDF",
+            "pages": 36,
+            "version": "v1.2",
             "visibility": "Public / Verified Citation"
         }
     },
@@ -139,6 +265,48 @@ SEED_DOCUMENTS = [
             "version": "v2.0",
             "visibility": "Public / Verified Citation"
         }
+    },
+    {
+        "title": "Karnataka Bhoomi & Dishaank Mobile Cadastral App Architecture",
+        "department": "Revenue Department, Government of Karnataka",
+        "category": "Research Study",
+        "summary": "Technical architecture and field verification methodologies behind Bhoomi digital RoR and Dishaank mobile app for geo-referenced RTC lookup.",
+        "metadata_json": {
+            "ref_id": "KA-BHOOMI-2024-011",
+            "theme": "Cadastral Mapping",
+            "state_region": "Karnataka",
+            "administrative_level": "State",
+            "document_type": "Research Study",
+            "record_type": "Research Studies",
+            "year": 2024,
+            "published": "12 Mar 2024",
+            "updated": "24 Jun 2024",
+            "format": "PDF",
+            "pages": 40,
+            "version": "v1.1",
+            "visibility": "Public / Verified Citation"
+        }
+    },
+    {
+        "title": "Uttar Pradesh Bhu-Lekh RoR & Real-Time Khatauni Mutation Protocol",
+        "department": "Board of Revenue, Uttar Pradesh",
+        "category": "Legislation",
+        "summary": "Government order mandating online automatic mutation of uncontested succession cases within 15 days on the UP Bhu-Lekh portal.",
+        "metadata_json": {
+            "ref_id": "UP-BHULEKH-2024-006",
+            "theme": "Land Dispute Resolution",
+            "state_region": "Uttar Pradesh",
+            "administrative_level": "State",
+            "document_type": "Legal Act",
+            "record_type": "Acts / Gazettes",
+            "year": 2024,
+            "published": "08 May 2024",
+            "updated": "18 Aug 2024",
+            "format": "PDF",
+            "pages": 34,
+            "version": "v1.3",
+            "visibility": "Public / Verified Citation"
+        }
     }
 ]
 
@@ -172,10 +340,22 @@ def format_document_dict(doc: Document, similarity: Optional[float] = None) -> D
 
 async def ensure_seed_documents(db: AsyncSession):
     try:
-        count_res = await db.execute(select(func.count()).select_from(Document))
-        total = count_res.scalar() or 0
-        if total == 0:
-            for seed in SEED_DOCUMENTS:
+        stmt = select(Document)
+        res = await db.execute(stmt)
+        existing_docs = res.scalars().all()
+        existing_refs = set()
+        for doc in existing_docs:
+            meta = doc.metadata_json or {}
+            ref = meta.get("ref_id")
+            if ref:
+                existing_refs.add(ref)
+            existing_refs.add(doc.title.strip().lower())
+
+        added = False
+        for seed in SEED_DOCUMENTS:
+            ref = seed["metadata_json"].get("ref_id")
+            title_key = seed["title"].strip().lower()
+            if (ref and ref not in existing_refs) and (title_key not in existing_refs):
                 doc = Document(
                     id=uuid.uuid4(),
                     title=seed["title"],
@@ -184,9 +364,13 @@ async def ensure_seed_documents(db: AsyncSession):
                     summary=seed["summary"],
                     status="Verified",
                     metadata_json=seed["metadata_json"],
-                    embedding=generate_embedding(seed["title"] + " " + seed["summary"])
+                    embedding=generate_embedding(seed["title"] + " " + seed["summary"] + " " + seed["metadata_json"].get("state_region", ""))
                 )
                 db.add(doc)
+                existing_refs.add(ref)
+                existing_refs.add(title_key)
+                added = True
+        if added:
             await db.commit()
     except Exception as e:
         print(f"Warning: Could not check/seed documents table: {e}")
@@ -307,7 +491,7 @@ async def get_documents(
                     continue
 
             # Apply theme filter
-            if theme and theme != "All":
+            if theme and theme != "All" and theme != "All Themes":
                 if doc_dict.get("theme") != theme:
                     continue
 
@@ -320,17 +504,27 @@ async def get_documents(
             # Apply query filtering
             if query and query.strip():
                 q = query.strip().lower()
+                text_blob = f"{doc_dict.get('title', '')} {doc_dict.get('summary', '')} {doc_dict.get('department', '')} {doc_dict.get('state_region', '')} {doc_dict.get('theme', '')} {doc_dict.get('administrative_level', '')} {doc_dict.get('ref_id', '')}".lower()
                 if search_mode == "exact":
-                    text_blob = f"{doc_dict.get('title', '')} {doc_dict.get('summary', '')} {doc_dict.get('department', '')}".lower()
-                    if q not in text_blob:
+                    q_words = [w for w in q.split() if len(w) > 1]
+                    if q not in text_blob and not (q_words and all(w in text_blob for w in q_words)):
                         continue
                 elif search_mode == "semantic":
                     # In semantic mode, include if similarity is positive or text has match
-                    text_blob = f"{doc_dict.get('title', '')} {doc_dict.get('summary', '')}".lower()
                     if (sim is not None and sim < 0.05) and (q not in text_blob):
                         continue
 
             formatted.append(doc_dict)
+
+        # Fallback: if query was provided but no specific local record matched,
+        # provide the National/Pan-India overarching statutory frameworks so the user always has
+        # legal and cadastral acts applicable to that district/state
+        if len(formatted) == 0 and query and query.strip():
+            for d, sim in scored_docs:
+                doc_dict = format_document_dict(d, similarity=sim)
+                if doc_dict.get("state_region") == "All India" or doc_dict.get("administrative_level") == "National":
+                    doc_dict["is_national_fallback"] = True
+                    formatted.append(doc_dict)
 
         # Sort by similarity score if semantic mode
         if search_mode == "semantic" and query_vec is not None:

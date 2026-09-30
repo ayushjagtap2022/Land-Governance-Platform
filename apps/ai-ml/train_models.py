@@ -1,9 +1,12 @@
 """
 Land Governance Platform - AI/ML Model Training Pipeline
-Trains real Scikit-Learn models using Census 2011, Nightlights Panel, Rainfall, and Crop statistics:
-  1. Dispute & Titling Risk Regressor (Random Forest)
-  2. Urban Sprawl & Land Conversion Forecaster (HistGradientBoosting)
-  3. Agrarian Climate Distress Vulnerability Model (Random Forest)
+Trains real Scikit-Learn models using:
+  1. Census 2011 (Demographics & Worker profiles)
+  2. Land Use Statistics - Classification of Area (Forests, Non-agri land, Fallow, Net sown)
+  3. Land Use Statistics - Sources of Irrigation (Canals, Wells, Tanks, Net/Gross irrigation)
+  4. VIIRS/DMSP Nightlights Panel (Luminosity, Economic velocity)
+  5. IMD District Rainfall Records (Precipitation departure variance)
+  6. MoAFW Crop Production & Yield Records
 """
 
 import json
@@ -34,7 +37,7 @@ def train_and_export():
     print("=" * 70)
 
     # 1. Build unified master dataset
-    print("\n[1/4] Ingesting and engineering features from Census, Nightlights, Rainfall, and Crop datasets...")
+    print("\n[1/4] Ingesting and engineering features from Census, Land Use, Irrigation, Nightlights, Rainfall, and Crop datasets...")
     df = build_master_dataset()
     print(f"Loaded {len(df)} districts with {df.shape[1]} engineered features.")
 
@@ -50,9 +53,12 @@ def train_and_export():
         "models": {},
         "training_datasets": [
             {"name": "Census of India 2011", "rows": 640, "citation": "Office of the Registrar General & Census Commissioner, India"},
+            {"name": "Land Use Statistics - Classification of Area (1998-2024)", "rows": 181626, "citation": "Ministry of Agriculture & Farmers Welfare, GoI"},
+            {"name": "Land Use Statistics - Sources of Irrigation (1998-2024)", "rows": 181500, "citation": "Ministry of Agriculture & Farmers Welfare, GoI"},
             {"name": "VIIRS/DMSP Nighttime Lights Panel (2014-2020)", "rows": 8333, "citation": "Earth Observation Group, NOAA / VIIRS"},
             {"name": "IMD District Precipitation Records", "rows": 24000, "citation": "India Meteorological Department (IMD)"},
-            {"name": "District Crop Production & Yield Panel", "rows": 246000, "citation": "Ministry of Agriculture & Farmers Welfare, GoI"}
+            {"name": "District Crop Production & Yield Panel", "rows": 246000, "citation": "Ministry of Agriculture & Farmers Welfare, GoI"},
+            {"name": "Indian Railways / GatiShakti Stations & Tracks", "rows": 48325, "citation": "Ministry of Railways & MoRTH / PM GatiShakti"}
         ]
     }
 
@@ -64,11 +70,13 @@ def train_and_export():
         "urban_household_ratio",
         "agri_worker_ratio",
         "cultivator_ratio",
-        "marginal_worker_ratio",
         "literacy_rate",
         "rented_house_ratio",
         "sc_st_ratio",
         "dilapidated_house_ratio",
+        "non_agri_land_pct",
+        "fallow_land_pct",
+        "forest_cover_pct",
         "nl_mean",
         "nl_growth_velocity",
         "internet_ratio",
@@ -100,7 +108,6 @@ def train_and_export():
     cv_mean_m1 = float(np.mean(cv_scores_m1))
     cv_std_m1 = float(np.std(cv_scores_m1))
 
-    # Feature importances
     importances_m1 = [
         {"feature": feat, "importance": round(float(imp), 4), "percentage": round(float(imp) * 100, 2)}
         for feat, imp in sorted(zip(features_m1, rf_dispute.feature_importances_), key=lambda x: x[1], reverse=True)
@@ -140,6 +147,9 @@ def train_and_export():
         "nl_std",
         "urban_household_ratio",
         "rural_household_ratio",
+        "non_agri_land_pct",
+        "fallow_land_pct",
+        "cropping_intensity_pct",
         "economic_density_index",
         "internet_ratio",
         "literacy_rate"
@@ -164,7 +174,6 @@ def train_and_export():
     mae_m2 = float(mean_absolute_error(y2_test, y2_pred))
     rmse_m2 = float(np.sqrt(mean_squared_error(y2_test, y2_pred)))
 
-    # Permutation importance for HistGradientBoosting
     perm = permutation_importance(hgb_conversion, X2_test, y2_test, n_repeats=10, random_state=42)
     total_perm = max(np.sum(perm.importances_mean), 1e-6)
     importances_m2 = [
@@ -201,6 +210,10 @@ def train_and_export():
         "rf_actual_mean",
         "rf_actual_std",
         "rf_departure_var",
+        "irrigation_intensity_pct",
+        "canal_share_pct",
+        "well_share_pct",
+        "net_sown_pct",
         "cultivator_ratio",
         "agri_worker_ratio",
         "crop_avg_yield",
