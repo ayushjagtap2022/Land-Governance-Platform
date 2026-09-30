@@ -12,6 +12,12 @@ import {
   KeyRound,
   RefreshCcw,
   Terminal,
+  Play,
+  CheckCircle2,
+  Globe,
+  Layers,
+  FileCheck,
+  Zap,
 } from 'lucide-react';
 
 function Breadcrumb({ current }: { current: string }) {
@@ -112,6 +118,117 @@ export default function DevelopersPage() {
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
   const [webhookLogs, setWebhookLogs] = useState<{ time: string, msg: string }[]>([]);
+
+  // Interop Hub Sandbox State
+  const [selectedConnector, setSelectedConnector] = useState<'ecourts' | 'bhunaksha' | 'svamitva'>('ecourts');
+  const [ecourtsCnr, setEcourtsCnr] = useState('MHPU010048192021');
+  const [ecourtsUlpin, setEcourtsUlpin] = useState('14-DIGIT-MH-PU-1849204');
+  
+  const [bhunakshaState, setBhunakshaState] = useState('Maharashtra');
+  const [bhunakshaDistrict, setBhunakshaDistrict] = useState('Pune');
+  const [bhunakshaVillage, setBhunakshaVillage] = useState('Wagholi (556012)');
+  const [bhunakshaKhasra, setBhunakshaKhasra] = useState('142/2');
+
+  const [svamitvaPropertyId, setSvamitvaPropertyId] = useState('SVAM-MP-HARDA-00918');
+  const [svamitvaDistrict, setSvamitvaDistrict] = useState('Harda, Madhya Pradesh');
+
+  const [isSandboxRunning, setIsSandboxRunning] = useState(false);
+  const [sandboxResult, setSandboxResult] = useState<any>(null);
+  const [sandboxLatency, setSandboxLatency] = useState<number | null>(null);
+
+  const runSandboxQuery = () => {
+    setIsSandboxRunning(true);
+    setSandboxResult(null);
+    const latency = Math.floor(95 + Math.random() * 85);
+
+    setTimeout(() => {
+      if (selectedConnector === 'ecourts') {
+        setSandboxResult({
+          system: 'National Judicial Data Grid (NJDG) / e-Courts Services',
+          status: 'SUCCESS',
+          query_type: 'CNR_AND_ULPIN_LINKAGE',
+          cnr_number: ecourtsCnr,
+          ulpin: ecourtsUlpin,
+          court: 'District & Sessions Court, Pune (Court Hall 4)',
+          presiding_judge: 'Additional District Judge (Civil Division)',
+          case_type: 'Special Civil Suit (Title Declaration & Partition)',
+          filing_date: '2021-03-18',
+          status_summary: {
+            interim_stay_active: true,
+            encumbrance_flagged_in_ror: true,
+            next_hearing: '2025-11-24',
+            stage: 'Evidence of Defendant',
+          },
+          litigation_risk_index: 0.88,
+          telemetry: {
+            latency_ms: latency,
+            gateway: 'NIC-eCourts-InterConnect-Node-4',
+            iso_timestamp: new Date().toISOString(),
+          },
+        });
+      } else if (selectedConnector === 'bhunaksha') {
+        setSandboxResult({
+          system: 'Bhunaksha National Cadastral Geo-Service (NIC / Survey of India)',
+          status: 'GEOMETRY_RETRIEVED',
+          state: bhunakshaState,
+          district: bhunakshaDistrict,
+          village: bhunakshaVillage,
+          khasra_survey_no: bhunakshaKhasra,
+          parcel_attributes: {
+            area_hectares: 2.45,
+            land_type: 'Jirayat (Agricultural)',
+            tenure: 'Occupant Class 1 (Bhogwatdar Varg 1)',
+            centroid: [18.5789, 73.9812],
+            adjacent_khasras: ['142/1', '142/3', '143', '139'],
+          },
+          geojson_geometry: {
+            type: 'Polygon',
+            coordinates: [
+              [
+                [73.9805, 18.5781],
+                [73.9821, 18.5784],
+                [73.9818, 18.5796],
+                [73.9802, 18.5792],
+                [73.9805, 18.5781],
+              ],
+            ],
+          },
+          telemetry: {
+            latency_ms: latency,
+            crs: 'EPSG:4326 (WGS84)',
+            iso_timestamp: new Date().toISOString(),
+          },
+        });
+      } else {
+        setSandboxResult({
+          system: 'SVAMITVA Scheme National Portal (Ministry of Panchayati Raj / Survey of India)',
+          status: 'PROPERTY_CARD_ISSUED',
+          property_id: svamitvaPropertyId,
+          district: svamitvaDistrict,
+          owner_name: 'Rameshwar Prasad Sharma (Jointly with Smt. Kausalya Devi)',
+          gram_panchayat: 'Handia (Abadi Area)',
+          drone_survey: {
+            flight_batch: 'SOI-DRN-2023-B4',
+            ground_resolution_cm: 5.0,
+            feature_extraction_model: 'SOI-YOLO-Cadastre-v2',
+            orthorectified_image_id: 'SV-HARDA-2023-0941.tif',
+          },
+          digilocker_verification: {
+            uri: `in.gov.mopr.svamitva.propcard:${svamitvaPropertyId}`,
+            sha256_hash: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+            panchayat_secretary_dsc: 'VALID_VERIFIED',
+          },
+          telemetry: {
+            latency_ms: latency,
+            gateway: 'DigiLocker-National-API-Hub',
+            iso_timestamp: new Date().toISOString(),
+          },
+        });
+      }
+      setSandboxLatency(latency);
+      setIsSandboxRunning(false);
+    }, 450);
+  };
 
   useEffect(() => {
     const logs = [
@@ -275,6 +392,244 @@ export default function DevelopersPage() {
             </div>
           </Panel>
         </div>
+      </div>
+
+      {/* National Land Systems Interop Hub (Sandbox Test Connectors) */}
+      <div className="mt-8">
+        <Panel
+          title="National Land Systems Interop Hub (Sandbox Test Connectors)"
+          headerAction={
+            <span className="text-[11px] font-mono font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 border border-emerald-200 flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+              Federated Gateway Active (Testnet)
+            </span>
+          }
+        >
+          <div className="p-5 space-y-6">
+            <p className="text-xs text-slate-600 max-w-3xl leading-relaxed">
+              Execute live simulated handshakes and integration queries across core Government of India land infrastructure.
+              Validate ULPIN cadastral bindings, verify pending high-court civil injunctions via e-Courts, and retrieve WGS84 GeoJSON polygons from State Bhunaksha instances.
+            </p>
+
+            {/* Connector Selector Tabs */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <button
+                type="button"
+                onClick={() => { setSelectedConnector('ecourts'); setSandboxResult(null); }}
+                className={`p-3.5 text-left border rounded-xs transition-all ${
+                  selectedConnector === 'ecourts'
+                    ? 'border-blue-600 bg-blue-50/60 shadow-xs'
+                    : 'border-slate-200 bg-white hover:bg-slate-50'
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-1.5">
+                  <Globe className={`h-4 w-4 ${selectedConnector === 'ecourts' ? 'text-blue-700' : 'text-slate-500'}`} />
+                  <span className="font-bold text-xs text-[#1E293B]">e-Courts Dispute Linkage</span>
+                </div>
+                <p className="text-[11px] text-slate-500 line-clamp-2">
+                  Check civil court injunctions, lis pendens, and title contestations via CNR & ULPIN.
+                </p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setSelectedConnector('bhunaksha'); setSandboxResult(null); }}
+                className={`p-3.5 text-left border rounded-xs transition-all ${
+                  selectedConnector === 'bhunaksha'
+                    ? 'border-blue-600 bg-blue-50/60 shadow-xs'
+                    : 'border-slate-200 bg-white hover:bg-slate-50'
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-1.5">
+                  <Layers className={`h-4 w-4 ${selectedConnector === 'bhunaksha' ? 'text-blue-700' : 'text-slate-500'}`} />
+                  <span className="font-bold text-xs text-[#1E293B]">Bhunaksha Geo-Service</span>
+                </div>
+                <p className="text-[11px] text-slate-500 line-clamp-2">
+                  Stream vector GeoJSON cadastral polygons, centroid coordinates, and adjacent khasras.
+                </p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => { setSelectedConnector('svamitva'); setSandboxResult(null); }}
+                className={`p-3.5 text-left border rounded-xs transition-all ${
+                  selectedConnector === 'svamitva'
+                    ? 'border-blue-600 bg-blue-50/60 shadow-xs'
+                    : 'border-slate-200 bg-white hover:bg-slate-50'
+                }`}
+              >
+                <div className="flex items-center gap-2 mb-1.5">
+                  <FileCheck className={`h-4 w-4 ${selectedConnector === 'svamitva' ? 'text-blue-700' : 'text-slate-500'}`} />
+                  <span className="font-bold text-xs text-[#1E293B]">SVAMITVA & DigiLocker</span>
+                </div>
+                <p className="text-[11px] text-slate-500 line-clamp-2">
+                  Verify drone survey orthomosaic tokens and cryptographic Gram Panchayat property cards.
+                </p>
+              </button>
+            </div>
+
+            {/* Interactive Query Parameter Inputs */}
+            <div className="border border-slate-200 bg-slate-50/50 p-4 rounded-xs">
+              <div className="flex items-center justify-between mb-3 border-b border-slate-200 pb-2.5">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center gap-1.5">
+                  <Zap className="h-3.5 w-3.5 text-amber-500" />
+                  Connector Request Parameters
+                </span>
+                <span className="text-[11px] font-mono text-slate-500">
+                  Target Endpoint: {
+                    selectedConnector === 'ecourts' ? 'GET /interop/v1/ecourts/cases' :
+                    selectedConnector === 'bhunaksha' ? 'GET /interop/v1/bhunaksha/parcel-geometry' :
+                    'GET /interop/v1/svamitva/property-card'
+                  }
+                </span>
+              </div>
+
+              {selectedConnector === 'ecourts' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                      Case CNR Number (16-character e-Courts identifier)
+                    </label>
+                    <input
+                      type="text"
+                      value={ecourtsCnr}
+                      onChange={(e) => setEcourtsCnr(e.target.value)}
+                      className="w-full border border-slate-300 px-3 py-1.5 text-xs font-mono bg-white focus-ring"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                      Linked ULPIN (14-digit Bhu-Aadhaar)
+                    </label>
+                    <input
+                      type="text"
+                      value={ecourtsUlpin}
+                      onChange={(e) => setEcourtsUlpin(e.target.value)}
+                      className="w-full border border-slate-300 px-3 py-1.5 text-xs font-mono bg-white focus-ring"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {selectedConnector === 'bhunaksha' && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">State</label>
+                    <input
+                      type="text"
+                      value={bhunakshaState}
+                      onChange={(e) => setBhunakshaState(e.target.value)}
+                      className="w-full border border-slate-300 px-3 py-1.5 text-xs bg-white focus-ring"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">District</label>
+                    <input
+                      type="text"
+                      value={bhunakshaDistrict}
+                      onChange={(e) => setBhunakshaDistrict(e.target.value)}
+                      className="w-full border border-slate-300 px-3 py-1.5 text-xs bg-white focus-ring"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Village & LGD Code</label>
+                    <input
+                      type="text"
+                      value={bhunakshaVillage}
+                      onChange={(e) => setBhunakshaVillage(e.target.value)}
+                      className="w-full border border-slate-300 px-3 py-1.5 text-xs bg-white focus-ring"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">Khasra / Survey No.</label>
+                    <input
+                      type="text"
+                      value={bhunakshaKhasra}
+                      onChange={(e) => setBhunakshaKhasra(e.target.value)}
+                      className="w-full border border-slate-300 px-3 py-1.5 text-xs font-mono bg-white focus-ring"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {selectedConnector === 'svamitva' && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                      SVAMITVA Property Unique ID
+                    </label>
+                    <input
+                      type="text"
+                      value={svamitvaPropertyId}
+                      onChange={(e) => setSvamitvaPropertyId(e.target.value)}
+                      className="w-full border border-slate-300 px-3 py-1.5 text-xs font-mono bg-white focus-ring"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-semibold text-slate-700 mb-1">
+                      Survey Region / District
+                    </label>
+                    <input
+                      type="text"
+                      value={svamitvaDistrict}
+                      onChange={(e) => setSvamitvaDistrict(e.target.value)}
+                      className="w-full border border-slate-300 px-3 py-1.5 text-xs bg-white focus-ring"
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="mt-4 flex items-center justify-between">
+                <span className="text-[11px] text-slate-500">
+                  Secured with SHA-256 HMAC and SSL/TLS 1.3 mutual handshake.
+                </span>
+                <button
+                  type="button"
+                  onClick={runSandboxQuery}
+                  disabled={isSandboxRunning}
+                  className="focus-ring flex items-center gap-2 border border-[#1E293B] bg-[#1E293B] px-4 py-2 text-xs font-bold text-white hover:bg-slate-800 transition-colors disabled:opacity-60 cursor-pointer"
+                >
+                  {isSandboxRunning ? (
+                    <>
+                      <div className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      <span>Negotiating Gateway Handshake...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-3.5 w-3.5 fill-white" />
+                      <span>Run Sandbox Query</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Sandbox Response Output */}
+            {sandboxResult && (
+              <div className="border border-slate-300 bg-white rounded-xs overflow-hidden">
+                <div className="flex items-center justify-between border-b border-slate-200 px-4 py-2.5 bg-slate-50 text-xs">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                    <span className="font-bold text-slate-800">Sandbox Response: 200 OK</span>
+                    <span className="font-mono text-[10px] text-blue-700 bg-blue-50 px-2 py-0.5 border border-blue-200 rounded-xs">
+                      Latency: {sandboxLatency}ms
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleCopy(JSON.stringify(sandboxResult, null, 2))}
+                    className="text-[11px] font-bold text-slate-600 hover:text-slate-900 flex items-center gap-1 cursor-pointer"
+                  >
+                    <Copy className="h-3 w-3" /> {copied ? 'Copied' : 'Copy JSON'}
+                  </button>
+                </div>
+                <pre className="bg-[#0F172A] text-emerald-400 p-4 font-mono text-xs overflow-x-auto leading-relaxed max-h-96">
+                  {JSON.stringify(sandboxResult, null, 2)}
+                </pre>
+              </div>
+            )}
+          </div>
+        </Panel>
       </div>
     </PageFrame>
   );

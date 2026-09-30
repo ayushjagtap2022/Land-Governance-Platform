@@ -13,6 +13,9 @@ import {
   Upload,
   X,
   Award,
+  Star,
+  ShieldCheck,
+  Sparkles,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
@@ -184,7 +187,62 @@ export default function InnovationPage() {
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [pilotsList, setPilotsList] = useState<PilotItem[]>(DEFAULT_PILOTS);
   const [votedIds, setVotedIds] = useState<Record<string, boolean>>({});
+  const [evaluatingPilot, setEvaluatingPilot] = useState<PilotItem | null>(null);
+  const [rubricScores, setRubricScores] = useState({
+    scalability: 21,
+    feasibility: 22,
+    regulatory: 20,
+    impact: 22,
+  });
+  const [juryNotes, setJuryNotes] = useState('');
+  const [pilotEvaluations, setPilotEvaluations] = useState<Record<string, { total: number; recommendation: string; date: string }>>({
+    'PLT-8821': { total: 88, recommendation: 'Recommended for Fast-Track Grant & Pilot Sandbox', date: '2025-08-14' },
+    'PLT-7412': { total: 84, recommendation: 'Recommended for Phase 1 Sandbox Testing', date: '2025-08-20' },
+  });
   const queryClient = useQueryClient();
+
+  const totalRubricScore = rubricScores.scalability + rubricScores.feasibility + rubricScores.regulatory + rubricScores.impact;
+  
+  const getRubricRecommendation = (score: number) => {
+    if (score >= 85) return 'Recommended for Fast-Track Grant & Pilot Sandbox';
+    if (score >= 70) return 'Conditional Approval (Subject to Field Benchmarking)';
+    return 'Requires Technical Re-submission & Re-scoping';
+  };
+
+  const openRubric = (pilot: PilotItem) => {
+    setEvaluatingPilot(pilot);
+    if (pilotEvaluations[pilot.id]) {
+      const prevTotal = pilotEvaluations[pilot.id].total;
+      const quarter = Math.round(prevTotal / 4);
+      setRubricScores({
+        scalability: quarter,
+        feasibility: quarter,
+        regulatory: quarter,
+        impact: prevTotal - quarter * 3,
+      });
+      setJuryNotes('Prior review on file: ' + pilotEvaluations[pilot.id].recommendation);
+    } else {
+      setRubricScores({ scalability: 20, feasibility: 21, regulatory: 19, impact: 22 });
+      setJuryNotes('');
+    }
+  };
+
+  const handleSaveEvaluation = () => {
+    if (!evaluatingPilot) return;
+    const rec = getRubricRecommendation(totalRubricScore);
+    setPilotEvaluations(prev => ({
+      ...prev,
+      [evaluatingPilot.id]: {
+        total: totalRubricScore,
+        recommendation: rec,
+        date: new Date().toISOString().split('T')[0],
+      }
+    }));
+    toast.success(`Jury Evaluation Recorded for ${evaluatingPilot.id}`, {
+      description: `Score: ${totalRubricScore}/100 — ${rec}`
+    });
+    setEvaluatingPilot(null);
+  };
 
   const { data: apiChallenges = [] } = useQuery<ChallengeItem[]>({
     queryKey: ['challenges'],
@@ -377,6 +435,7 @@ export default function InnovationPage() {
                     <th className="px-4 py-3 font-bold">Lead Investigator & Org</th>
                     <th className="px-4 py-3 font-bold">Grant</th>
                     <th className="px-4 py-3 font-bold">Status</th>
+                    <th className="px-4 py-3 font-bold text-center">Jury Rubric</th>
                     <th className="px-4 py-3 font-bold text-right">Community Votes</th>
                   </tr>
                 </thead>
@@ -396,6 +455,26 @@ export default function InnovationPage() {
                       </td>
                       <td className="px-4 py-3.5">
                         <StatusPill status={pilot.status} />
+                      </td>
+                      <td className="px-4 py-3.5 text-center">
+                        {pilotEvaluations[pilot.id] ? (
+                          <button
+                            onClick={() => openRubric(pilot)}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-sm border border-emerald-300 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 transition-colors"
+                            title="View/Update Jury Score"
+                          >
+                            <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+                            <span>{pilotEvaluations[pilot.id].total}/100</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => openRubric(pilot)}
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-sm border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-400 transition-colors"
+                          >
+                            <Star className="h-3.5 w-3.5 text-amber-500" />
+                            <span>Score Rubric</span>
+                          </button>
+                        )}
                       </td>
                       <td className="px-4 py-3.5 text-right">
                         <button
@@ -517,6 +596,195 @@ export default function InnovationPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* Jury Rubric Evaluation Modal */}
+      {evaluatingPilot && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1E293B]/50 p-4 backdrop-blur-xs">
+          <div className="w-full max-w-2xl bg-white shadow-2xl border border-slate-300 max-h-[92vh] flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-slate-200 px-6 py-4 bg-slate-50">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-sm bg-[#1E293B] text-white">
+                  <Award className="h-5 w-5 text-amber-400" />
+                </div>
+                <div>
+                  <h3 className="font-serif text-base font-bold text-[#1E293B]">
+                    Technical Committee Jury Rubric
+                  </h3>
+                  <p className="text-xs text-slate-500 font-mono">
+                    Evaluation Matrix for {evaluatingPilot.id} • {evaluatingPilot.title}
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setEvaluatingPilot(null)} 
+                className="text-slate-400 hover:text-slate-700 transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div className="p-6 space-y-6 overflow-y-auto flex-1 text-xs">
+              {/* Proposal Banner */}
+              <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-sm">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="font-bold text-slate-800 text-sm">{evaluatingPilot.title}</span>
+                  <span className="font-mono text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 border border-emerald-200">
+                    Grant ₹{evaluatingPilot.funding_lakhs}L
+                  </span>
+                </div>
+                <p className="text-slate-600">
+                  Lead: <strong className="text-slate-800">{evaluatingPilot.lead_name}</strong> ({evaluatingPilot.organization}) • Current Status: {evaluatingPilot.status}
+                </p>
+              </div>
+
+              {/* 4 Rubric Pillars */}
+              <div className="space-y-4">
+                <div className="border border-slate-200 p-4 bg-white rounded-sm space-y-2">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <span className="font-bold text-slate-800">1. Technical Scalability & DILRMP/ULPIN Architecture</span>
+                      <p className="text-[11px] text-slate-500">API throughput, database micro-indexing, adherence to ISO 19152 LADM & NIC cadastral schema.</p>
+                    </div>
+                    <span className="font-mono font-bold text-sm text-blue-700 bg-blue-50 px-2.5 py-1 border border-blue-200 shrink-0">
+                      {rubricScores.scalability} / 25
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="25"
+                    value={rubricScores.scalability}
+                    onChange={(e) => setRubricScores(prev => ({ ...prev, scalability: Number(e.target.value) }))}
+                    className="w-full accent-blue-600 cursor-pointer"
+                  />
+                </div>
+
+                <div className="border border-slate-200 p-4 bg-white rounded-sm space-y-2">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <span className="font-bold text-slate-800">2. Ground Feasibility & Field Cadastral Usability</span>
+                      <p className="text-[11px] text-slate-500">Ease of adoption by Patwaris/Talathis, offline sync resilience, RTK-GPS integration tolerances.</p>
+                    </div>
+                    <span className="font-mono font-bold text-sm text-blue-700 bg-blue-50 px-2.5 py-1 border border-blue-200 shrink-0">
+                      {rubricScores.feasibility} / 25
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="25"
+                    value={rubricScores.feasibility}
+                    onChange={(e) => setRubricScores(prev => ({ ...prev, feasibility: Number(e.target.value) }))}
+                    className="w-full accent-blue-600 cursor-pointer"
+                  />
+                </div>
+
+                <div className="border border-slate-200 p-4 bg-white rounded-sm space-y-2">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <span className="font-bold text-slate-800">3. Regulatory & Legal Tenability (LARR Act & Tenancy Codes)</span>
+                      <p className="text-[11px] text-slate-500">Compliance with RFCTLARR Act 2013, Forest Rights Act 2006, state revenue land tribunal precedent.</p>
+                    </div>
+                    <span className="font-mono font-bold text-sm text-blue-700 bg-blue-50 px-2.5 py-1 border border-blue-200 shrink-0">
+                      {rubricScores.regulatory} / 25
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="25"
+                    value={rubricScores.regulatory}
+                    onChange={(e) => setRubricScores(prev => ({ ...prev, regulatory: Number(e.target.value) }))}
+                    className="w-full accent-blue-600 cursor-pointer"
+                  />
+                </div>
+
+                <div className="border border-slate-200 p-4 bg-white rounded-sm space-y-2">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <span className="font-bold text-slate-800">4. Socio-Economic & Smallholder Equity Impact</span>
+                      <p className="text-[11px] text-slate-500">Protection of marginal and tribal landholders, gender-equal joint titling, reduction in court litigation costs.</p>
+                    </div>
+                    <span className="font-mono font-bold text-sm text-blue-700 bg-blue-50 px-2.5 py-1 border border-blue-200 shrink-0">
+                      {rubricScores.impact} / 25
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min="0"
+                    max="25"
+                    value={rubricScores.impact}
+                    onChange={(e) => setRubricScores(prev => ({ ...prev, impact: Number(e.target.value) }))}
+                    className="w-full accent-blue-600 cursor-pointer"
+                  />
+                </div>
+              </div>
+
+              {/* Jury Notes & Recommendation Box */}
+              <div>
+                <label className="block font-bold text-slate-700 mb-1">Confidential Jury Observations & Directives</label>
+                <textarea
+                  value={juryNotes}
+                  onChange={(e) => setJuryNotes(e.target.value)}
+                  placeholder="Record specific technical caveats, field pilot validation requirements, or advisory remarks..."
+                  className="w-full border border-slate-300 p-2.5 text-xs h-20 resize-none focus-ring bg-white"
+                />
+              </div>
+
+              {/* Score Summary Card */}
+              <div className="flex items-center justify-between p-4 bg-slate-900 text-white rounded-sm">
+                <div>
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Composite Jury Score</span>
+                  <div className="flex items-baseline gap-2 mt-0.5">
+                    <span className="text-3xl font-serif font-bold text-amber-400">{totalRubricScore}</span>
+                    <span className="text-xs text-slate-400">/ 100</span>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-[10px] uppercase font-bold tracking-wider text-slate-400">Recommendation</span>
+                  <div className="mt-1">
+                    <span className={`inline-block px-2.5 py-1 text-xs font-bold rounded-sm ${
+                      totalRubricScore >= 85
+                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                        : totalRubricScore >= 70
+                        ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                        : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                    }`}>
+                      {getRubricRecommendation(totalRubricScore)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="border-t border-slate-200 px-6 py-4 flex justify-between items-center bg-slate-50">
+              <span className="text-[11px] text-slate-500 flex items-center gap-1.5">
+                <ShieldCheck className="h-4 w-4 text-emerald-600" />
+                DoLR Technical Board Peer-Review Protocol
+              </span>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEvaluatingPilot(null)}
+                  className="px-4 py-2 text-xs font-bold border border-slate-300 bg-white hover:bg-slate-100 text-slate-700"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveEvaluation}
+                  className="px-4 py-2 text-xs font-bold bg-[#1E293B] hover:bg-slate-800 text-white flex items-center gap-2"
+                >
+                  <Award className="h-4 w-4 text-amber-400" />
+                  Submit Formal Evaluation
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
