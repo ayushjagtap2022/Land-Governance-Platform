@@ -208,6 +208,8 @@ function RoutedErrorBoundary({ children }: { children: ReactNode }) {
 
 function Shell() {
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const [location] = useLocation();
+  const isLandingPage = location === '/';
 
   // Connect global notifications when logged in
   useNotifications();
@@ -216,8 +218,8 @@ function Shell() {
     <div className="min-h-[100dvh] bg-[#f4f6f8]">
       <Header />
       <div className="flex w-full flex-col md:flex-row">
-        <Sidebar />
-        <main className="min-w-0 flex-1">
+        {!isLandingPage && <Sidebar />}
+        <main className={`min-w-0 flex-1 ${isLandingPage ? 'w-full' : ''}`}>
           <RoutedErrorBoundary>
             <Switch>
               <Route path="/" component={LandingPage} />
