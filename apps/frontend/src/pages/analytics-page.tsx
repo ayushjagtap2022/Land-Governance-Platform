@@ -103,6 +103,18 @@ export default function AnalyticsPage() {
   const [trendData, setTrendData] = useState<any[]>(analyticsTrendData);
 
   const [dashboardData, setDashboardData] = useState<any | null>(null);
+  const [availableStates, setAvailableStates] = useState<string[]>(initialStates.map(s => s.name));
+
+  useEffect(() => {
+    fetch('/api/v1/analytics/states')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setAvailableStates(data);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const categoryKeys = [
     'research_output',
@@ -316,8 +328,8 @@ export default function AnalyticsPage() {
               value={primaryRegion}
               onChange={(e) => setPrimaryRegion(e.target.value)}
             >
-              {initialStates.map((s) => (
-                <option key={s.name} value={s.name}>{s.name}</option>
+              {availableStates.map((st) => (
+                <option key={st} value={st}>{st}</option>
               ))}
             </select>
           </div>
@@ -328,8 +340,8 @@ export default function AnalyticsPage() {
               value={comparisonRegion}
               onChange={(e) => setComparisonRegion(e.target.value)}
             >
-              {initialStates.map((s) => (
-                <option key={s.name} value={s.name}>{s.name}</option>
+              {availableStates.map((st) => (
+                <option key={st} value={st}>{st}</option>
               ))}
             </select>
           </div>

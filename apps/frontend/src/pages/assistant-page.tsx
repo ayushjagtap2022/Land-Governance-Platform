@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'wouter';
 import { documents, type LandDocument } from '@/data/mockData';
-
+import { useEffect } from 'react';
 const quickQueries = [
   'Ceiling limits across MP vs Maharashtra',
   'SVAMITVA property card distribution guidelines',
@@ -127,8 +127,55 @@ export default function AssistantPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [copied, setCopied] = useState(false);
   const [selectedTrend, setSelectedTrend] = useState('');
+  const [allDocs, setAllDocs] = useState<LandDocument[]>(documents);
+  const [trends, setTrends] = useState(trendRadar);
 
-  const sourceDocuments = useMemo(() => response?.sourceIds.map((id) => documents.find((document) => document.id === id)).filter((document): document is LandDocument => Boolean(document)) ?? [], [response]);
+  useEffect(() => {
+    fetch('/api/v1/ai/trends')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setTrends(data);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/v1/repository/documents')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          const mapped: LandDocument[] = data.map((d: any) => ({
+            id: d.id,
+            refId: d.ref_id,
+            title: d.title,
+            department: d.department,
+            category: d.category,
+            theme: d.theme,
+            stateRegion: d.state_region,
+            administrativeLevel: d.administrative_level,
+            documentType: d.document_type || 'Policy Paper',
+            recordType: d.record_type || 'Policy Drafts',
+            year: d.year,
+            published: d.published,
+            updated: d.updated,
+            status: d.status,
+            format: d.format,
+            pages: d.pages,
+            version: d.version,
+            versions: d.versions || [],
+            visibility: d.visibility,
+            summary: d.summary,
+            fileUrl: d.file_url,
+          }));
+          setAllDocs(mapped);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const sourceDocuments = useMemo(() => response?.sourceIds.map((id) => allDocs.find((document) => document.id === id)).filter((document): document is LandDocument => Boolean(document)) ?? [], [response, allDocs]);
 
   const ask = async (value = question) => {
     const trimmed = value.trim();
@@ -273,7 +320,7 @@ export default function AssistantPage() {
         <aside className="min-w-0 space-y-5">
           <Panel eyebrow="High-frequency policy radar" title="90-day trend signals">
             <div className="divide-y divide-slate-200">
-              {trendRadar.map((trend) => {
+              {trends.map((trend) => {
                 const active = selectedTrend === trend.keyword;
                 return (
                   <Link className={`focus-ring block px-4 py-4 hover:bg-slate-50 ${active ? 'border-l-2 border-[#f2b134] bg-[#fff8e8]' : ''}`} data-testid={`link-trend-${trend.keyword.toLowerCase().replaceAll(' ', '-')}`} href={`/repository?search=${encodeURIComponent(trend.search)}`} key={trend.keyword} onClick={() => setSelectedTrend(trend.keyword)}>

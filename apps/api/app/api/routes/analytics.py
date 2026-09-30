@@ -53,3 +53,11 @@ def get_dashboard_category(
     """
     return analytics_service.get_dashboard_data(category=category, state=state)
 
+@router.get("/states", summary="Get All Available Indian States for Analytics")
+def get_available_states() -> List[str]:
+    """Returns sorted list of all 35 Indian States and Union Territories with empirical data."""
+    if analytics_service.df.empty:
+        return ["Maharashtra", "Karnataka", "Uttar Pradesh", "Madhya Pradesh", "Gujarat", "Odisha", "Tamil Nadu", "Bihar", "Rajasthan", "Punjab"]
+    return sorted(analytics_service.df["state_name"].str.title().unique().tolist())
+
+
