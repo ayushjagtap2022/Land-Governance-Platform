@@ -1,6 +1,4 @@
-# Import only auth-related models for now.
-# Document model requires pgvector + PostGIS extensions to be enabled on Neon DB.
-# It will be migrated separately when Module 2 (Repository) is built.
+# Import models for Alembic discovery
 from app.models.user import User
 from app.models.audit_log import AuditLog
 
@@ -15,8 +13,5 @@ from app.models.message import Message
 # Module 11 (Notifications)
 from app.models.notification import Notification
 
-# Uncomment when PostGIS and pgvector extensions are enabled on Neon DB:
-# from app.models.document import Document
-
-# Important: Import all your SQLModel table models here so that Alembic's env.py
-# can discover them via `import app.models`
+# Module 2 (Repository - pgvector & PostGIS)
+from app.models.document import Document, DocumentChunk

@@ -8,25 +8,22 @@ import {
   ExternalLink,
   FileCheck2,
   FileText,
+  Scale,
   Search,
   ShieldCheck,
   TrendingDown,
   TrendingUp,
+  Quote,
 } from 'lucide-react';
 import { Link } from 'wouter';
-import { documents, type LandDocument } from '@/data/mockData';
-
+import { CitationModal } from '@/components/common/CitationModal';
+import type { LandDocument } from '@/types/repository';
+import { useEffect } from 'react';
+import { useLanguage } from '@/context/LanguageContext';
 const quickQueries = [
   'Ceiling limits across MP vs Maharashtra',
   'SVAMITVA property card distribution guidelines',
   'Procedures for agricultural land conversion to industrial use',
-];
-
-const trendRadar = [
-  { keyword: 'Drone Cadastral Survey', change: '+24%', direction: 'up' as const, search: 'Cadastral' },
-  { keyword: 'Digital Title Registry', change: '+18%', direction: 'up' as const, search: 'National Land Records' },
-  { keyword: 'Forest Rights Act', change: '+11%', direction: 'up' as const, search: 'Rights' },
-  { keyword: 'Land Resurvey Disputes', change: '-8%', direction: 'down' as const, search: 'Dispute' },
 ];
 
 type AssistantResponse = {
@@ -35,42 +32,13 @@ type AssistantResponse = {
   sourceIds: string[];
 };
 
-const responseLibrary: AssistantResponse[] = [
-  {
-    query: 'Ceiling limits across MP vs Maharashtra',
-    bullets: [
-      'The indexed records distinguish ceiling administration by state statute rather than by a single national threshold.',
-      'Maharashtra’s current record is an amendment instrument; confirm the notified schedule and land-classification provisions before applying a limit.',
-      'The repository does not contain a verified Madhya Pradesh ceiling notification in this first index, so the comparison should be treated as incomplete.',
-    ],
-    sourceIds: ['DOC-26019-002', 'DOC-26019-003'],
-  },
-  {
-    query: 'SVAMITVA property card distribution guidelines',
-    bullets: [
-      'The SVAMITVA guidance places drone survey, village-level verification, and property card generation in a linked operational sequence.',
-      'Disputed entries should follow the local verification and escalation process before a card is treated as a final record.',
-      'The current published guidance is version v1.3, dated 18 Jun 2024.',
-    ],
-    sourceIds: ['DOC-26019-001', 'DOC-26019-004'],
-  },
-  {
-    query: 'Procedures for agricultural land conversion to industrial use',
-    bullets: [
-      'The indexed catalogue does not yet contain a verified state conversion order that supports a complete legal answer.',
-      'Use the model mutation workflow only as process context; it does not replace the competent state authority’s conversion notification.',
-      'A formal brief should identify the applicable state, district, land class, and conversion authority before recommending next steps.',
-    ],
-    sourceIds: ['DOC-26019-005', 'DOC-26019-002'],
-  },
-];
-
 function Breadcrumb({ current }: { current: string }) {
+  const { t } = useLanguage();
   return (
     <div className="mb-4 flex items-center gap-2 text-xs text-slate-500" data-testid="text-breadcrumb">
-      <span>National Land Governance Platform</span>
+      <span>{t('app_name')}</span>
       <ChevronRight className="h-3 w-3" />
-      <span className="font-semibold text-[#244562]">{current}</span>
+      <span className="font-semibold text-[#244562]">{t(current)}</span>
     </div>
   );
 }
@@ -93,7 +61,7 @@ function Panel({ title, eyebrow, children, className = '' }: { title?: string; e
   );
 }
 
-function SourceReference({ document }: { document: LandDocument }) {
+function SourceReference({ document, onCite }: { document: LandDocument; onCite?: (doc: LandDocument) => void }) {
   const page = document.id === 'DOC-26019-001' ? '14' : document.id === 'DOC-26019-002' ? '22' : document.id === 'DOC-26019-005' ? '10' : '7';
   const excerpt = document.id === 'DOC-26019-001'
     ? '“Property cards shall be prepared after completion of the drone survey and village-level verification process.”'
@@ -113,9 +81,20 @@ function SourceReference({ document }: { document: LandDocument }) {
         <FileText className="h-4 w-4 shrink-0 text-[#244562]" />
       </div>
       <p className="mt-3 border-l-2 border-[#f2b134] bg-white p-3 text-xs leading-5 text-slate-700">{excerpt}</p>
-      <Link className="focus-ring mt-3 inline-flex items-center gap-1 text-xs font-bold text-[#244562] underline underline-offset-2" data-testid={`link-view-source-${document.id}`} href={`/repository#${document.id}`}>
-        View Source Document <ExternalLink className="h-3 w-3" />
-      </Link>
+      <div className="mt-3 flex items-center justify-between">
+        <Link className="focus-ring inline-flex items-center gap-1 text-xs font-bold text-[#244562] underline underline-offset-2" data-testid={`link-view-source-${document.id}`} href={`/repository#${document.id}`}>
+          View Source Document <ExternalLink className="h-3 w-3" />
+        </Link>
+        {onCite && (
+          <button
+            onClick={() => onCite(document)}
+            className="focus-ring inline-flex items-center gap-1 border border-slate-300 bg-white px-2 py-1 text-[11px] font-bold text-[#244562] hover:bg-slate-100"
+            type="button"
+          >
+            <Quote className="h-3 w-3" /> Cite (BibTeX/APA)
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -126,27 +105,86 @@ export default function AssistantPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [copied, setCopied] = useState(false);
   const [selectedTrend, setSelectedTrend] = useState('');
+  const [allDocs, setAllDocs] = useState<LandDocument[]>([]);
+  const [trends, setTrends] = useState<{ keyword: string; change: string; direction: 'up' | 'down'; search: string }[]>([]);
+  const [serviceError, setServiceError] = useState('');
+  const [citationDoc, setCitationDoc] = useState<LandDocument | null>(null);
 
-  const sourceDocuments = useMemo(() => response?.sourceIds.map((id) => documents.find((document) => document.id === id)).filter((document): document is LandDocument => Boolean(document)) ?? [], [response]);
+  useEffect(() => {
+    fetch('/api/v1/ai/trends')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          setTrends(data);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
-  const ask = (value = question) => {
+  useEffect(() => {
+    fetch('/api/v1/repository/documents')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          const mapped: LandDocument[] = data.map((d: any) => ({
+            id: d.id,
+            refId: d.ref_id,
+            title: d.title,
+            department: d.department,
+            category: d.category,
+            theme: d.theme,
+            stateRegion: d.state_region,
+            administrativeLevel: d.administrative_level,
+            documentType: d.document_type || 'Policy Paper',
+            recordType: d.record_type || 'Policy Drafts',
+            year: d.year,
+            published: d.published,
+            updated: d.updated,
+            status: d.status,
+            format: d.format,
+            pages: d.pages,
+            version: d.version,
+            versions: d.versions || [],
+            visibility: d.visibility,
+            summary: d.summary,
+            fileUrl: d.file_url,
+          }));
+          setAllDocs(mapped);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const sourceDocuments = useMemo(() => response?.sourceIds.map((id) => allDocs.find((document) => document.id === id)).filter((document): document is LandDocument => Boolean(document)) ?? [], [response, allDocs]);
+
+  const ask = async (value = question) => {
     const trimmed = value.trim();
     if (!trimmed || isSearching) return;
     setQuestion(trimmed);
     setIsSearching(true);
-    window.setTimeout(() => {
-      const matching = responseLibrary.find((item) => item.query.toLowerCase() === trimmed.toLowerCase());
-      setResponse(matching ?? {
-        query: trimmed,
-        bullets: [
-          'The indexed registry can support a grounded answer only where a verified DoLR source is available for the question.',
-          'No single source in the current catalogue provides a complete determination for this query; review the linked records before preparing an official note.',
-          'For a reliable comparison, specify the state, administrative level, land class, and relevant publication period.',
-        ],
-        sourceIds: ['DOC-26019-001', 'DOC-26019-005'],
+    setServiceError('');
+    try {
+      const res = await fetch('/api/v1/ai/assistant/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: trimmed }),
       });
-      setIsSearching(false);
-    }, 650);
+      if (res.ok) {
+        const data = await res.json();
+        setResponse({
+          query: data.query,
+          bullets: data.bullets,
+          sourceIds: data.source_ids,
+        });
+        setIsSearching(false);
+        return;
+      }
+    } catch (err) {
+      console.warn('AI Assistant API call failed', err);
+    }
+    setResponse(null);
+    setServiceError('The grounded assistant is currently unavailable. No answer has been generated.');
+    setIsSearching(false);
   };
 
   const copyBrief = () => {
@@ -159,18 +197,35 @@ export default function AssistantPage() {
 
   return (
     <PageFrame>
+      {/* Unified AI Suite Navigation Tabs */}
+      <div className="mb-6 flex border-b border-slate-300 gap-2">
+        <div
+          className="flex items-center gap-2 border-b-2 border-[#244562] bg-[#f0f4f8] px-4 py-2 text-xs font-bold text-[#244562]"
+        >
+          <Bot className="h-4 w-4 text-[#244562]" />
+          Policy Q&amp;A Assistant
+        </div>
+        <Link
+          href="/synthesis"
+          className="flex items-center gap-2 border-b-2 border-transparent px-4 py-2 text-xs font-semibold text-slate-500 hover:border-slate-300 hover:text-slate-800 transition-colors"
+        >
+          <Scale className="h-4 w-4" />
+          Cross-Document Policy Synthesis
+        </Link>
+      </div>
+
       <div className="mb-6 flex flex-col justify-between gap-4 border-b border-slate-300 pb-5 lg:flex-row lg:items-end">
         <div>
-          <p className="section-kicker mb-2">Research support / statutory decision aid</p>
+          <p className="section-kicker mb-2">AI-powered help / policy questions</p>
           <h1 className="font-serif text-3xl font-semibold tracking-tight text-[#132f4c] md:text-4xl" data-testid="text-page-title-ai-assistant">AI Assistant</h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Ask policy questions and receive structured, traceable answers grounded in the indexed land-governance repository.</p>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Ask questions about land policies and get clear answers backed by verified government documents from the repository.</p>
         </div>
-        <Link className="focus-ring flex items-center gap-2 border border-[#244562] px-3 py-2 text-xs font-bold text-[#244562] hover:bg-slate-50" data-testid="link-open-synthesis" href="/synthesis"><FileCheck2 className="h-3.5 w-3.5" />Open synthesis tool</Link>
+        <Link className="focus-ring flex items-center gap-2 border border-[#244562] px-3 py-2 text-xs font-bold text-[#244562] hover:bg-slate-50" data-testid="link-open-synthesis" href="/synthesis"><FileCheck2 className="h-3.5 w-3.5" />Compare Multiple Documents</Link>
       </div>
 
       <div className="mb-5 flex items-start gap-3 border border-[#b9cce0] bg-[#eef4fa] p-4 text-xs leading-5 text-[#244562]" data-testid="banner-ai-statutory">
         <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0" />
-        <p><span className="font-bold">AI Decision Support Engine</span> — Grounded exclusively on indexed DoLR Gazette notifications, SVAMITVA guidelines, and verified land-governance studies.</p>
+        <p><span className="font-bold">AI-Powered Answers</span> — All answers are based on verified gazette notifications, SVAMITVA guidelines, and official land governance documents only.</p>
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
@@ -185,6 +240,7 @@ export default function AssistantPage() {
                 </div>
                 <button className="focus-ring flex items-center gap-2 bg-[#244562] px-4 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-60" data-testid="button-ask-platform" type="button" disabled={isSearching || !question.trim()} onClick={() => ask()}><Bot className="h-4 w-4" />{isSearching ? 'Searching' : 'Ask'}</button>
               </div>
+              {serviceError && <p className="mt-3 text-xs text-red-700" role="alert">{serviceError}</p>}
               <div className="mt-5">
                 <p className="mb-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">Quick query chips</p>
                 <div className="flex flex-wrap gap-2">
@@ -224,7 +280,7 @@ export default function AssistantPage() {
                 </div>
                 <div className="mt-5 border border-slate-300">
                   <div className="border-b border-slate-200 bg-[#eef2f5] px-4 py-3"><p className="flex items-center gap-2 text-xs font-bold text-[#244562]"><FileText className="h-4 w-4" />Cited Source References</p><p className="mt-1 text-[11px] text-slate-500">Verbatim excerpts from indexed records used for this answer.</p></div>
-                  <div className="space-y-3 p-4">{sourceDocuments.map((document) => <SourceReference document={document} key={document.id} />)}</div>
+                  <div className="space-y-3 p-4">{sourceDocuments.map((document) => <SourceReference document={document} key={document.id} onCite={(doc) => setCitationDoc(doc)} />)}</div>
                 </div>
               </div>
             </Panel>
@@ -234,7 +290,7 @@ export default function AssistantPage() {
         <aside className="min-w-0 space-y-5">
           <Panel eyebrow="High-frequency policy radar" title="90-day trend signals">
             <div className="divide-y divide-slate-200">
-              {trendRadar.map((trend) => {
+              {trends.map((trend) => {
                 const active = selectedTrend === trend.keyword;
                 return (
                   <Link className={`focus-ring block px-4 py-4 hover:bg-slate-50 ${active ? 'border-l-2 border-[#f2b134] bg-[#fff8e8]' : ''}`} data-testid={`link-trend-${trend.keyword.toLowerCase().replaceAll(' ', '-')}`} href={`/repository?search=${encodeURIComponent(trend.search)}`} key={trend.keyword} onClick={() => setSelectedTrend(trend.keyword)}>
@@ -258,6 +314,7 @@ export default function AssistantPage() {
           </Panel>
         </aside>
       </div>
+      {citationDoc && <CitationModal document={citationDoc} onClose={() => setCitationDoc(null)} />}
     </PageFrame>
   );
 }
