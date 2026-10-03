@@ -40,7 +40,36 @@ def run_offline_sweep():
 
     results: List[Dict[str, Any]] = []
 
-    def record(module: str, method: str, op_type: str, status: str, detail: str):
+    def check_tagged_offline(res) -> bool:
+        if getattr(res, "source", None) in ("offline", "sample") or getattr(res, "is_offline", False) or getattr(res, "is_sample", False):
+            return True
+        if isinstance(res, dict):
+            return bool(
+                res.get("source") in ("offline", "sample")
+                or res.get("is_offline") is True
+                or res.get("is_sample") is True
+                or res.get("status") == "offline"
+                or res.get("data_source") == "offline"
+            )
+        if isinstance(res, list):
+            if getattr(res, "source", None) in ("offline", "sample") or getattr(res, "is_offline", False) or getattr(res, "is_sample", False):
+                return True
+            if len(res) > 0 and isinstance(res[0], dict):
+                first = res[0]
+                return bool(
+                    first.get("source") in ("offline", "sample")
+                    or first.get("is_offline") is True
+                    or first.get("is_sample") is True
+                    or first.get("data_source") == "offline"
+                )
+        return False
+
+    def record(module: str, method: str, op_type: str, status: str, detail: str, result_obj: Any = None):
+        if op_type == "READ" and status == "PASSED" and result_obj is not None:
+            if not check_tagged_offline(result_obj):
+                status = "FAILED"
+                detail = f"NOT TAGGED OFFLINE/SAMPLE: {result_obj!r}"
+
         results.append({
             "module": module,
             "method": method,
@@ -80,19 +109,19 @@ def run_offline_sweep():
     # 2. Repository Module (4 methods)
     try:
         docs = client.repository.list()
-        record("Repository", "list()", "READ", "PASSED", f"returned {docs.count} docs, source='{docs.source}'")
+        record("Repository", "list()", "READ", "PASSED", f"returned {docs.count} docs, source='{docs.source}'", docs)
     except Exception as e:
         record("Repository", "list()", "READ", "FAILED", str(e))
 
     try:
-        docs = client.repository.search("leasing")
-        record("Repository", "search()", "READ", "PASSED", f"returned {docs.count} docs, source='{docs.source}'")
+        docs = client.repository.search("land")
+        record("Repository", "search()", "READ", "PASSED", f"returned {docs.count} docs, source='{docs.source}'", docs)
     except Exception as e:
         record("Repository", "search()", "READ", "FAILED", str(e))
 
     try:
         doc = client.repository.get("doc-001")
-        record("Repository", "get()", "READ", "PASSED", f"returned doc id={doc.id}, is_offline={doc.is_offline}")
+        record("Repository", "get()", "READ", "PASSED", f"returned doc id={doc.id}, is_offline={doc.is_offline}", doc)
     except Exception as e:
         record("Repository", "get()", "READ", "FAILED", str(e))
 
@@ -105,7 +134,8 @@ def run_offline_sweep():
     # 3. Assistant Module (4 methods)
     try:
         ans = client.assistant.chat("Explain land ceiling limits")
-        record("Assistant", "chat()", "READ", "PASSED", "returned offline answer")
+        grounded = ans.get("grounded", None)
+        record("Assistant", "chat()", "READ", "PASSED", f"offline answer, grounded={grounded}", ans)
     except Exception as e:
         record("Assistant", "chat()", "READ", "FAILED", str(e))
 
@@ -334,7 +364,10 @@ def run_offline_sweep():
     # 13. Health Module (1 method)
     try:
         hlth = client.health.check()
-        record("Health", "check()", "READ", "PASSED", f"status='{hlth.get('status')}'")
+        if hlth.get("status") != "offline":
+            record("Health", "check()", "READ", "FAILED", f"Expected status='offline', got '{hlth.get('status')}'")
+        else:
+            record("Health", "check()", "READ", "PASSED", f"status='{hlth.get('status')}', source='{hlth.get('source')}'", hlth)
     except Exception as e:
         record("Health", "check()", "READ", "FAILED", str(e))
 

@@ -20,6 +20,41 @@ from .errors import (
 
 logger = logging.getLogger("land_governance_sdk")
 
+class ResponseDict(dict):
+    """Dictionary response subclass supporting .source, .is_offline, and .is_sample attribute access."""
+    def __getattr__(self, name: str) -> Any:
+        if name in self:
+            return self[name]
+        raise AttributeError(f"'ResponseDict' object has no attribute '{name}'")
+
+    @property
+    def source(self) -> str:
+        return self.get("source", "live")
+
+    @property
+    def is_offline(self) -> bool:
+        return bool(self.get("is_offline", False))
+
+    @property
+    def is_sample(self) -> bool:
+        return bool(self.get("is_sample", False))
+
+
+class ResponseList(list):
+    """List response subclass supporting .source, .is_offline, and .is_sample attribute access."""
+    def __init__(
+        self,
+        iterable=None,
+        source: str = "live",
+        is_offline: bool = False,
+        is_sample: bool = False,
+    ):
+        super().__init__(iterable or [])
+        self.source = source
+        self.is_offline = is_offline
+        self.is_sample = is_sample
+
+
 class HttpClient:
     def __init__(
         self,
@@ -134,10 +169,13 @@ class HttpClient:
 
                     raise LandGovernanceApiError(message=str(msg), status_code=status_code, payload=data)
 
-                # Attach source: "live" metadata if dictionary
+                # Attach source: "live" metadata if dictionary or list
                 if isinstance(data, dict):
                     data["source"] = "live"
                     data["is_offline"] = False
+                    return ResponseDict(data)
+                elif isinstance(data, list):
+                    return ResponseList(data, source="live", is_offline=False, is_sample=False)
 
                 return data
 

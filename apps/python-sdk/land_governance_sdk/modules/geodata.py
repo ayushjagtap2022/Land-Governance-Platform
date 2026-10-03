@@ -34,7 +34,7 @@ class GeodataModule:
                 st_clean = state.strip().upper()
                 raw_data = [d for d in raw_data if d["state"].upper() == st_clean]
             items = [DistrictItem(**d) for d in raw_data[:limit]]
-            return DistrictList(districts=items, count=len(items), source="offline")
+            return DistrictList(districts=items, count=len(items), source="offline", is_offline=True, is_sample=True)
 
     def get_layers(self) -> LayerCatalog:
         """Retrieves toggleable GIS layer catalog and WMS configuration."""
@@ -49,6 +49,8 @@ class GeodataModule:
                 dispute={"label": "Dispute Density Heatmap", "type": "heatmap", "opacity": 0.58},
                 climate={"label": "Climate Risk & Inundation Zones", "type": "vector", "opacity": 0.50},
                 source="offline",
+                is_offline=True,
+                is_sample=True,
             )
 
     def upload_geojson(

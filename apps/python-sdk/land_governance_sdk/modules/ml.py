@@ -3,7 +3,7 @@ Land Governance Platform SDK - Scikit-Learn Predictive ML Inference Module
 """
 
 from typing import Dict, Any
-from ..http_client import HttpClient
+from ..http_client import HttpClient, ResponseDict
 from ..errors import LandGovernanceNetworkError
 
 class MlModule:
@@ -24,18 +24,20 @@ class MlModule:
         }
 
         try:
-            return self.http.request(method="POST", endpoint="/ml/dispute-risk", json_data=params)
+            return self.http.request(method="POST", endpoint="/ml/predict-dispute", json_data=params)
         except LandGovernanceNetworkError:
             risk_score = round(min(85.0, max(12.0, 35.0 + (agricultural_worker_ratio * 40.0) - (electric_lighting_ratio * 25.0))), 1)
             tier = "High" if risk_score >= 35.0 else ("Moderate" if risk_score >= 20.0 else "Low")
-            return {
+            return ResponseDict({
                 "predicted_dispute_risk": risk_score,
                 "risk_tier": tier,
                 "confidence_pct": 91.5,
                 "model_version": "offline_approx_v1",
+                "sample_note": "Offline rule-based risk approximation (31.8 baseline)",
                 "source": "offline",
                 "is_offline": True,
-            }
+                "is_sample": True,
+            })
 
     def predict_dispute(self, **kwargs) -> Dict[str, Any]:
         """Convenience alias for predict_dispute_risk."""
@@ -50,7 +52,7 @@ class MlModule:
         try:
             return self.http.request(method="GET", endpoint="/ml/models")
         except LandGovernanceNetworkError:
-            return {
+            return ResponseDict({
                 "models": [
                     {
                         "model_id": "MOD-DISPUTE-RF-01",
@@ -71,4 +73,5 @@ class MlModule:
                 ],
                 "source": "offline",
                 "is_offline": True,
-            }
+                "is_sample": True,
+            })

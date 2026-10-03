@@ -30,6 +30,8 @@ class DistrictList(BaseModel):
     districts: List[DistrictItem]
     count: int
     source: str = "live"
+    is_offline: bool = False
+    is_sample: bool = False
 
     def to_dataframe(self) -> Any:
         """Converts district list into a Pandas DataFrame with source metadata."""
@@ -49,3 +51,5 @@ class LayerCatalog(BaseModel):
     dispute: Dict[str, Any]
     climate: Dict[str, Any]
     source: str = "live"
+    is_offline: bool = False
+    is_sample: bool = False

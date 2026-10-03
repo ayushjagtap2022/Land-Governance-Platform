@@ -3,7 +3,7 @@ Land Governance Platform SDK - Health Module
 """
 
 from typing import Dict, Any
-from ..http_client import HttpClient
+from ..http_client import HttpClient, ResponseDict
 from ..errors import LandGovernanceNetworkError
 
 class HealthModule:
@@ -15,4 +15,11 @@ class HealthModule:
         try:
             return self.http.request(method="GET", endpoint="/healthz")
         except LandGovernanceNetworkError:
-            return {"status": "ok", "mode": "offline", "source": "offline", "is_offline": True}
+            return ResponseDict({
+                "status": "offline",
+                "database": "disconnected",
+                "mode": "offline",
+                "source": "offline",
+                "is_offline": True,
+                "is_sample": True,
+            })

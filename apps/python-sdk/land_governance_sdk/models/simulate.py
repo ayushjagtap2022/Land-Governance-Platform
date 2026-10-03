@@ -50,3 +50,6 @@ class SimulationComparison(BaseModel):
     scenario_b: SimulationResult
     deltas: Dict[str, float] = Field(description="Difference metrics (Scenario B minus Scenario A)")
     winner: str = Field(description="Recommended policy scenario based on net impact")
+    source: str = "live"
+    is_offline: bool = False
+    is_sample: bool = False

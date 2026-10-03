@@ -198,6 +198,7 @@ class SimulateModule:
         delta_savings = round(res_b.summary.projected_litigation_savings_cr - res_a.summary.projected_litigation_savings_cr, 2)
 
         winner = "Scenario B" if (delta_savings > 0 and delta_disputes >= 0) else "Scenario A"
+        is_off = bool(res_a.is_offline or res_b.is_offline)
 
         return SimulationComparison(
             scenario_a=res_a,
@@ -208,6 +209,9 @@ class SimulateModule:
                 "litigation_savings_delta_cr": delta_savings,
             },
             winner=f"{winner} is recommended (High-yield policy trajectory)",
+            source="offline" if is_off else "live",
+            is_offline=is_off,
+            is_sample=is_off,
         )
 
     def get_baselines(self) -> Dict[str, Any]:
