@@ -25,9 +25,15 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      // Don't force-logout for endpoints that may 401 due to a
+      // trailing-slash redirect stripping the Authorization header.
+      const url = error.config?.url || '';
+      const isNotificationEndpoint = url.includes('/notifications');
+      if (!isNotificationEndpoint) {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   },

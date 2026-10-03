@@ -4,7 +4,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://your-api-domain.onrender.com/api/$1"
+      "destination": "https://land-governance-platform-production.up.railway.app/api/$1"
     },
     {
       "source": "/(.*)",

@@ -50,7 +50,7 @@ export function Header() {
 
   const { data: notifications } = useQuery({
     queryKey: ['notifications'],
-    queryFn: () => api.get('/notifications').then((res) => res.data),
+    queryFn: () => api.get('/notifications/').then((res) => res.data),
     enabled: isAuthenticated,
   });
 
