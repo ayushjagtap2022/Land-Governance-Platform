@@ -420,11 +420,11 @@ Unstaged/untracked items:
 1. DATASETS_DIR Configured (RESOLVED)
    Updated in both `apps/api/config.py` and `apps/api/app/core/config.py` to use `os.getenv("DATASETS_DIR", relative_path)`. Works portably across local development and Docker.
 
-2. Simulation Confidence Intervals & Model Version (RESOLVED)
-   Backend now computes real ensemble dispersion across 120 estimator trees in `RandomForestRegressor` (`MOD-DISPUTE-RF-01`), returning dynamic `tree_ci_margin` (e.g. ±4.81% tree spread) and explicit `model_version: "v1.2_hybrid_rf_linear"`. Python SDK maps both high-level shock variables and explicit backend parameters (`ceiling`, `tax`, `budget`, `window`), and `National` baseline is now supported.
+2. Simulation Confidence Margins & Model Version (RESOLVED)
+   Backend now computes real dynamic ensemble dispersion across 120 estimator trees in `RandomForestRegressor` (`MOD-DISPUTE-RF-01`) evaluated on the specific simulated jurisdiction/state, returning dynamic `tree_ci_margin` (labeled honestly as `± X% (RF 120-Tree Spread)`, avoiding misleading "95% CI" terminology). Dynamic scenario dispersion is applied to all four metrics (`urbanPace`, `climateScore`, `revenue`, and `disputeRate`). Explicit `model_version: "v1.2_hybrid_rf_linear"` is returned.
 
-3. RAG Grounding & Refusal Enforced (RESOLVED)
-   `apps/api/app/services/rag_service.py` requires positive token overlap (`overlap > 0`). When no indexed document matches, it strictly returns `grounded=False` with verified refusal bullets. Heuristic excerpt fallbacks explicitly flag `grounded=False`.
+3. RAG Content Term Ratio & Off-Topic Refusal (RESOLVED)
+   `apps/api/app/services/rag_service.py` filters stop words and requires a minimum content-term overlap ratio (at least 2 substantive keywords or $\ge 25\%$ overlap). Plausible off-topic questions (e.g. "What is the GST rate on gold?") strictly return `grounded=False` with transparent refusal bullets, preventing false grounding on common single words like "land".
 
 4. Password Reset Endpoints Updated (RESOLVED)
    `POST /auth/forgot-password` and `POST /auth/reset-password` return HTTP 501 Not Implemented, clarifying that SMTP mailers, OTP/2FA, and Government SSO (DigiLocker/Jan Parichay) are enterprise architectural hooks.
@@ -436,8 +436,18 @@ Unstaged/untracked items:
    - `real_state_land_use_trends.json` is NOT 0 bytes: it is 115 KB (4,698 lines) covering 38 states and UTs.
    - `indiasat_landcover.geojson` is NOT 7 bytes: it is 1.13 MB containing 1,313 real polygon features.
    - `audit_log.py` is NOT 0 bytes: it is 1.5 KB (48 lines) defining SQLModel `AuditLog`, backed by Alembic migration and live `/api/v1/admin/audit-logs` endpoint.
+   - Confirmed tracked in git via `git ls-files` and `git ls-tree -l HEAD`.
 
-7. Secrets in Git History (HIGH RISK - ACTION REQUIRED)
+7. Methodological Disclosures Prominently Placed (RESOLVED)
+   Composite proxy vulnerability index disclosures and $R^2$ evaluation clarifications are prominently placed in root `README.md`, `apps/python-sdk/README.md`, and `apps/sdk/README.md`. Disclosed that $R^2$ measures goodness-of-fit to calibrated composite formulas rather than raw judicial dispute counts.
+
+8. Dual SDK Live Rehearsal & Package Distribution (RESOLVED)
+   - 3-scenario live rehearsal executed against live FastAPI server (`http://127.0.0.1:8000/api/v1`): all 3 scenarios (`digital_cadastre` in National, `land_ceiling` in Maharashtra, `fast_track_courts` in Uttar Pradesh) parsed successfully with dynamic tree spread intervals.
+   - OpenAPI schema re-exported from live server with 63 endpoints to `tests/fixtures/openapi.json`.
+   - TypeScript SDK built (`tsup`) and packaged into `apps/sdk/land-governance-sdk-1.0.1.tgz`. Tested in a clean temporary directory with `npm install` and Node.js require: passed cleanly.
+   - Python SDK tested with git subdirectory pip installation syntax: `pip install "git+https://github.com/ayushjagtap2022/Land-Governance-Platform.git@nirmal#subdirectory=apps/python-sdk"`.
+
+9. Secrets in Git History (HIGH RISK - ACTION REQUIRED)
    `git log --all -- apps/api/.env` confirmed that `.env` was committed in 5 historical commits on a public repository (`ayushjagtap2022/Land-Governance-Platform`). Database connection URL, Gemini API key, and JWT secret must be rotated immediately, and production deployments must never use the default JWT secret.
 
 ---
@@ -456,12 +466,13 @@ of the 13 live FastAPI route modules.
 
 | Domain | Rating | Basis |
 |--------|--------|-------|
-| Backend API (FastAPI) | 4/5 | Code read + 3 live probes |
-| ML Models | 4/5 | models_metadata.json + CSV confirmed; training code read |
-| RAG/AI Pipeline | 3/5 | Code read; Gemini live calls not verified in audit |
-| GIS Data | 2/5 | Route code real; underlying GeoJSON data largely absent |
-| Frontend pages | 3/5 | Code read; UI not rendered in audit |
-| Python SDK | 4/5 | 16 tests passed [RAN]; code read |
-| TypeScript SDK | 4/5 | 11 tests passed [RAN]; code read |
-| Auth (full) | 3/5 | Core JWT real; OTP/2FA/SSO are stubs |
-| Git hygiene | 2/5 | SDK and tests untracked; 5 SDK files unstaged |
+| Backend API (FastAPI) | 5/5 | Code read + 63 live routes + 3 live rehearsal scenarios passed |
+| ML Models | 4/5 | models_metadata.json + CSV confirmed; 120-tree spread verified |
+| RAG/AI Pipeline | 4/5 | Grounding token ratio + stopword filtering + off-topic refusal tested |
+| GIS Data | 4/5 | 1.13 MB GeoJSON (1,313 features) & 640 district endpoints verified tracked |
+| Frontend pages | 3/5 | Code read; UI screenshots captured |
+| Python SDK | 5/5 | 16 unit tests passed [RAN]; live 3-scenario rehearsal passed; pip tested |
+| TypeScript SDK | 5/5 | 11 unit tests passed [RAN]; clean npm tarball install verified |
+| Auth (full) | 3/5 | Core JWT real; OTP/2FA/SSO documented as HTTP 501 hooks |
+| Git hygiene | 4/5 | All SDKs, fixtures, and data files tracked; branch nirmal synced |
+

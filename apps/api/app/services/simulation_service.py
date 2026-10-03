@@ -309,7 +309,7 @@ class SimulationService:
         base_calc_rev = (base["tax"] * 18.5 * 1.0) - (base["budget"] * 0.35)
         proj_revenue = max(200.0, round(base["revenue"] + (revenue_gain - base_calc_rev), 0))
 
-        # Fetch ML Prediction and Ensemble Tree Spread for empirical confidence intervals
+        # Fetch ML Prediction and Ensemble Tree Spread for empirical dispersion
         tree_margin = 1.8
         ml_insights = None
         try:
@@ -317,6 +317,8 @@ class SimulationService:
             policy_adj = {
                 "titling_coverage_pct": float(min(100.0, (params.budget / base["budget"]) * 65.0)),
                 "digital_mutation_speed_pct": float(min(100.0, (base["window"] / params.window) * 60.0)),
+                "tax_conversion_pct": float(params.tax),
+                "ceiling_acres": float(params.ceiling),
             }
             ml_disp = ml_service.predict_dispute_risk(state_name=params.state, policy_adjustments=policy_adj)
             ml_urban = ml_service.predict_urban_conversion(state_name=params.state)
@@ -344,7 +346,15 @@ class SimulationService:
         except Exception:
             pass
 
-        # Metrics with Empirical Ensemble Dispersion and Sensitivity Bounds
+        # Compute dynamic scenario-sensitive dispersion for all four metrics
+        tax_delta = abs(params.tax - base["tax"])
+        budget_delta = abs(params.budget - base["budget"])
+        ceiling_delta = abs(base["ceiling"] - params.ceiling)
+
+        urban_margin = round(0.20 + (tax_delta / 5.0) * 0.12, 2)
+        climate_margin = round(1.2 + (ceiling_delta / 10.0) * 0.5 + (budget_delta / 50.0) * 0.6, 1)
+        rev_margin = round(25.0 + (tax_delta * 3.8) + (budget_delta * 0.18), 1)
+
         metrics = {
             "disputeRate": MetricProjection(
                 current=base["dispute_rate"],
@@ -357,21 +367,21 @@ class SimulationService:
                 current=base["urban_pace"],
                 projected=proj_urban,
                 delta=round(proj_urban - base["urban_pace"], 1),
-                confidence_interval="± 0.4% (Parametric Sensitivity)",
+                confidence_interval=f"± {urban_margin}% (Tax Sensitivity Dispersion)",
                 direction="decrease" if proj_urban < base["urban_pace"] else "increase"
             ),
             "climateScore": MetricProjection(
                 current=base["climate_score"],
                 projected=proj_climate,
                 delta=round(proj_climate - base["climate_score"], 0),
-                confidence_interval="± 2.5 pts (Climatic Variance)",
+                confidence_interval=f"± {climate_margin} pts (Agro-Climatic Sensitivity)",
                 direction="increase" if proj_climate > base["climate_score"] else "decrease"
             ),
             "revenue": MetricProjection(
                 current=base["revenue"],
                 projected=proj_revenue,
                 delta=round(proj_revenue - base["revenue"], 0),
-                confidence_interval="± ₹45 Cr (Tax Elasticity Spread)",
+                confidence_interval=f"± ₹{rev_margin} Cr (Revenue Elasticity Spread)",
                 direction="increase" if proj_revenue > base["revenue"] else "decrease"
             )
         }

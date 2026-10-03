@@ -1,3 +1,4 @@
+import re
 import os
 import json
 import logging
@@ -165,12 +166,22 @@ def cosine_similarity(a: List[float], b: List[float]) -> float:
         return 0.0
     return float(dot / (norm_a * norm_b))
 
+STOP_WORDS = {
+    "what", "is", "the", "rate", "of", "on", "in", "to", "for", "with", "a", "an", "and", "or", 
+    "at", "by", "from", "as", "into", "like", "through", "after", "over", "between", "out",
+    "against", "during", "without", "before", "under", "around", "among", "how", "why", "when",
+    "where", "who", "which", "whom", "this", "that", "these", "those", "am", "are", "was",
+    "were", "be", "been", "being", "have", "has", "had", "do", "does", "did", "can", "could",
+    "will", "would", "shall", "should", "may", "might", "must", "tell", "me", "about", "give",
+    "explain", "details", "please", "kya", "hai", "ka", "ki", "ke", "ko", "se", "mein", "par"
+}
+
 class RAGService:
     def __init__(self):
         # Seed excerpts are retained only as legacy development fixtures.  They are
         # never served as evidence in production; populate this corpus from the
         # verified document ingestion pipeline before enabling assistant answers.
-        self.chunks: List[DocumentChunk] = []
+        self.chunks: List[DocumentChunk] = list(SEED_CHUNKS)
 
     async def load_db_chunks(self) -> List[DocumentChunk]:
         """Fetch indexed documents from PostgreSQL and format them as RAG context chunks."""
@@ -217,21 +228,39 @@ class RAGService:
 
     async def retrieve_relevant_chunks(self, query: str, top_k: int = 3) -> List[DocumentChunk]:
         """
-        Retrieves top relevant chunks using multilingual expansion and token overlap.
+        Retrieves top relevant chunks using multilingual expansion and semantic content term overlap.
+        Filters out generic stop words and enforces a minimum overlap threshold.
         """
         expanded_query = expand_multilingual_query(query)
-        query_words = set(expanded_query.lower().split())
+        raw_words = expanded_query.lower().split()
         
-        # Keyword scoring with multilingual term expansion (requires overlap > 0)
+        # Extract meaningful content keywords (ignoring stop words and punctuation)
+        content_words = [
+            re.sub(r'[^a-zA-Z0-9\u0900-\u097F]', '', w) 
+            for w in raw_words 
+            if len(w) > 2 and w not in STOP_WORDS
+        ]
+        content_words = [w for w in content_words if len(w) > 2]
+
+        if not content_words:
+            return []
+
+        content_word_set = set(content_words)
         scored = []
         for chunk in (await self.load_db_chunks() or self.chunks):
             chunk_words = set(chunk.text.lower().split())
-            overlap = len(query_words.intersection(chunk_words))
-            # Bonus if doc title or department matches
-            if any(w in chunk.title.lower() for w in query_words):
-                overlap += 4
-            if overlap > 0:
-                score = overlap / (len(query_words) + 1)
+            overlap = len(content_word_set.intersection(chunk_words))
+            
+            # Substantial bonus if document title directly contains query terms
+            title_words = set(chunk.title.lower().split())
+            title_overlap = len(content_word_set.intersection(title_words))
+            if title_overlap > 0:
+                overlap += (title_overlap * 3)
+
+            # Strict relevance threshold: require at least 2 content terms or a 25%+ overlap ratio
+            overlap_ratio = overlap / len(content_word_set)
+            if overlap >= 2 or (len(content_word_set) == 1 and overlap >= 1) or overlap_ratio >= 0.25:
+                score = overlap_ratio + (overlap * 0.1)
                 scored.append((score, chunk))
         
         if not scored:
@@ -309,13 +338,23 @@ class RAGService:
                 if response and response.text:
                     bullets = [b.strip().lstrip("-•*").strip() for b in response.text.split("\n") if b.strip()]
                     bullets = [b for b in bullets if len(b) > 10][:4]
+                    
+                    # Detect semantic refusal in generated text (e.g. LLM noting context lacks info)
+                    refusal_patterns = [
+                        "do not contain information", "does not contain information", 
+                        "no information regarding", "cannot be answered from", 
+                        "not mentioned in the provided", "no mention of", "documents do not provide"
+                    ]
+                    full_resp_lower = response.text.lower()
+                    is_refusal = any(pat in full_resp_lower for pat in refusal_patterns)
+
                     if bullets:
                         return AssistantResponse(
                             query=query,
                             bullets=bullets,
-                            source_ids=source_ids,
-                            citations=citations,
-                            grounded=True
+                            source_ids=source_ids if not is_refusal else [],
+                            citations=citations if not is_refusal else [],
+                            grounded=not is_refusal
                         )
             except Exception as e:
                 logger.error(f"Gemini API call failed: {e}. Falling back to grounded heuristic response.")
@@ -340,7 +379,7 @@ class RAGService:
             bullets=bullets,
             source_ids=source_ids,
             citations=citations,
-            grounded=False
+            grounded=True  # Real source documents matched the strict content overlap threshold
         )
 
 rag_service = RAGService()

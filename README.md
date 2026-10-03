@@ -56,13 +56,22 @@ npm run dev
 ```
 * Web Application: `http://localhost:5173`
 
-### 3. Testing the SDKs
+### 3. Testing & Installing the Dual SDKs
 ```bash
-# Python SDK Test Suite (16 unit, fallback & golden vector tests)
+# Python SDK (Direct from Git branch nirmal)
+pip install "git+https://github.com/ayushjagtap2022/Land-Governance-Platform.git@nirmal#subdirectory=apps/python-sdk"
+
+# Python SDK Local Editable Installation & Test Suite (16 passing tests)
 cd apps/python-sdk
+pip install -e .[pandas]
 pytest tests -v
 
-# TypeScript SDK Test Suite (11 parity & network fallback tests)
+# TypeScript SDK (Local Monorepo / Pre-built Tarball)
+npm install ./apps/sdk
+# or install from packed tarball:
+npm install ./apps/sdk/land-governance-sdk-1.0.1.tgz
+
+# TypeScript SDK Test Suite (11 passing tests)
 cd apps/sdk
 npm test
 ```
@@ -93,13 +102,32 @@ The platform's analytical engine pairs empirical statistical calibration with ma
 
 1. **Hybrid Policy Simulation Engine (`v1.2_hybrid_rf_linear`)**:
    - Computes policy shock projections via econometric domain equations calibrated against Census 2011, VIIRS nightlight radiance, and IMD rainfall statistics.
-   - Outputs dynamic decision-support dispersion ranges derived from the spread of 120 estimator trees in the trained Random Forest model.
+   - Outputs dynamic decision-support dispersion ranges derived from the spread across 120 estimator trees in the trained Random Forest model.
 2. **Dispute Vulnerability Model (`MOD-DISPUTE-RF-01`)**:
-   - `RandomForestRegressor` (120 Trees) trained on 640 Indian districts to predict a composite land dispute vulnerability index (0–100) based on agricultural workforce ratios, economic density, and cadastral coverage.
+   - `RandomForestRegressor` (120 Trees) trained across 640 Indian districts to predict a composite land dispute vulnerability index (0–100) based on agricultural workforce ratios, economic density, and cadastral coverage.
 3. **Urban Sprawl & Conversion Forecaster (`MOD-SPRAWL-HGB-02`)**:
    - `HistGradientBoostingRegressor` predicting agricultural-to-urban parcel conversion velocity per 100k population.
 4. **Agrarian Climate Vulnerability Model (`MOD-CLIMATE-RF-03`)**:
    - Estimates agrarian distress vulnerability index where irrigation intensity and canal/well infrastructure serve as primary buffering factors.
+
+---
+
+## ⚠️ Important Methodological Disclosures
+
+> ### 1. Calibrated Composite Proxy Indices (Not Raw Court Litigation Counts)
+> In the absence of district-level judicial case-filing registries in open government data, the dispute risk, urban conversion, and climate metrics are **calibrated composite proxy vulnerability indices (scaled 0–100)** constructed from Census 2011 indicators, VIIRS nightlight radiance, and IMD rainfall panels.
+> 
+> **Evaluation Clarification ($R^2$ vs Prediction Accuracy)**:  
+> The reported model $R^2$ scores measure goodness-of-fit to these calibrated composite proxy vulnerability indices rather than predicting raw judicial court litigation records. Because proxy indices are formulated from demographic and spatial features, high $R^2$ demonstrates internal consistency and mathematical fit to the proxy formula, not empirical case-filing accuracy.
+
+> ### 2. Decision-Support Dispersion ("RF 120-Tree Spread", Not 95% Confidence Interval)
+> The confidence margins shown across simulation outcomes (e.g. `± 4.82% (RF 120-Tree Spread)`) represent the **empirical disagreement across the 120 individual decision trees** within the Random Forest ensemble for the specific simulated state/jurisdiction. They reflect model variance and parameter sensitivity, not a parametric 95% frequentist confidence interval.
+
+> ### 3. Conversational RAG Policy Refusal
+> The AI policy assistant enforces strict ungrounded inquiry refusal. Inquiries lacking semantic overlap with verified gazettes, acts, or circulars in the central knowledge repository return `grounded=False` with explicit refusal bullets to prevent bureaucratic hallucinations.
+
+> ### 4. Enterprise Identity & OTP Hooks
+> Password reset via SMTP and Government SSO (DigiLocker / Jan Parichay) are defined as architectural endpoints returning `HTTP 501 Not Implemented` for clean enterprise plug-in in on-premise government cloud environments.
 
 ---
 
@@ -112,14 +140,7 @@ The platform's analytical engine pairs empirical statistical calibration with ma
 
 ---
 
-## 📜 Architectural Disclosures & Operational Notes
-
-- **Simulation Ranges**: The simulation engine outputs decision-support dispersion intervals (derived from ensemble tree spreads or sensitivity elasticities), intended for cabinet and policy deliberations rather than definitive parametric forecasts.
-- **RAG Policy Refusal**: When no verified circular or act in the knowledge repository matches an inquiry, the AI assistant strictly refuses to speculate (`grounded=False`) in accordance with civil-service policy guidelines.
-- **Enterprise Hooks**: Password reset via SMTP and Government SSO (DigiLocker / Jan Parichay) are implemented as architectural endpoints (returning HTTP 501 in demo deployments) designed for seamless enterprise identity hookup.
-
----
-
 ## ⚖️ License
 
 MIT License. Designed and developed for the Ministry of Rural Development / DoLR (SIH PS 26019).
+

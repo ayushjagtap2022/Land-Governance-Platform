@@ -136,6 +136,16 @@ class MLService:
                 if "internet_ratio" in X.columns:
                     X["internet_ratio"] = (X["internet_ratio"] + 0.3 * speed_boost).clip(upper=0.95)
 
+            if "tax_conversion_pct" in policy_adjustments:
+                tax_val = float(policy_adjustments["tax_conversion_pct"])
+                if "non_agri_land_pct" in X.columns:
+                    X["non_agri_land_pct"] = (X["non_agri_land_pct"] * (1.0 - (tax_val - 8.0) * 0.02)).clip(lower=1.0)
+
+            if "ceiling_acres" in policy_adjustments:
+                ceil_val = float(policy_adjustments["ceiling_acres"])
+                if "fallow_land_pct" in X.columns:
+                    X["fallow_land_pct"] = (X["fallow_land_pct"] * (ceil_val / 54.0)).clip(lower=0.5, upper=45.0)
+
         preds = self.m1_dispute.predict(X)
         mean_pred = float(np.mean(preds))
 

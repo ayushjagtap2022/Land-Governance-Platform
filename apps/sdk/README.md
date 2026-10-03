@@ -27,17 +27,38 @@ A robust, enterprise-grade, fully typed client library designed for developers, 
 
 ---
 
+## ⚠️ Important Methodological Disclosures
+
+> ### Calibrated Composite Proxy Indices (Not Raw Court Litigation Counts)
+> In the absence of district-level judicial case-filing registries in open government data, the dispute risk, urban conversion, and climate metrics predicted by the platform and SDK are **calibrated composite proxy vulnerability indices (scaled 0–100)** constructed from Census 2011 indicators, VIIRS nightlight radiance, and IMD rainfall panels.  
+> 
+> **Evaluation Clarification ($R^2$ vs Prediction Accuracy)**:  
+> Reported $R^2$ goodness-of-fit scores evaluate mathematical alignment to these composite proxy indices rather than raw judicial court litigation records. Because proxy formulas incorporate demographic indicators, high $R^2$ indicates internal mathematical consistency, not raw dispute-count prediction accuracy.
+> 
+> **Decision-Support Spread ("RF 120-Tree Spread", Not 95% Confidence Interval)**:  
+> Outcome dispersion values across policy simulations (e.g. `± 4.82% (RF 120-Tree Spread)`) quantify the empirical disagreement across the 120 individual decision trees within the Random Forest ensemble for that jurisdiction, serving as a sensitivity dispersion metric rather than a statistical prediction interval.
+
+---
+
 ## Installation
 
 ```bash
-# npm (Local Monorepo / GitHub direct)
-npm install git+https://github.com/ayushjagtap2022/Land-Governance-Platform.git#subdirectory=apps/sdk
+# npm (Local Monorepo Path)
+npm install ./apps/sdk
+
+# npm (Pre-built Release Tarball)
+npm install ./apps/sdk/land-governance-sdk-1.0.1.tgz
+
+# npm (GitHub Release Asset)
+npm install https://github.com/ayushjagtap2022/Land-Governance-Platform/releases/download/v1.0.1/land-governance-sdk-1.0.1.tgz
 
 # npm (NPM Registry)
 npm install land-governance-sdk
 
 # pnpm / yarn / bun
-pnpm add land-governance-sdk
+pnpm add ./apps/sdk
+yarn add ./apps/sdk
+bun add ./apps/sdk
 ```
 
 ---

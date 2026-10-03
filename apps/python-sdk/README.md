@@ -18,7 +18,9 @@ Official Python Client Library for DoLR Officers, Data Scientists, Policy Analys
 - **Decision-Support Range & Hybrid Engine Disclosure**:
   - **Offline mode** (`offline_approx_v1`): Deterministic demo approximation computed from baseline variance scaling for offline rehearsals.
   - **Live mode** (`v1.2_hybrid_rf_linear`): Combines multivariable domain econometric equations (calibrated against Census 2011, VIIRS nightlights, and IMD rainfall) with an active 120-tree Random Forest Regressor (`MOD-DISPUTE-RF-01`).
-  - **`confidence_range`**: Decision-support dispersion indicator (derived from the empirical spread across all 120 estimator trees in live mode, or heuristic sensitivity spread in offline mode). *Note: This is an empirical dispersion index for cabinet deliberations, not a parametric statistical confidence interval.*
+  - **`confidence_range`**: Decision-support dispersion indicator (derived from the empirical spread across all 120 estimator trees in live mode, or heuristic sensitivity spread in offline mode). *Note: This represents ensemble tree disagreement for cabinet deliberations, not a 95% parametric confidence interval.*
+- **Methodological Disclosure (Composite Proxy Vulnerability Indices)**:
+  - In the absence of district-level judicial case-filing registries in open government data, dispute risk, urban conversion, and climate distress metrics are **calibrated composite proxy vulnerability indices (0–100)** constructed from Census 2011 indicators, VIIRS nightlights, and IMD rainfall panels. Model $R^2$ scores measure goodness-of-fit to these composite proxy indices rather than raw judicial dispute records.
 - **Native Pandas Integration**:
   - Call `.to_dataframe()` on GIS district queries, policy document searches, and simulation trajectories.
 - **11 Specialized Modules + Aliases**:
@@ -31,7 +33,10 @@ Official Python Client Library for DoLR Officers, Data Scientists, Policy Analys
 ## 🚀 Installation
 
 ```bash
-# Basic Installation
+# Direct Installation from Git branch nirmal
+pip install "git+https://github.com/ayushjagtap2022/Land-Governance-Platform.git@nirmal#subdirectory=apps/python-sdk"
+
+# Basic Installation (PyPI)
 pip install land-governance-sdk
 
 # Installation with Pandas Dataframe support
