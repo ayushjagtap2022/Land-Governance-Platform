@@ -120,7 +120,8 @@ class MLService:
                 "nl_growth_velocity", "internet_ratio", "economic_density_index"
             ]
 
-        X = target_rows[features].copy()
+        X_base = target_rows[features].copy()
+        X = X_base.copy()
 
         # Counterfactual policy simulation shifts
         if policy_adjustments:
@@ -150,11 +151,26 @@ class MLService:
         mean_pred = float(np.mean(preds))
 
         # Real ensemble tree dispersion across 120 decision trees
+        # Sound econometric methodology: calculate per-tree difference (baseline - scenario)
+        # to measure uncertainty specifically regarding the policy REDUCTION (delta)
+        clip_note = None
         try:
-            tree_preds = np.array([tree.predict(X.values if hasattr(X, "values") else X) for tree in self.m1_dispute.estimators_])
-            tree_std = float(np.mean(np.std(tree_preds, axis=0)))
+            tree_scen = np.array([tree.predict(X.values if hasattr(X, "values") else X) for tree in self.m1_dispute.estimators_])
+            tree_base = np.array([tree.predict(X_base.values if hasattr(X_base, "values") else X_base) for tree in self.m1_dispute.estimators_])
+            tree_deltas = tree_base - tree_scen
+            delta_std = float(np.mean(np.std(tree_deltas, axis=0)))
+
+            if delta_std > 0.01:
+                tree_std = delta_std
+            else:
+                tree_std = float(np.mean(np.std(tree_scen, axis=0)))
+
             tree_ci_margin = round(1.96 * tree_std, 2)
-            conf_range = [round(max(0.0, mean_pred - tree_ci_margin), 1), round(mean_pred + tree_ci_margin, 1)]
+            lower_b = round(max(0.0, mean_pred - tree_ci_margin), 1)
+            upper_b = round(mean_pred + tree_ci_margin, 1)
+            conf_range = [lower_b, upper_b]
+            if lower_b == 0.0:
+                clip_note = "Lower bound clipped at 0.0%: model cannot rule out zero effect under current policy intensity."
         except Exception:
             tree_std = 1.48
             tree_ci_margin = 2.9
@@ -170,6 +186,7 @@ class MLService:
             "tree_spread_std": round(tree_std, 2),
             "tree_ci_margin": tree_ci_margin,
             "confidence_range": conf_range,
+            "clip_note": clip_note,
             "risk_band": "High" if mean_pred > 65 else ("Moderate" if mean_pred > 40 else "Low"),
             "risk_tier": "High" if mean_pred > 65 else ("Moderate" if mean_pred > 40 else "Low"),
             "district_min": round(float(np.min(preds)), 2),

@@ -16,7 +16,13 @@ class SimulationInput(BaseModel):
         default=None,
         ge=1.0,
         le=50.0,
-        description="Number of designated fast-track revenue courts / Lok Adalats (Assumption: each bench accelerates disposal by ~8-10 days, Law Commission Report 245)"
+        description="Number of designated fast-track revenue courts / Lok Adalats. Modelling assumption (illustrative, not empirically estimated)."
+    )
+    court_acceleration_days_per_bench: float = Field(
+        default=8.0,
+        ge=1.0,
+        le=20.0,
+        description="Assumed disposal acceleration in days per designated bench. Modelling assumption (illustrative, not empirically estimated)."
     )
 
 class MetricProjection(BaseModel):
@@ -288,10 +294,15 @@ class SimulationService:
     def run_simulation(self, params: SimulationInput) -> SimulationOutput:
         base = self.get_baseline(params.state)
         
-        # Fast-track courts econometric translation per Law Commission of India Report 245:
-        # Each designated bench compresses disposal latency by ~10 days from baseline 180 days.
+        # Fast-track courts capacity model:
+        # Modelling assumption (illustrative, not empirically estimated) with diminishing returns.
+        # Asymptotically approaches statutory minimum window (30 days) to prevent abrupt saturation.
         if params.fast_track_courts is not None:
-            active_window = max(30.0, min(365.0, 180.0 - (params.fast_track_courts * 10.0)))
+            eff_courts = float(params.fast_track_courts)
+            accel_coeff = float(params.court_acceleration_days_per_bench)
+            # Diminishing returns exponential formula: max days saved = 150 days (180 -> 30)
+            days_saved = 150.0 * (1.0 - np.exp(-(eff_courts * accel_coeff) / 150.0))
+            active_window = round(max(30.0, 180.0 - days_saved), 1)
         else:
             active_window = params.window
 
@@ -340,6 +351,15 @@ class SimulationService:
 
             if "predicted_dispute_risk_index" in ml_disp:
                 tree_margin = float(ml_disp.get("tree_ci_margin", 1.8))
+                dispute_reduction_val = round(abs(proj_dispute - base["dispute_rate"]), 1)
+                lower_b = round(max(0.0, dispute_reduction_val - tree_margin), 1)
+                upper_b = round(dispute_reduction_val + tree_margin, 1)
+                reduction_conf_range = [lower_b, upper_b]
+                clip_note = ml_disp.get("clip_note") or (
+                    "Lower bound clipped at 0.0%: model cannot rule out zero effect under current policy intensity."
+                    if lower_b == 0.0 else None
+                )
+
                 ml_insights = {
                     "model_id": ml_disp.get("model_id", "MOD-DISPUTE-RF-01"),
                     "algorithm": ml_disp.get("algorithm", "RandomForestRegressor (120 Trees)"),
@@ -350,7 +370,9 @@ class SimulationService:
                     "predicted_dispute_risk_index": ml_disp["predicted_dispute_risk_index"],
                     "tree_spread_std": ml_disp.get("tree_spread_std", 1.48),
                     "tree_ci_margin": tree_margin,
-                    "confidence_range": ml_disp.get("confidence_range", [round(max(0.0, proj_dispute - tree_margin), 1), round(proj_dispute + tree_margin, 1)]),
+                    "confidence_metric": "dispute_reduction_pct",
+                    "confidence_range": reduction_conf_range,
+                    "clip_note": clip_note,
                     "risk_band": ml_disp.get("risk_band", "Moderate"),
                     "districts_evaluated": ml_disp.get("districts_evaluated", 1),
                     "predicted_conversion_hectares": ml_urban.get("predicted_annual_conversion_hectares_per_100k", 0.0),
@@ -468,15 +490,16 @@ class SimulationService:
             )
 
         explainability = [
-            f"A ₹10 Cr increase in drone survey modernization historically correlates with a 0.38 reduction in boundary litigation based on 2019–2024 DILRMP data in {params.state}.",
-            f"Shortening the fast-track court window by 30 days increases early settlement velocity by 4.2%, preventing the long-tail court backlog cascade.",
+            f"Drone survey modernization allocations model boundary litigation suppression based on baseline titling coverage elasticity in {params.state} (modelling assumption, illustrative).",
+            f"Shortening the dispute resolution window models early settlement velocity, reducing administrative backlog duration (modelling assumption, illustrative).",
             f"Conversion tax rates above 12% show diminishing elasticity ({elasticity:.2f} factor) as informal land subdivisions rise to bypass formal stamp duty.",
         ]
         if params.fast_track_courts is not None:
             explainability.append(
-                f"Fast-Track Courts Policy Impact: {params.fast_track_courts:.0f} designated benches modeled. "
-                f"Per Law Commission of India (Report 245) and DILRMP revenue court assessments, each bench yields "
-                f"an average ~10-day disposal acceleration, translating to an effective resolution window of {active_window:.0f} days."
+                f"Fast-Track Courts Policy Impact: {params.fast_track_courts:.0f} designated benches modeled with "
+                f"an assumed illustrative acceleration of {params.court_acceleration_days_per_bench:.1f} days/bench under diminishing returns. "
+                f"Effective resolution window is projected at {active_window:.1f} days. "
+                f"Note: Modelling assumption (illustrative, not empirically estimated)."
             )
         if stat_note:
             explainability.append(stat_note)
@@ -488,12 +511,15 @@ class SimulationService:
                 f"{ml_insights['predicted_dispute_risk_index']}/100 (120-tree spread: ±{tree_margin}%). Top non-linear drivers: "
                 + ", ".join([f"{d['feature']} ({d['percentage']}%)" for d in ml_insights.get("top_drivers", [])[:3]]) + "."
             )
+            if ml_insights.get("clip_note"):
+                explainability.append(f"Model Effect Significance: {ml_insights['clip_note']}")
 
         methodology = (
             "Estimates are calculated via a hybrid ensemble of trained Scikit-Learn Machine Learning models "
             "(RandomForestRegressor with 120 trees, R²=0.83, HistGradientBoosting) and multivariable domain equations "
             "calibrated against Census 2011, VIIRS Nightlight Luminosity, and IMD Rainfall panels. "
-            "Fast-track court backlog elasticity is derived from Law Commission of India Report No. 245. "
+            "Policy shock parameters (fast-track court capacity, survey expenditure elasticity) are structured "
+            "as illustrative modelling assumptions rather than certified empirical estimates. "
             "Confidence ranges indicate ensemble dispersion across tree estimators for decision-support."
         )
 

@@ -40,4 +40,6 @@ class AuthModule:
 
     def get_me(self) -> Dict[str, Any]:
         """Retrieves active user profile."""
+        if self.http.is_offline():
+            raise LandGovernanceOfflineError("User profile retrieval is disabled in offline mode.")
         return self.http.request(method="GET", endpoint="/auth/me")
