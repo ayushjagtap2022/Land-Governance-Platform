@@ -685,7 +685,20 @@ export default function MapPage() {
                       fillOpacity: 0.95
                     }}
                     eventHandlers={{ click: () => setSelectedDistrict(district) }}
-                  />
+                  >
+                    <Popup>
+                      <div className="p-1 min-w-[190px] text-xs">
+                        <div className="flex items-center justify-between border-b border-slate-200 pb-1">
+                          <span className="font-bold text-[#132f4c]">{district.district}</span>
+                          <span className="text-[10px] font-mono text-slate-500">{district.state}</span>
+                        </div>
+                        <div className="mt-2 space-y-1 text-[11px]">
+                          <div>Modernization: <strong className="text-emerald-700">{district.modernization}%</strong></div>
+                          <div>Pending Litigation: <strong className="text-amber-700">{district.disputes}%</strong></div>
+                        </div>
+                      </div>
+                    </Popup>
+                  </CircleMarker>
                 );
               })}
               {aoiPoints.length >= 3 && <Polygon positions={aoiPoints} pathOptions={{ color: '#9b6300', weight: 2, dashArray: '5 4', fillColor: '#f2b134', fillOpacity: 0.18 }} />}

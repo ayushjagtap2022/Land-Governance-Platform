@@ -20,14 +20,17 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// ── Response interceptor: catch 401 → force logout ───────────────────
+// ── Response interceptor: catch 401 → handle session ───────────────────
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      const path = window.location.pathname;
+      if (path !== '/login' && path !== '/register') {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
     }
     return Promise.reject(error);
   },

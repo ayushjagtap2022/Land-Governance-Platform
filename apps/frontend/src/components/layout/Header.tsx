@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Bell, ChevronDown, Search, ShieldCheck, UserRound, LogIn, LogOut } from 'lucide-react';
+import { Bell, ChevronDown, Search, ShieldCheck, UserRound, LogIn, LogOut, Languages } from 'lucide-react';
 import { useRole, type Role } from '@/context/RoleContext';
 import { useAuthStore } from '@/stores/authStore';
 import { Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
+import { BhashiniTranslatorModal } from '@/components/common/BhashiniTranslatorModal';
 
 const roles: Role[] = ['Researcher', 'Official', 'Institution Admin', 'Public', 'Super Admin'];
 
@@ -16,6 +17,7 @@ export function Header() {
   const [showNotifSettings, setShowNotifSettings] = useState(false);
   const [notifsTab, setNotifsTab] = useState('Ministry');
   const [profileOpen, setProfileOpen] = useState(false);
+  const [showBhashini, setShowBhashini] = useState(false);
   
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const user = useAuthStore((s) => s.user);
@@ -30,6 +32,7 @@ export function Header() {
 
   return (
     <header className="relative z-20">
+      {showBhashini && <BhashiniTranslatorModal onClose={() => setShowBhashini(false)} />}
       <div className="flex min-h-8 flex-wrap items-center justify-between gap-2 border-b border-slate-300 bg-slate-100 px-4 py-1.5 text-[11px] text-slate-700 md:px-8">
         <div className="flex items-center gap-3">
           <span className="font-semibold tracking-wide">भारत सरकार | Government of India</span>
@@ -43,7 +46,15 @@ export function Header() {
             <button className="focus-ring border border-slate-400 bg-white px-1.5 py-0.5 font-bold" data-testid="button-font-increase" type="button">A+</button>
           </div>
           <button className="focus-ring underline underline-offset-2" data-testid="link-screen-reader" type="button">Screen Reader</button>
-          <button className="focus-ring font-semibold" data-testid="button-language" type="button">English <span className="mx-1 text-slate-400">|</span> हिन्दी</button>
+          <button
+            onClick={() => setShowBhashini(true)}
+            className="focus-ring flex items-center gap-1 font-bold border border-orange-300 bg-orange-50 px-2 py-0.5 text-orange-950 hover:bg-orange-100 transition-colors"
+            data-testid="button-language"
+            type="button"
+          >
+            <Languages className="h-3 w-3 text-orange-600" />
+            <span>English <span className="mx-0.5 text-orange-400">|</span> हिन्दी <span className="text-[10px] text-orange-600 font-mono">(Bhashini AI)</span></span>
+          </button>
           <span className="flag-mark" aria-label="Indian flag" role="img"><span /></span>
         </div>
       </div>
