@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
+import { useLanguage } from '@/context/LanguageContext';
 import api from '@/lib/api';
 
 function Breadcrumb({ current }: { current: string }) {

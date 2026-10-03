@@ -24,7 +24,16 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { useRole } from '@/context/RoleContext';
-import { CitationModal } from '@/components/common/CitationModal';import { toast } from 'sonner';
+import { useLanguage } from '@/context/LanguageContext';
+import { CitationModal } from '@/components/common/CitationModal';
+import { toast } from 'sonner';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   type LandDocument,
   type RepositoryDocumentType,

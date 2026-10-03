@@ -38,6 +38,8 @@ import {
   ComposedChart
 } from 'recharts';
 import { toast } from 'sonner';
+import { useLanguage } from '@/context/LanguageContext';
+
 function Breadcrumb({ current }: { current: string }) {
   const { t } = useLanguage();
   return (
@@ -98,6 +100,7 @@ type ScenarioResult = {
 const BASELINE: ScenarioParams & ScenarioResult = {
   ceiling: 0, tax: 0, budget: 0, window: 0,
   disputeRate: 0, urbanPace: 0, climateScore: 0, revenue: 0,};
+const baselineMetrics = BASELINE;
 
 export default function SimulatePage() {
   const [activeTab, setActiveTab] = useState<'policy' | 'infrastructure'>('policy');

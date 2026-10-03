@@ -9,6 +9,8 @@ import api from '@/lib/api';
 import { toast } from 'sonner';
 import { BhashiniTranslatorModal } from '@/components/common/BhashiniTranslatorModal';
 import { PLATFORM_NAV_ITEMS, type NavItemConfig } from '@/config/navigation';
+import { StateEmblem } from '@/components/common/StateEmblem';
+import { DigitalIndiaLogo, AzadiMahotsavLogo } from '@/components/common/GovLogos';
 
 const roles: Role[] = ['Researcher', 'Official', 'Institution Admin', 'Public', 'Super Admin'];
 
@@ -21,6 +23,7 @@ export function Header() {
   const [showNotifSettings, setShowNotifSettings] = useState(false);
   const [notifsTab, setNotifsTab] = useState('Ministry');
   const [profileOpen, setProfileOpen] = useState(false);
+  const [roleOpen, setRoleOpen] = useState(false);
   const [showBhashini, setShowBhashini] = useState(false);
   const [highContrast, setHighContrast] = useState(false);
   const [tickerPaused, setTickerPaused] = useState(false);

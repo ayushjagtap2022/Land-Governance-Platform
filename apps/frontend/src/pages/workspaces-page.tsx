@@ -73,49 +73,6 @@ export const initialRevisions: DocumentRevision[] = [
   },
 ];
 
-export type DocumentRevision = {
-  version: string;
-  timestamp: string;
-  author: string;
-  authorRole: string;
-  summary: string;
-  content: string;
-};
-
-export const initialRevisions: DocumentRevision[] = [
-  {
-    version: 'v2.4 (Current)',
-    timestamp: '12 minutes ago',
-    author: 'Dr. Rajesh Verma',
-    authorRole: 'Joint Secretary, DoLR',
-    summary: 'Added CORS base station baseline spacing (sub-5cm RTK validation requirements).',
-    content: `# National Cadastral Resurvey Standards\n\n## Section 4: RTK & Drone Tolerances\n- Continuous Operating Reference Stations (CORS) network density must not exceed 50km baseline spacing.\n- Ground Sampling Distance (GSD) for inhabited rural abadi parcels fixed at sub-5cm.\n- All cadastral vertices must tie into datum WGS-84 / UTM 43N.\n\n## Section 5: Dispute Fast-Tracking\n- Interim boundaries subject to public display at Gram Panchayat for 30 statutory days.`,
-  },
-  {
-    version: 'v2.3',
-    timestamp: '2 hours ago',
-    author: 'Smt. Ananya Rao',
-    authorRole: 'Senior GIS Scientist, NRSC',
-    summary: 'Integrated Forest Rights Act (FRA 2006) buffer clause and Bhuvan LISS-IV alignment.',
-    content: `# National Cadastral Resurvey Standards\n\n## Section 3: Forest & Tribal Land Demarcation\n- Cadastral survey teams must overlay FRA community forest rights layers before locking survey boundaries.\n- Remote sensing verification required for reserve forest boundaries.`,
-  },
-  {
-    version: 'v2.2',
-    timestamp: 'Yesterday at 4:30 PM',
-    author: 'Shri K. Raman',
-    authorRole: 'Director of Land Records, Maharashtra',
-    summary: 'Standardized 14-digit ULPIN parcel format alignment across all State Revenue Codes.',
-    content: `# National Cadastral Resurvey Standards\n\n## Section 2: Unique Land Parcel Identification Number (ULPIN)\n- Bhu-Aadhaar (14 digits) generated algorithmically from parcel polygon centroid coordinates.`,
-  },
-  {
-    version: 'v2.1',
-    timestamp: '3 days ago',
-    author: 'Dr. Rajesh Verma',
-    authorRole: 'Joint Secretary, DoLR',
-    summary: 'Initial Inter-Departmental Committee working draft adopted.',
-    content: `# National Cadastral Resurvey Standards\n\nWorking Committee Draft for state consultation and inter-ministerial harmonization.`,
-  },
-];
 
 function Breadcrumb({ current }: { current: string }) {
   const { t } = useLanguage();

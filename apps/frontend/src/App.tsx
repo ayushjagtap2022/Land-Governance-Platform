@@ -1,7 +1,8 @@
 import { useEffect, type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ChevronRight, CircleHelp } from 'lucide-react';
-import { Route, Switch, useLocation } from 'wouter';import { Toaster as SonnerToaster } from 'sonner';
+import { Route, Switch, useLocation, Link } from 'wouter';
+import { Toaster as SonnerToaster } from 'sonner';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';

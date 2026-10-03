@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'wouter';
 import { CitationModal } from '@/components/common/CitationModal';
+import { useLanguage } from '@/context/LanguageContext';
 import type { LandDocument } from '@/types/repository';
 import { useEffect } from 'react';
 const quickQueries = [
