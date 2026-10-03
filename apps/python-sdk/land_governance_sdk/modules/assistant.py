@@ -49,3 +49,47 @@ class AssistantModule:
                 "source": "offline",
                 "is_offline": True,
             }
+
+    def get_trends(self) -> Dict[str, Any]:
+        """Retrieves emerging topics and search telemetry trends in land governance."""
+        try:
+            return self.http.request(method="GET", endpoint="/ai/trends")
+        except LandGovernanceNetworkError:
+            return {
+                "trending_topics": [
+                    {"topic": "SVAMITVA Drone Accuracy", "queries_30d": 1284, "trend": "+34%"},
+                    {"topic": "ULPIN Multi-State Encumbrance", "queries_30d": 980, "trend": "+21%"},
+                    {"topic": "Model Land Leasing Act 2016", "queries_30d": 760, "trend": "+18%"},
+                ],
+                "source": "offline",
+                "is_offline": True,
+                "is_sample": True,
+            }
+
+    def summarize(
+        self,
+        title: str,
+        content: Optional[str] = None,
+        department: str = "Department of Land Resources"
+    ) -> Dict[str, Any]:
+        """Generates executive policy briefing summary for a legal document."""
+        try:
+            return self.http.request(
+                method="POST",
+                endpoint="/ai/summarize",
+                json_data={"title": title, "content": content, "department": department}
+            )
+        except LandGovernanceNetworkError:
+            return {
+                "title": title,
+                "department": department,
+                "summary": f"Executive policy synthesis of '{title}'. Recommends standardizing digital registry integration and dispute acceleration mechanisms.",
+                "key_takeaways": [
+                    "Clarifies institutional responsibilities between state revenue and central registries.",
+                    "Provides clear timeline benchmarks for titling dispute settlement.",
+                ],
+                "source": "offline",
+                "is_offline": True,
+                "is_sample": True,
+            }
+

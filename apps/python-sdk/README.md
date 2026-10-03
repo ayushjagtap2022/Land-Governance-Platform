@@ -23,10 +23,19 @@ Official Python Client Library for DoLR Officers, Data Scientists, Policy Analys
   - In the absence of district-level judicial case-filing registries in open government data, dispute risk, urban conversion, and climate distress metrics are **calibrated composite proxy vulnerability indices (0–100)** constructed from Census 2011 indicators, VIIRS nightlights, and IMD rainfall panels. Model $R^2$ scores measure goodness-of-fit to these composite proxy indices rather than raw judicial dispute records.
 - **Native Pandas Integration**:
   - Call `.to_dataframe()` on GIS district queries, policy document searches, and simulation trajectories.
-- **11 Specialized Modules + Aliases**:
-  - `client.documents` (Repository), `client.ai` (RAG Assistant), `client.gis` (Geodata), `client.simulation` (Policy Simulation), `client.ml`, `client.auth`, `client.analytics`, `client.innovation`, `client.workspaces`, `client.admin`, `client.health`.
+- **13 Specialized Service Modules + Memorable Aliases (44 Public Methods)**:
+  - `client.documents` / `client.repository`: Central gazette search, detail retrieval, and draft act uploads.
+  - `client.ai` / `client.assistant`: Conversational RAG assistant, multi-document synthesis, emerging trends, and executive summarization.
+  - `client.gis` / `client.geodata`: 640-district spatial indicators, WMS layers, GeoJSON feature collections, and temporal digitization stats.
+  - `client.simulation` / `client.simulate`: Macroeconomic policy shock evaluations, scenario comparisons, and state baselines.
+  - `client.analytics`: National summary, 25-year progression trends, state comparisons, climate radar, 7 PS-16 category dashboards, and NLGI rankings.
+  - `client.ml`: Active model registry and dispute risk forecasting.
+  - `client.innovation`: Innovation challenges, proposal submission, featured showcase gallery, ecosystem stats, and leaderboard rankings.
+  - `client.webhooks` / `client.api_keys`: Webhook event subscriptions, live HMAC dispatch, delivery event audits, and developer API key generation.
+  - `client.auth`, `client.workspaces`, `client.admin`, `client.notifications`, `client.health`.
 - **Policy Scenario Side-by-Side Comparison**:
   - `client.simulation.compare(scenario_a, scenario_b)` for side-by-side policy trade-off evaluation.
+
 
 ---
 

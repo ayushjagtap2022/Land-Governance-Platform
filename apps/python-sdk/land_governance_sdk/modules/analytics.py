@@ -67,3 +67,40 @@ class AnalyticsModule:
                 "source": "offline",
                 "is_offline": True,
             }
+
+    def get_dashboard(self, category: str = "disputes", state: Optional[str] = None) -> Dict[str, Any]:
+        """Retrieves category-specific dashboard metrics (e.g. disputes, titling, svamitva)."""
+        params = {"state": state} if state else {}
+        try:
+            return self.http.request(method="GET", endpoint=f"/analytics/dashboards/{category}", params=params)
+        except LandGovernanceNetworkError:
+            return {
+                "category": category,
+                "state": state or "National",
+                "kpis": [
+                    {"label": f"{category.title()} Volume", "value": 142850, "delta": -4.2},
+                    {"label": "Settlement Velocity", "value": "18.4 days", "delta": 2.1},
+                ],
+                "source": "offline",
+                "is_offline": True,
+                "is_sample": True,
+            }
+
+    def get_nlgi(self, state: Optional[str] = None) -> Dict[str, Any]:
+        """Retrieves National Land Governance Index (NLGI) composite ranking and pillar scores."""
+        params = {"state": state} if state else {}
+        try:
+            return self.http.request(method="GET", endpoint="/analytics/nlgi", params=params)
+        except LandGovernanceNetworkError:
+            return {
+                "index_name": "National Land Governance Index (NLGI)",
+                "rankings": [
+                    {"state": "Maharashtra", "score": 84.6, "rank": 1, "tier": "Frontrunner"},
+                    {"state": "Karnataka", "score": 81.2, "rank": 2, "tier": "Frontrunner"},
+                    {"state": "Madhya Pradesh", "score": 76.5, "rank": 3, "tier": "Achiever"},
+                ],
+                "source": "offline",
+                "is_offline": True,
+                "is_sample": True,
+            }
+

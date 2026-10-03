@@ -64,3 +64,42 @@ class GeodataModule:
             json_data={"layer_name": layer_name, "geojson": geojson_data, **kwargs},
             is_write_op=True,
         )
+
+    def get_geojson(self, layer_key: str = "districts", year: int = 2024) -> Dict[str, Any]:
+        """Retrieves raw GeoJSON FeatureCollection for a spatial layer."""
+        params = {"year": year}
+        try:
+            return self.http.request(method="GET", endpoint=f"/geodata/geojson/{layer_key}", params=params)
+        except LandGovernanceNetworkError:
+            return {
+                "type": "FeatureCollection",
+                "layer_key": layer_key,
+                "year": year,
+                "features": [
+                    {
+                        "type": "Feature",
+                        "geometry": {"type": "Polygon", "coordinates": [[[73.8, 18.5], [73.9, 18.5], [73.9, 18.6], [73.8, 18.6], [73.8, 18.5]]]},
+                        "properties": {"name": "Sample Spatial Unit", "state": "Maharashtra", "code": "MH-SAMPLE"},
+                    }
+                ],
+                "source": "offline",
+                "is_offline": True,
+                "is_sample": True,
+            }
+
+    def get_temporal_stats(self, year: int = 2024) -> Dict[str, Any]:
+        """Retrieves national land transitions and digitization progress for a target year."""
+        params = {"year": year}
+        try:
+            return self.http.request(method="GET", endpoint="/geodata/temporal-stats", params=params)
+        except LandGovernanceNetworkError:
+            return {
+                "year": year,
+                "digitized_parcels_cr": 12.8,
+                "cors_drone_coverage_sqkm": 345000,
+                "agricultural_diversion_hectares": 48200,
+                "source": "offline",
+                "is_offline": True,
+                "is_sample": True,
+            }
+

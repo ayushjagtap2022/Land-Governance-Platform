@@ -29,6 +29,7 @@ class LandGovernanceClient:
         offline: bool = False,
         fallback_to_offline: bool = False,
         config: Optional[ClientConfig] = None,
+        transport: Optional[Any] = None,
     ):
         if config is None:
             config = ClientConfig(
@@ -40,7 +41,8 @@ class LandGovernanceClient:
                 fallback_to_offline=fallback_to_offline,
             )
 
-        self.http = HttpClient(config)
+        self.http = HttpClient(config, transport=transport)
+
 
         # 12 Service Modules + Memorable Aliases
         self.auth = AuthModule(self.http)

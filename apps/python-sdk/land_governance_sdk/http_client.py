@@ -21,11 +21,17 @@ from .errors import (
 logger = logging.getLogger("land_governance_sdk")
 
 class HttpClient:
-    def __init__(self, config: Optional[ClientConfig] = None):
+    def __init__(
+        self,
+        config: Optional[ClientConfig] = None,
+        transport: Optional[httpx.BaseTransport] = None,
+    ):
         self.config = config or ClientConfig()
+        self._transport = transport
         self._token: Optional[str] = self.config.token
         self._api_key: Optional[str] = self.config.api_key
         self._has_warned_offline: bool = False
+
 
     def set_token(self, token: Optional[str]) -> None:
         self._token = token
@@ -98,8 +104,9 @@ class HttpClient:
             req_headers["X-API-Key"] = self._api_key
 
         try:
-            with httpx.Client(timeout=self.config.timeout) as client:
+            with httpx.Client(timeout=self.config.timeout, transport=self._transport) as client:
                 resp = client.request(
+
                     method=method_upper,
                     url=url,
                     json=json_data,

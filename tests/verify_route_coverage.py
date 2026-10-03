@@ -43,6 +43,8 @@ def analyze_route_coverage():
         # Assistant
         ("POST", "/api/v1/ai/assistant/chat"): "client.assistant.chat()",
         ("POST", "/api/v1/ai/synthesis/compare"): "client.assistant.synthesize()",
+        ("GET", "/api/v1/ai/trends"): "client.assistant.get_trends()",
+        ("POST", "/api/v1/ai/summarize"): "client.assistant.summarize()",
         # Workspaces
         ("GET", "/api/v1/workspaces/"): "client.workspaces.list()",
         ("POST", "/api/v1/workspaces/"): "client.workspaces.create()",
@@ -50,20 +52,28 @@ def analyze_route_coverage():
         ("GET", "/api/v1/geodata/districts"): "client.geodata.get_districts()",
         ("GET", "/api/v1/geodata/layers"): "client.geodata.get_layers()",
         ("POST", "/api/v1/geodata/upload-geojson"): "client.geodata.upload_geojson()",
+        ("GET", "/api/v1/geodata/geojson/{layer_key}"): "client.geodata.get_geojson()",
+        ("GET", "/api/v1/geodata/temporal-stats"): "client.geodata.get_temporal_stats()",
         # Analytics
         ("GET", "/api/v1/analytics/states"): "client.analytics.get_summary()",
         ("GET", "/api/v1/analytics/trends"): "client.analytics.get_trends()",
         ("GET", "/api/v1/analytics/compare"): "client.analytics.compare_states()",
         ("GET", "/api/v1/analytics/radar"): "client.analytics.get_climate_radar()",
+        ("GET", "/api/v1/analytics/dashboards/{category}"): "client.analytics.get_dashboard()",
+        ("GET", "/api/v1/analytics/nlgi"): "client.analytics.get_nlgi()",
         # Simulate
         ("POST", "/api/v1/simulate/evaluate"): "client.simulate.run()",
         ("GET", "/api/v1/simulate/presets"): "client.simulate.run(preset)",
+        ("GET", "/api/v1/simulate/baselines"): "client.simulate.get_baselines()",
         # ML
         ("GET", "/api/v1/ml/models"): "client.ml.get_models()",
         ("POST", "/api/v1/ml/predict-dispute"): "client.ml.predict_dispute() / client.ml.predict_dispute_risk()",
         # Innovation
         ("GET", "/api/v1/innovation/challenges"): "client.innovation.list_challenges()",
         ("POST", "/api/v1/innovation/challenges/{challenge_id}/proposals"): "client.innovation.submit_proposal()",
+        ("GET", "/api/v1/innovation/showcase"): "client.innovation.get_showcase()",
+        ("GET", "/api/v1/innovation/stats"): "client.innovation.get_stats()",
+        ("GET", "/api/v1/innovation/challenges/{challenge_id}/leaderboard"): "client.innovation.get_leaderboard()",
         # Admin
         ("GET", "/api/v1/admin/audit-logs"): "client.admin.get_audit_logs()",
         ("GET", "/api/v1/admin/stats"): "client.admin.get_telemetry()",
@@ -78,6 +88,7 @@ def analyze_route_coverage():
         # Health
         ("GET", "/api/v1/healthz"): "client.health.check()",
     }
+
 
     print("=" * 80)
     print("LAND GOVERNANCE PLATFORM - SDK TO BACKEND ROUTE COVERAGE REPORT")

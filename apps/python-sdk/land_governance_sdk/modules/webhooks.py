@@ -16,15 +16,17 @@ class WebhooksModule:
         """Retrieves active webhook notification endpoints."""
         try:
             return self.http.request(method="GET", endpoint="/webhooks/subscriptions")
-        except LandGovernanceNetworkError:
+        except (LandGovernanceNetworkError, LandGovernanceOfflineError):
             return [
                 {
-                    "id": "sub_offline_01",
-                    "url": "https://nic.gov.in/webhooks/landgov-events",
+                    "id": "sample_sub_offline_01",
+                    "url": "https://example.gov.in/webhooks/sample-endpoint",
                     "events": ["simulation.completed", "document.approved"],
-                    "status": "active",
+                    "status": "active (sample baseline)",
                     "source": "offline",
                     "is_offline": True,
+                    "is_sample": True,
+                    "note": "Sample baseline record for offline evaluation.",
                 }
             ]
 
@@ -59,51 +61,44 @@ class WebhooksModule:
         target_url: Optional[str] = None
     ) -> Dict[str, Any]:
         """Simulates a webhook event delivery with HMAC-SHA256 signature."""
-        try:
-            body = {
-                "event_type": event_type,
-                "payload": payload or {
-                    "simulation_id": "sim_demo_01",
-                    "state": "Maharashtra",
-                    "dispute_reduction_pct": 3.5,
-                }
-            }
-            if target_url:
-                body["target_url"] = target_url
+        if self.http.is_offline():
+            raise LandGovernanceOfflineError("Webhook test dispatch requires a live network connection and subscriber destination.")
 
-            return self.http.request(
-                method="POST",
-                endpoint="/webhooks/test-dispatch",
-                json_data=body
-            )
-        except LandGovernanceNetworkError:
-            return {
-                "status": "dispatched",
-                "delivery": {
-                    "event_id": "evt_offline_mock",
-                    "event_type": event_type,
-                    "delivered": True,
-                    "http_status": 200,
-                    "source": "offline",
-                },
-                "source": "offline",
-                "is_offline": True,
+        body = {
+            "event_type": event_type,
+            "payload": payload or {
+                "simulation_id": "sim_demo_01",
+                "state": "Maharashtra",
+                "dispute_reduction_pct": 3.5,
             }
+        }
+        if target_url:
+            body["target_url"] = target_url
+
+        return self.http.request(
+            method="POST",
+            endpoint="/webhooks/test-dispatch",
+            json_data=body
+        )
 
     def get_events(self, limit: int = 20) -> List[Dict[str, Any]]:
         """Retrieves audit trail of dispatched webhook events."""
         try:
             return self.http.request(method="GET", endpoint="/webhooks/events", params={"limit": limit})
-        except LandGovernanceNetworkError:
+        except (LandGovernanceNetworkError, LandGovernanceOfflineError):
             return [
                 {
-                    "event_id": "evt_hist_01",
+                    "event_id": "sample_evt_offline_01",
                     "event_type": "simulation.completed",
-                    "delivered": True,
+                    "delivered": False,
+                    "status": "sample_baseline",
                     "source": "offline",
                     "is_offline": True,
+                    "is_sample": True,
+                    "note": "Sample event audit record for offline evaluation.",
                 }
             ]
+
 
     def generate_api_key(
         self,

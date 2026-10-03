@@ -1,9 +1,9 @@
 """
 Offline Method Sweep Verification Script for Land Governance Python SDK
-Dynamically inspects dir() for all 12 modules on LandGovernanceClient to confirm
-that 100% of public methods are accounted for, verified, and strictly adhere to offline rules:
+Dynamically inspects dir() for all 13 modules on LandGovernanceClient to confirm
+that 100% of public methods (44/44) are accounted for, verified, and strictly adhere to offline rules:
 1. Every read method returns tagged data (is_offline=True or source="offline")
-2. Every write method raises LandGovernanceOfflineError
+2. Every write / live network operation raises LandGovernanceOfflineError
 """
 
 import sys
@@ -33,7 +33,6 @@ MODULE_NAMES = [
     "webhooks",
     "health",
 ]
-
 
 def run_offline_sweep():
     warnings.simplefilter("ignore", UserWarning)
@@ -103,7 +102,7 @@ def run_offline_sweep():
     except LandGovernanceOfflineError:
         record("Repository", "upload()", "WRITE", "PASSED", "Raised LandGovernanceOfflineError")
 
-    # 3. Assistant Module (2 methods)
+    # 3. Assistant Module (4 methods)
     try:
         ans = client.assistant.chat("Explain land ceiling limits")
         record("Assistant", "chat()", "READ", "PASSED", "returned offline answer")
@@ -111,10 +110,22 @@ def run_offline_sweep():
         record("Assistant", "chat()", "READ", "FAILED", str(e))
 
     try:
-        syn = client.assistant.synthesize("SVAMITVA")
+        syn = client.assistant.synthesize(["SVAMITVA"])
         record("Assistant", "synthesize()", "READ", "PASSED", f"source='{syn.get('source')}'")
     except Exception as e:
         record("Assistant", "synthesize()", "READ", "FAILED", str(e))
+
+    try:
+        trends = client.assistant.get_trends()
+        record("Assistant", "get_trends()", "READ", "PASSED", f"topics={len(trends.get('trending_topics', []))}")
+    except Exception as e:
+        record("Assistant", "get_trends()", "READ", "FAILED", str(e))
+
+    try:
+        summ = client.assistant.summarize("SVAMITVA Act")
+        record("Assistant", "summarize()", "READ", "PASSED", f"summary length={len(summ.get('summary', ''))}")
+    except Exception as e:
+        record("Assistant", "summarize()", "READ", "FAILED", str(e))
 
     # 4. Workspaces Module (2 methods)
     try:
@@ -124,14 +135,14 @@ def run_offline_sweep():
         record("Workspaces", "list()", "READ", "FAILED", str(e))
 
     try:
-        client.workspaces.create("Test Workspace")
+        client.workspaces.create("New Workspace")
         record("Workspaces", "create()", "WRITE", "FAILED", "Did not raise LandGovernanceOfflineError")
     except LandGovernanceOfflineError:
         record("Workspaces", "create()", "WRITE", "PASSED", "Raised LandGovernanceOfflineError")
 
-    # 5. Geodata Module (3 methods)
+    # 5. Geodata Module (5 methods)
     try:
-        dists = client.geodata.get_districts()
+        dists = client.geodata.get_districts(limit=7)
         record("Geodata", "get_districts()", "READ", "PASSED", f"returned {len(dists.districts)} districts, source='{dists.source}'")
     except Exception as e:
         record("Geodata", "get_districts()", "READ", "FAILED", str(e))
@@ -143,27 +154,39 @@ def run_offline_sweep():
         record("Geodata", "get_layers()", "READ", "FAILED", str(e))
 
     try:
-        client.geodata.upload_geojson("test_layer", {"type": "FeatureCollection", "features": []})
+        client.geodata.upload_geojson("layer", {"type": "FeatureCollection", "features": []})
         record("Geodata", "upload_geojson()", "WRITE", "FAILED", "Did not raise LandGovernanceOfflineError")
     except LandGovernanceOfflineError:
         record("Geodata", "upload_geojson()", "WRITE", "PASSED", "Raised LandGovernanceOfflineError")
 
-    # 6. Analytics Module (4 methods)
     try:
-        sum_data = client.analytics.get_summary()
-        record("Analytics", "get_summary()", "READ", "PASSED", f"total_districts={sum_data.get('total_districts')}")
+        geo = client.geodata.get_geojson("districts")
+        record("Geodata", "get_geojson()", "READ", "PASSED", f"features={len(geo.get('features', []))}, sample={geo.get('is_sample')}")
+    except Exception as e:
+        record("Geodata", "get_geojson()", "READ", "FAILED", str(e))
+
+    try:
+        tstats = client.geodata.get_temporal_stats()
+        record("Geodata", "get_temporal_stats()", "READ", "PASSED", f"year={tstats.get('year')}, sample={tstats.get('is_sample')}")
+    except Exception as e:
+        record("Geodata", "get_temporal_stats()", "READ", "FAILED", str(e))
+
+    # 6. Analytics Module (6 methods)
+    try:
+        summary = client.analytics.get_summary()
+        record("Analytics", "get_summary()", "READ", "PASSED", f"total_districts={summary.get('total_districts')}")
     except Exception as e:
         record("Analytics", "get_summary()", "READ", "FAILED", str(e))
 
     try:
         trends = client.analytics.get_trends("Maharashtra")
-        record("Analytics", "get_trends()", "READ", "PASSED", f"returned {len(trends.get('trend_points', []))} trend points")
+        record("Analytics", "get_trends()", "READ", "PASSED", f"returned {len(trends.get('trend_points', []))} points")
     except Exception as e:
         record("Analytics", "get_trends()", "READ", "FAILED", str(e))
 
     try:
-        cmp_st = client.analytics.compare_states("Maharashtra", "Gujarat")
-        record("Analytics", "compare_states()", "READ", "PASSED", f"compared states")
+        comp = client.analytics.compare_states("Maharashtra", "Karnataka")
+        record("Analytics", "compare_states()", "READ", "PASSED", "compared states")
     except Exception as e:
         record("Analytics", "compare_states()", "READ", "FAILED", str(e))
 
@@ -173,25 +196,44 @@ def run_offline_sweep():
     except Exception as e:
         record("Analytics", "get_climate_radar()", "READ", "FAILED", str(e))
 
-    # 7. Simulate Module (2 methods)
     try:
-        sim = client.simulate.run(policy_variable="digital_cadastre", target_value=85.0)
-        record("Simulate", "run()", "READ", "PASSED", f"is_offline={sim.is_offline}, metric={sim.summary.confidence_metric} {sim.summary.confidence_range}")
+        dash = client.analytics.get_dashboard("disputes")
+        record("Analytics", "get_dashboard()", "READ", "PASSED", f"kpis={len(dash.get('kpis', []))}, sample={dash.get('is_sample')}")
+    except Exception as e:
+        record("Analytics", "get_dashboard()", "READ", "FAILED", str(e))
+
+    try:
+        nlgi = client.analytics.get_nlgi()
+        record("Analytics", "get_nlgi()", "READ", "PASSED", f"rankings={len(nlgi.get('rankings', []))}, sample={nlgi.get('is_sample')}")
+    except Exception as e:
+        record("Analytics", "get_nlgi()", "READ", "FAILED", str(e))
+
+    # 7. Simulate Module (3 methods)
+    try:
+        sim = client.simulate.run(policy_variable="digital_cadastre", target_value=80.0)
+        bracket = sim.summary.confidence_range
+        record("Simulate", "run()", "READ", "PASSED", f"is_offline={sim.is_offline}, metric={sim.summary.confidence_metric} [{bracket[0]}, {bracket[1]}]")
     except Exception as e:
         record("Simulate", "run()", "READ", "FAILED", str(e))
 
     try:
-        s1 = client.simulate.run(policy_variable="digital_cadastre", target_value=85.0)
+        s1 = client.simulate.run(policy_variable="digital_cadastre", target_value=75.0)
         s2 = client.simulate.run(policy_variable="digital_cadastre", target_value=95.0)
-        cmp_sim = client.simulate.compare(s1, s2)
-        record("Simulate", "compare()", "READ", "PASSED", f"winner: '{cmp_sim.winner[:30]}...'")
+        comp = client.simulate.compare(s1, s2)
+        record("Simulate", "compare()", "READ", "PASSED", f"winner: '{comp.winner[:30]}...'")
     except Exception as e:
         record("Simulate", "compare()", "READ", "FAILED", str(e))
+
+    try:
+        base = client.simulate.get_baselines()
+        record("Simulate", "get_baselines()", "READ", "PASSED", f"states={len(base.get('states', {}))}, sample={base.get('is_sample')}")
+    except Exception as e:
+        record("Simulate", "get_baselines()", "READ", "FAILED", str(e))
 
     # 8. ML Module (3 methods)
     try:
         models = client.ml.get_models()
-        record("ML", "get_models()", "READ", "PASSED", f"returned models catalog")
+        record("ML", "get_models()", "READ", "PASSED", "returned models catalog")
     except Exception as e:
         record("ML", "get_models()", "READ", "FAILED", str(e))
 
@@ -207,7 +249,7 @@ def run_offline_sweep():
     except Exception as e:
         record("ML", "predict_dispute_risk()", "READ", "FAILED", str(e))
 
-    # 9. Innovation Module (2 methods)
+    # 9. Innovation Module (5 methods)
     try:
         chs = client.innovation.list_challenges()
         record("Innovation", "list_challenges()", "READ", "PASSED", f"returned {len(chs)} challenges")
@@ -219,6 +261,24 @@ def run_offline_sweep():
         record("Innovation", "submit_proposal()", "WRITE", "FAILED", "Did not raise LandGovernanceOfflineError")
     except LandGovernanceOfflineError:
         record("Innovation", "submit_proposal()", "WRITE", "PASSED", "Raised LandGovernanceOfflineError")
+
+    try:
+        show = client.innovation.get_showcase()
+        record("Innovation", "get_showcase()", "READ", "PASSED", f"items={len(show)}, sample={show[0].get('is_sample')}")
+    except Exception as e:
+        record("Innovation", "get_showcase()", "READ", "FAILED", str(e))
+
+    try:
+        istats = client.innovation.get_stats()
+        record("Innovation", "get_stats()", "READ", "PASSED", f"active={istats.get('active_challenges')}")
+    except Exception as e:
+        record("Innovation", "get_stats()", "READ", "FAILED", str(e))
+
+    try:
+        lead = client.innovation.get_leaderboard("00000000-0000-0000-0000-000000000001")
+        record("Innovation", "get_leaderboard()", "READ", "PASSED", f"rankings={len(lead)}, sample={lead[0].get('is_sample')}")
+    except Exception as e:
+        record("Innovation", "get_leaderboard()", "READ", "FAILED", str(e))
 
     # 10. Admin Module (2 methods)
     try:
@@ -243,21 +303,21 @@ def run_offline_sweep():
     # 12. Webhooks Module (5 methods)
     try:
         wh_subs = client.webhooks.list_subscriptions()
-        record("Webhooks", "list_subscriptions()", "READ", "PASSED", f"returned {len(wh_subs)} subscriptions")
+        record("Webhooks", "list_subscriptions()", "READ", "PASSED", f"returned {len(wh_subs)} sample subscriptions")
     except Exception as e:
         record("Webhooks", "list_subscriptions()", "READ", "FAILED", str(e))
 
     try:
         wh_evs = client.webhooks.get_events()
-        record("Webhooks", "get_events()", "READ", "PASSED", f"returned {len(wh_evs)} events")
+        record("Webhooks", "get_events()", "READ", "PASSED", f"returned {len(wh_evs)} sample events")
     except Exception as e:
         record("Webhooks", "get_events()", "READ", "FAILED", str(e))
 
     try:
-        wh_disp = client.webhooks.test_dispatch()
-        record("Webhooks", "test_dispatch()", "READ", "PASSED", f"status='{wh_disp.get('status')}'")
-    except Exception as e:
-        record("Webhooks", "test_dispatch()", "READ", "FAILED", str(e))
+        client.webhooks.test_dispatch()
+        record("Webhooks", "test_dispatch()", "WRITE", "FAILED", "Did not raise LandGovernanceOfflineError")
+    except LandGovernanceOfflineError:
+        record("Webhooks", "test_dispatch()", "WRITE", "PASSED", "Raised LandGovernanceOfflineError")
 
     try:
         client.webhooks.subscribe("https://example.com/webhook")
@@ -277,7 +337,6 @@ def run_offline_sweep():
         record("Health", "check()", "READ", "PASSED", f"status='{hlth.get('status')}'")
     except Exception as e:
         record("Health", "check()", "READ", "FAILED", str(e))
-
 
     # Print Table
     print("\n" + "="*80)

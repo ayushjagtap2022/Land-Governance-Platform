@@ -209,3 +209,20 @@ class SimulateModule:
             },
             winner=f"{winner} is recommended (High-yield policy trajectory)",
         )
+
+    def get_baselines(self) -> Dict[str, Any]:
+        """Retrieves empirical baseline policy parameters and indicators across states."""
+        try:
+            return self.http.request(method="GET", endpoint="/simulate/baselines")
+        except LandGovernanceNetworkError:
+            return {
+                "states": {
+                    "Maharashtra": {"ceiling": 54.0, "tax": 8.0, "budget": 120.0, "window": 180.0},
+                    "Karnataka": {"ceiling": 54.0, "tax": 7.5, "budget": 110.0, "window": 160.0},
+                    "National": {"ceiling": 54.0, "tax": 8.0, "budget": 100.0, "window": 180.0},
+                },
+                "source": "offline",
+                "is_offline": True,
+                "is_sample": True,
+            }
+

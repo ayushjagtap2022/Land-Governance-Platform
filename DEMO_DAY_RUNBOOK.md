@@ -30,6 +30,13 @@ curl http://localhost:3001
 3. **Tab 3**: `http://localhost:8000/docs` (FastAPI Swagger UI — Module 9)
 4. **Tab 4**: Split Terminal ready for the 30-second Python SDK demo.
 
+### 4. Sync OpenAPI Fixture (If Backend Routes Modified)
+Ensure the test suite's route drift contract fixture is aligned with the running FastAPI backend:
+```bash
+python -c "import json, sys; sys.path.insert(0, 'apps/api'); from app.main import app; json.dump(app.openapi(), open('tests/fixtures/openapi.json', 'w'), indent=2)"
+```
+
+
 ---
 
 ## 🎯 The 5-Minute Winning Pitch Flow

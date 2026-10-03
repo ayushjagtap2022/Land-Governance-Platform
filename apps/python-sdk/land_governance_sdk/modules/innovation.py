@@ -38,3 +38,59 @@ class InnovationModule:
             json_data={"challenge_id": challenge_id, "title": title, "description": description},
             is_write_op=True,
         )
+
+    def get_showcase(self, skip: int = 0, limit: int = 10) -> List[Dict[str, Any]]:
+        """Retrieves featured successful pilot projects from the innovation showcase."""
+        try:
+            return self.http.request(method="GET", endpoint="/innovation/showcase", params={"skip": skip, "limit": limit})
+        except LandGovernanceNetworkError:
+            return [
+                {
+                    "id": "showcase-01",
+                    "title": "AI Cadastral Boundary Reconciler",
+                    "team": "IIT Bombay GeoAI Lab",
+                    "impact": "40% reduction in revenue court boundary hearings in Satara",
+                    "status": "Pilot Completed",
+                    "source": "offline",
+                    "is_offline": True,
+                    "is_sample": True,
+                }
+            ]
+
+    def get_stats(self) -> Dict[str, Any]:
+        """Retrieves innovation ecosystem aggregate statistics."""
+        try:
+            return self.http.request(method="GET", endpoint="/innovation/stats")
+        except LandGovernanceNetworkError:
+            return {
+                "active_challenges": 3,
+                "submitted_proposals": 42,
+                "funded_pilots": 8,
+                "total_grants_awarded_lakhs": 45.0,
+                "source": "offline",
+                "is_offline": True,
+                "is_sample": True,
+            }
+
+    def get_leaderboard(self, challenge_id: str, limit: int = 10) -> List[Dict[str, Any]]:
+        """Retrieves ranked public leaderboard for an innovation challenge."""
+        try:
+            return self.http.request(
+                method="GET",
+                endpoint=f"/innovation/challenges/{challenge_id}/leaderboard",
+                params={"limit": limit}
+            )
+        except LandGovernanceNetworkError:
+            return [
+                {
+                    "rank": 1,
+                    "proposal_id": "prop-01",
+                    "title": "Sub-Centimeter Ortho-rectified Cadastral Matcher",
+                    "jury_score": 94.5,
+                    "votes": 128,
+                    "source": "offline",
+                    "is_offline": True,
+                    "is_sample": True,
+                }
+            ]
+
