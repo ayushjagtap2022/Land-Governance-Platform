@@ -1,6 +1,6 @@
 {
   "name": "land-governance-platform",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Official TypeScript & JavaScript SDK for the National Land Governance Platform (SIH PS 26019)",
   "keywords": [
     "land-governance",
@@ -20,7 +20,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ayushjagtap2022/Land-Governance-Platform.git",
+    "url": "git+https://github.com/ayushjagtap2022/Land-Governance-Platform.git",
     "directory": "apps/sdk"
   },
   "main": "./dist/index.cjs",

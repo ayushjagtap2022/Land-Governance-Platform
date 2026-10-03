@@ -18,7 +18,7 @@ export * from './types';
  *
  * @example
  * ```ts
- * import { createClient } from '@land-governance/sdk';
+ * import { createClient } from 'land-governance-platform';
  *
  * const client = createClient({
  *   baseUrl: 'http://127.0.0.1:8000/api/v1',

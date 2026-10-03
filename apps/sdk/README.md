@@ -1,8 +1,8 @@
-# @land-governance/sdk
+# land-governance-platform
 
-> Official TypeScript & JavaScript SDK for the **National Land Governance Platform** (Smart India Hackathon 2024 / SIH PS 26019).
+> Official TypeScript & JavaScript SDK for the **National Land Governance Platform** (Smart India Hackathon / SIH PS 26019).
 
-[![npm version](https://img.shields.io/npm/v/@land-governance/sdk.svg)](https://www.npmjs.com/package/@land-governance/sdk)
+[![npm version](https://img.shields.io/npm/v/land-governance-platform.svg?color=cb3837)](https://www.npmjs.com/package/land-governance-platform)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-3178C6.svg)](https://www.typescriptlang.org/)
 [![Node.js 18+](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
@@ -31,16 +31,16 @@ A robust, enterprise-grade, fully typed client library designed for developers, 
 
 ```bash
 # npm
-npm install @land-governance/sdk
+npm install land-governance-platform
 
 # pnpm
-pnpm add @land-governance/sdk
+pnpm add land-governance-platform
 
 # yarn
-yarn add @land-governance/sdk
+yarn add land-governance-platform
 
 # bun
-bun add @land-governance/sdk
+bun add land-governance-platform
 ```
 
 ---
@@ -48,11 +48,11 @@ bun add @land-governance/sdk
 ## Quick Start
 
 ```typescript
-import { createClient } from '@land-governance/sdk';
+import { createClient } from 'land-governance-platform';
 
 // 1. Initialize client (can optionally pass existing token)
 const client = createClient({
-  baseUrl: 'http://127.0.0.1:8000/api/v1',
+  baseUrl: 'https://land-governance-platform-production.up.railway.app/api/v1', // or local 'http://127.0.0.1:8000/api/v1'
   // token: 'existing_jwt_token', // Optional: set token directly
 });
 
@@ -461,7 +461,7 @@ subscription.close();
 The SDK provides strongly typed errors with intuitive helper getters:
 
 ```typescript
-import { LandGovernanceApiError, LandGovernanceTimeoutError } from '@land-governance/sdk';
+import { LandGovernanceApiError, LandGovernanceTimeoutError } from 'land-governance-platform';
 
 try {
   await client.repository.get('non-existent-id');
