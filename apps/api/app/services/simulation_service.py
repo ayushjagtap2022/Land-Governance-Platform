@@ -296,7 +296,7 @@ class SimulationService:
         
         # Fast-track courts capacity model:
         # Modelling assumption (illustrative, not empirically estimated) with diminishing returns.
-        # Asymptotically approaches statutory minimum window (30 days) to prevent abrupt saturation.
+        # Asymptotically approaches assumed minimum window (30 days) to prevent abrupt saturation.
         if params.fast_track_courts is not None:
             eff_courts = float(params.fast_track_courts)
             accel_coeff = float(params.court_acceleration_days_per_bench)

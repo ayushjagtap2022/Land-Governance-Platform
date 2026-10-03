@@ -178,11 +178,35 @@ def test_http_timeout_fallback():
         assert res.source == "offline"
         assert len(res.districts) > 0
 
-def test_invalid_policy_target_value_validation():
-    """Verify negative or out-of-range simulation targets trigger validation error."""
+def test_random_input_sweep_confidence_bracket():
+    """Sweeps multiple random parameter configurations to assert lower <= point estimate <= upper."""
+    import random
     client = LandGovernanceClient(offline=True)
-    res = client.simulate.run(policy_variable="digital_cadastre", target_value=150.0)
-    assert res.parameters.target_value == 150.0
+    random.seed(42)
+
+    variables = ["digital_cadastre", "land_ceiling", "tax_incentive", "fast_track_courts"]
+    states = ["Maharashtra", "Karnataka", "National"]
+
+    for _ in range(15):
+        var = random.choice(variables)
+        val = random.uniform(20.0, 95.0)
+        inv = random.uniform(50.0, 300.0)
+        st = random.choice(states)
+
+        sim = client.simulate.run(
+            policy_variable=var,
+            target_value=val,
+            investment_cr=inv,
+            state=st
+        )
+
+        pt = sim.summary.dispute_reduction_pct
+        lower, upper = sim.summary.confidence_range
+
+        assert lower <= pt <= upper, (
+            f"Confidence bracket violation for {var}={val}, inv={inv}: "
+            f"lower ({lower}) <= point ({pt}) <= upper ({upper}) is False!"
+        )
 
 if __name__ == "__main__":
     test_client_initialization()
@@ -198,4 +222,5 @@ if __name__ == "__main__":
     test_500_server_error_triggers_fallback_when_enabled()
     test_http_timeout_fallback()
     test_invalid_policy_target_value_validation()
-    print("ALL 13 PYTHON SDK TESTS PASSED SUCCESSFULLY!")
+    test_random_input_sweep_confidence_bracket()
+    print("ALL PYTHON SDK TESTS PASSED SUCCESSFULLY!")

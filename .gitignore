@@ -63,6 +63,10 @@ Land Governance Platform Datasets/
 apps/api/uploads/
 **/uploads/
 uploads/
+apps/api/app/data/api_keys.json
+apps/api/app/data/webhook_subscriptions.json
+**/api_keys.json
+**/webhook_subscriptions.json
 
 # OS Files
 .DS_Store

@@ -109,6 +109,9 @@ class SimulateModule:
 
                 if "projected" in dig and "current" in dig:
                     dig_gain = round(max(0.0, float(dig["projected"]) - float(dig["current"])), 1)
+                elif policy_variable == "fast_track_courts" and budget is None:
+                    # Establishing fast-track courts does not increase digital cadastre coverage
+                    dig_gain = 0.0
                 else:
                     dig_gain = round(min(35.0, (b_val / 120.0) * 18.5), 1)
 

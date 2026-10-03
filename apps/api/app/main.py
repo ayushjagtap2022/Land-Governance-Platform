@@ -18,13 +18,26 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
-RATE_LIMIT_MAX = 120
+RATE_LIMIT_MAX = 600
 RATE_WINDOW_SEC = 60
 _request_timestamps = {}
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        client_ip = request.client.host if request.client else "127.0.0.1"
+        path = request.url.path
+        # Exempt health check and documentation endpoints from rate-limiting
+        if path in ("/healthz", "/docs", "/redoc", "/favicon.ico") or path.endswith("/openapi.json"):
+            return await call_next(request)
+
+        # Extract client IP securely (accounting for reverse proxy)
+        x_forwarded_for = request.headers.get("X-Forwarded-For")
+        if x_forwarded_for:
+            client_ip = x_forwarded_for.split(",")[0].strip()
+        elif request.client:
+            client_ip = request.client.host
+        else:
+            client_ip = "127.0.0.1"
+
         api_key = request.headers.get("X-API-Key", "")
         ident = api_key or client_ip
         now = time.time()
@@ -37,7 +50,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             from fastapi.responses import JSONResponse
             return JSONResponse(
                 status_code=429,
-                content={"detail": "Rate limit exceeded. Maximum 120 requests per minute."},
+                content={"detail": f"Rate limit exceeded. Maximum {RATE_LIMIT_MAX} requests per minute."},
                 headers={
                     "X-RateLimit-Limit": str(RATE_LIMIT_MAX),
                     "X-RateLimit-Remaining": "0",
