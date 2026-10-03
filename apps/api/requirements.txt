@@ -8,6 +8,7 @@ alembic
 pgvector
 geoalchemy2
 passlib[bcrypt]
+bcrypt==4.0.1
 python-jose[cryptography]
 
 broadcaster[redis]>=0.2.0
@@ -23,7 +24,7 @@ psycopg[binary]>=3.2.0
 boto3>=1.35.0
 pandas>=2.2.0
 numpy>=2.0.0
-scikit-learn>=1.5.0
+scikit-learn>=1.8.0,<1.9.0
 statsmodels>=0.14.0
 pypdf>=5.0.0
 pillow>=11.0.0

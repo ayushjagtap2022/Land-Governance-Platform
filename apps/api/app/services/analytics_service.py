@@ -128,20 +128,26 @@ class AnalyticsService:
         clean_a = state_a.strip().upper()
         clean_b = state_b.strip().upper()
 
-        sub_a = self.df[self.df["state_lookup"] == clean_a]
-        sub_b = self.df[self.df["state_lookup"] == clean_b]
+        if self.df.empty or "state_lookup" not in self.df.columns:
+            rf_a, rf_b = 45.0, 50.0
+            cult_a, cult_b = 30.0, 35.0
+            irrig_a, irrig_b = 35.0, 30.0
+            clim_a, clim_b = 55.0, 60.0
+        else:
+            sub_a = self.df[self.df["state_lookup"] == clean_a]
+            sub_b = self.df[self.df["state_lookup"] == clean_b]
 
-        rf_a = float(sub_a["rf_departure_var"].mean()) if not sub_a.empty else 45.0
-        rf_b = float(sub_b["rf_departure_var"].mean()) if not sub_b.empty else 50.0
+            rf_a = float(sub_a["rf_departure_var"].mean()) if not sub_a.empty and "rf_departure_var" in sub_a else 45.0
+            rf_b = float(sub_b["rf_departure_var"].mean()) if not sub_b.empty and "rf_departure_var" in sub_b else 50.0
 
-        cult_a = float(sub_a["cultivator_ratio"].mean() * 100) if not sub_a.empty else 30.0
-        cult_b = float(sub_b["cultivator_ratio"].mean() * 100) if not sub_b.empty else 35.0
+            cult_a = float(sub_a["cultivator_ratio"].mean() * 100) if not sub_a.empty and "cultivator_ratio" in sub_a else 30.0
+            cult_b = float(sub_b["cultivator_ratio"].mean() * 100) if not sub_b.empty and "cultivator_ratio" in sub_b else 35.0
 
-        irrig_a = float(sub_a["irrigation_intensity_pct"].mean()) if not sub_a.empty and "irrigation_intensity_pct" in sub_a else 35.0
-        irrig_b = float(sub_b["irrigation_intensity_pct"].mean()) if not sub_b.empty and "irrigation_intensity_pct" in sub_b else 30.0
+            irrig_a = float(sub_a["irrigation_intensity_pct"].mean()) if not sub_a.empty and "irrigation_intensity_pct" in sub_a else 35.0
+            irrig_b = float(sub_b["irrigation_intensity_pct"].mean()) if not sub_b.empty and "irrigation_intensity_pct" in sub_b else 30.0
 
-        clim_a = float(sub_a["target_climate_vulnerability"].mean()) if not sub_a.empty else 55.0
-        clim_b = float(sub_b["target_climate_vulnerability"].mean()) if not sub_b.empty else 60.0
+            clim_a = float(sub_a["target_climate_vulnerability"].mean()) if not sub_a.empty and "target_climate_vulnerability" in sub_a else 55.0
+            clim_b = float(sub_b["target_climate_vulnerability"].mean()) if not sub_b.empty and "target_climate_vulnerability" in sub_b else 60.0
 
         return [
             {"subject": "Drought Exposure", "A": round(min(100, rf_a * 1.8), 0), "B": round(min(100, rf_b * 1.8), 0), "fullMark": 100},

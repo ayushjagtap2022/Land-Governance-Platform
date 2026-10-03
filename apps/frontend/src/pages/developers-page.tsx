@@ -19,26 +19,29 @@ import {
   FileCheck,
   Zap,
 } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
 
 function Breadcrumb({ current }: { current: string }) {
+  const { t } = useLanguage();
   return (
     <div className="mb-4 flex items-center gap-2 text-xs text-slate-500">
-      <span>National Land Governance Platform</span>
+      <span>{t('app_name')}</span>
       <ChevronRight className="h-3 w-3" />
-      <span className="font-semibold text-[#1E293B]">{current}</span>
+      <span className="font-semibold text-[#1E293B]">{t(current)}</span>
     </div>
   );
 }
 
 function PageFrame({ title, kicker, description, children, actions }: { title: string; kicker: string; description: string; children: React.ReactNode; actions?: React.ReactNode }) {
+  const { t } = useLanguage();
   return (
     <section className="w-full px-4 py-5 md:px-8 md:py-7">
       <Breadcrumb current={title} />
       <div className="mb-6 flex flex-col justify-between gap-4 border-b border-slate-300 pb-5 lg:flex-row lg:items-end">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">{kicker}</p>
-          <h1 className="font-serif text-3xl font-semibold tracking-tight text-[#1E293B] md:text-4xl">{title}</h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{description}</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">{t(kicker)}</p>
+          <h1 className="font-serif text-3xl font-semibold tracking-tight text-[#1E293B] md:text-4xl">{t(title)}</h1>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{t(description)}</p>
         </div>
         {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
       </div>
@@ -263,19 +266,19 @@ export default function DevelopersPage() {
 
   return (
     <PageFrame
-      kicker="Interoperability / Institutional Access"
-      title="Developer API Explorer"
-      description="Connect approved applications to discoverable land-governance metadata, run headless simulations, and monitor webhooks."
+      kicker="API access / developer tools"
+      title="Developer APIs &amp; Integrations"
+      description="Access official land governance APIs, test integration endpoints, query district statistics, and connect external applications."
       actions={
         <button className="focus-ring flex items-center gap-2 border border-[#1E293B] bg-[#1E293B] px-3 py-2 text-xs font-bold text-white hover:bg-slate-800" type="button">
-          <Database className="h-3.5 w-3.5" /> Download Full OpenAPI Spec
+          <Database className="h-3.5 w-3.5" /> Download API Specifications
         </button>
       }
     >
       <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
         {/* API Documentation */}
         <div className="space-y-6">
-          <Panel title="Interactive API Documentation">
+          <Panel title="API Endpoints &amp; Testing">
             <div className="flex border-b border-slate-200 bg-slate-50 overflow-x-auto">
               {ENDPOINTS.map((ep, idx) => (
                 <button
@@ -397,8 +400,7 @@ export default function DevelopersPage() {
       {/* National Land Systems Interop Hub (Sandbox Test Connectors) */}
       <div className="mt-8">
         <Panel
-          title="National Land Systems Interop Hub (Sandbox Test Connectors)"
-          headerAction={
+          title="National Land Systems Interop Hub (Sandbox Test Connectors)"          headerAction={
             <span className="text-[11px] font-mono font-bold text-emerald-700 bg-emerald-50 px-2.5 py-1 border border-emerald-200 flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
               Federated Gateway Active (Testnet)
@@ -408,8 +410,7 @@ export default function DevelopersPage() {
           <div className="p-5 space-y-6">
             <p className="text-xs text-slate-600 max-w-3xl leading-relaxed">
               Execute live simulated handshakes and integration queries across core Government of India land infrastructure.
-              Validate ULPIN cadastral bindings, verify pending high-court civil injunctions via e-Courts, and retrieve WGS84 GeoJSON polygons from State Bhunaksha instances.
-            </p>
+              Validate ULPIN cadastral bindings, verify pending high-court civil injunctions via e-Courts, and retrieve WGS84 GeoJSON polygons from State Bhunaksha instances.            </p>
 
             {/* Connector Selector Tabs */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -427,8 +428,7 @@ export default function DevelopersPage() {
                   <span className="font-bold text-xs text-[#1E293B]">e-Courts Dispute Linkage</span>
                 </div>
                 <p className="text-[11px] text-slate-500 line-clamp-2">
-                  Check civil court injunctions, lis pendens, and title contestations via CNR & ULPIN.
-                </p>
+                  Check civil court injunctions, lis pendens, and title contestations via CNR & ULPIN.                </p>
               </button>
 
               <button
@@ -445,8 +445,7 @@ export default function DevelopersPage() {
                   <span className="font-bold text-xs text-[#1E293B]">Bhunaksha Geo-Service</span>
                 </div>
                 <p className="text-[11px] text-slate-500 line-clamp-2">
-                  Stream vector GeoJSON cadastral polygons, centroid coordinates, and adjacent khasras.
-                </p>
+                  Stream vector GeoJSON cadastral polygons, centroid coordinates, and adjacent khasras.                </p>
               </button>
 
               <button
@@ -463,8 +462,7 @@ export default function DevelopersPage() {
                   <span className="font-bold text-xs text-[#1E293B]">SVAMITVA & DigiLocker</span>
                 </div>
                 <p className="text-[11px] text-slate-500 line-clamp-2">
-                  Verify drone survey orthomosaic tokens and cryptographic Gram Panchayat property cards.
-                </p>
+                  Verify drone survey orthomosaic tokens and cryptographic Gram Panchayat property cards.                </p>
               </button>
             </div>
 

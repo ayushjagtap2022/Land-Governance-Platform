@@ -14,11 +14,12 @@ import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 
 function Breadcrumb({ current }: { current: string }) {
+  const { t } = useLanguage();
   return (
     <div className="mb-4 flex items-center gap-2 text-xs text-slate-500" data-testid="text-breadcrumb">
-      <span>National Land Governance Platform</span>
+      <span>{t('app_name')}</span>
       <ChevronRight className="h-3 w-3" />
-      <span className="font-semibold text-[#244562]">{current}</span>
+      <span className="font-semibold text-[#244562]">{t(current)}</span>
     </div>
   );
 }
@@ -182,23 +183,23 @@ export default function SynthesisPage() {
           className="flex items-center gap-2 border-b-2 border-[#244562] bg-[#f0f4f8] px-4 py-2 text-xs font-bold text-[#244562]"
         >
           <Scale className="h-4 w-4 text-[#244562]" />
-          Cross-Document Policy Synthesis
+          Compare Policies Side-by-Side
         </div>
       </div>
 
       <div className="mb-6 flex flex-col justify-between gap-4 border-b border-slate-300 pb-5 lg:flex-row lg:items-end">
         <div>
-          <p className="section-kicker mb-2">Research support / cross-document comparison</p>
+          <p className="section-kicker mb-2">Policy comparison tool</p>
           <h1 className="font-serif text-3xl font-semibold tracking-tight text-[#132f4c] md:text-4xl" data-testid="text-page-title-research-synthesis">Research Synthesis</h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Select 2 to 5 indexed records to compare their strategic objectives, consensus points, policy gaps, and recommended actionable next steps for DoLR.</p>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Pick 2 to 5 documents to compare their goals, areas of agreement, gaps, and recommended next steps.</p>
         </div>
-        <Link className="focus-ring flex items-center gap-2 border border-[#244562] px-3 py-2 text-xs font-bold text-[#244562] hover:bg-slate-50" data-testid="link-back-to-assistant" href="/assistant"><FileCheck2 className="h-3.5 w-3.5" />Switch to Policy Q&amp;A</Link>
+        <Link className="focus-ring flex items-center gap-2 border border-[#244562] px-3 py-2 text-xs font-bold text-[#244562] hover:bg-slate-50" data-testid="link-back-to-assistant" href="/assistant"><FileCheck2 className="h-3.5 w-3.5" />Go to AI Assistant</Link>
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[320px_minmax(0,1fr)]">
         <Panel eyebrow="Evidence selection" title="Choose source records">
           <div className="border-b border-slate-200 bg-[#fff8e8] px-4 py-3 text-xs leading-5 text-slate-700">
-            Select 2 to 5 documents. The synthesis matrix will be grounded exclusively in the selected instruments.
+            Select 2 to 5 documents. The comparison will be based only on the documents you select.
             <div className="mt-2 flex gap-2">
               <button
                 type="button"

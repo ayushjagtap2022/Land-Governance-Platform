@@ -23,26 +23,29 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import api from '@/lib/api';
+import { useLanguage } from '@/context/LanguageContext';
 
 function Breadcrumb({ current }: { current: string }) {
+  const { t } = useLanguage();
   return (
     <div className="mb-4 flex items-center gap-2 text-xs text-slate-500">
-      <span>National Land Governance Platform</span>
+      <span>{t('app_name')}</span>
       <ChevronRight className="h-3 w-3" />
-      <span className="font-semibold text-[#1E293B]">{current}</span>
+      <span className="font-semibold text-[#1E293B]">{t(current)}</span>
     </div>
   );
 }
 
 function PageFrame({ title, kicker, description, children, actions }: { title: string; kicker: string; description: string; children: React.ReactNode; actions?: React.ReactNode }) {
+  const { t } = useLanguage();
   return (
     <section className="w-full px-4 py-5 md:px-8 md:py-7">
       <Breadcrumb current={title} />
       <div className="mb-6 flex flex-col justify-between gap-4 border-b border-slate-300 pb-5 lg:flex-row lg:items-end">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">{kicker}</p>
-          <h1 className="font-serif text-3xl font-semibold tracking-tight text-[#1E293B] md:text-4xl">{title}</h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{description}</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">{t(kicker)}</p>
+          <h1 className="font-serif text-3xl font-semibold tracking-tight text-[#1E293B] md:text-4xl">{t(title)}</h1>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{t(description)}</p>
         </div>
         {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
       </div>
@@ -111,24 +114,24 @@ type PilotItem = {
 const DEFAULT_CHALLENGES: ChallengeItem[] = [
   {
     id: 'CHAL-2025-01',
-    title: 'AI Automated Cadastral Boundary Overlap Resolution',
-    description: 'Develop computer-vision and topological graph algorithms to resolve parcel overlaps between Survey of India baselines and state revenue maps.',
+    title: 'AI-Powered Land Boundary Overlap Resolution',
+    description: 'Develop smart algorithms to automatically fix overlapping boundaries between Survey of India drone maps and state revenue records.',
     total_grant_pool: 75,
     deadline: '2025-11-30',
     eligibility_criteria: 'Accredited Indian Universities, IITs, NITs, and geospatial startups with DPIIT recognition.',
   },
   {
     id: 'CHAL-2025-02',
-    title: 'Offline-First Mobile Cadastral Verification for Scheduled Areas',
-    description: 'Low-latency GIS mobile toolkit for village revenue officers in remote tribal belts with intermittent connectivity.',
+    title: 'Offline Mobile Land Verification for Remote & Tribal Areas',
+    description: 'Easy-to-use mobile GIS app for village revenue officers in remote areas with poor internet connectivity.',
     total_grant_pool: 50,
     deadline: '2025-12-15',
     eligibility_criteria: 'Consortia of State Remote Sensing Centers, IIITs, and verified civil society partners.',
   },
   {
     id: 'CHAL-2025-03',
-    title: 'Blockchain-Audited Mutation Ledger for Urban Peri-Centers',
-    description: 'Zero-knowledge verified tamper-proof registry for automated registry-to-mutation handshakes.',
+    title: 'Tamper-Proof Land Transfer & Mutation Ledger',
+    description: 'Secure, verified ledger to automatically update land records when property registration is completed.',
     total_grant_pool: 60,
     deadline: '2026-01-20',
     eligibility_criteria: 'National research institutions collaborating with Municipal Corporations.',
@@ -138,7 +141,7 @@ const DEFAULT_CHALLENGES: ChallengeItem[] = [
 const DEFAULT_PILOTS: PilotItem[] = [
   {
     id: 'PLT-8821',
-    title: 'AI Point-Cloud Parcel Extraction from SVAMITVA Drone Orthomosaics',
+    title: 'AI Land Plot Detection from SVAMITVA Drone Maps',
     lead_name: 'Dr. S. K. Narayanan',
     organization: 'IISc Bangalore & Survey of India',
     funding_lakhs: 25,
@@ -147,7 +150,7 @@ const DEFAULT_PILOTS: PilotItem[] = [
   },
   {
     id: 'PLT-7412',
-    title: 'Automated Deed Discrepancy Parsing via Multilingual Legal LLMs',
+    title: 'Automated Land Deed Error Checking in Indian Languages',
     lead_name: 'Prof. Ananya Sen',
     organization: 'IIT Bombay & NIC Maharashtra',
     funding_lakhs: 35,
@@ -156,7 +159,7 @@ const DEFAULT_PILOTS: PilotItem[] = [
   },
   {
     id: 'PLT-6190',
-    title: 'Sentinel-2 Multispectral Encroachment Alert Pipeline',
+    title: 'Satellite-Based Land Encroachment Early Warning System',
     lead_name: 'Dr. Rajiv Menon',
     organization: 'TERI & DoLR New Delhi',
     funding_lakhs: 18,
@@ -353,22 +356,22 @@ export default function InnovationPage() {
 
   return (
     <PageFrame
-      kicker="Open collaboration / pilots"
-      title="Open Innovation & Grant Portal"
-      description="A structured entry point for universities, state departments, and technology practitioners to propose and pilot responsible land-governance innovations."
+      kicker="Ideas & collaboration"
+      title="Innovation & Research Grants"
+      description="A place for universities, startups, and government departments to propose new ideas, apply for research grants, and pilot new land governance solutions."
       actions={
         <button 
           className="focus-ring flex items-center gap-2 border border-[#1E293B] bg-[#1E293B] px-3 py-2 text-xs font-bold text-white hover:bg-slate-800 transition-colors"
           onClick={() => setShowSubmitModal(true)}
         >
-          <Lightbulb className="h-3.5 w-3.5" /> Submit Proposal
+          <Lightbulb className="h-3.5 w-3.5" /> Submit a Proposal
         </button>
       }
     >
       <div className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
         {/* Left Column: Challenges */}
         <div className="space-y-6">
-          <Panel title="Active Research Challenges & RFPs">
+          <Panel title="Open Problem Challenges & Grants">
             <div className="divide-y divide-slate-200">
               {challenges.map(challenge => (
                 <div key={challenge.id} className="p-5 hover:bg-slate-50 transition-colors">
@@ -394,7 +397,7 @@ export default function InnovationPage() {
                     onClick={() => handleDownloadRfp(challenge)}
                     className="w-full focus-ring flex items-center justify-center gap-2 border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors"
                   >
-                    <Download className="h-3.5 w-3.5" /> Download RFP Guidelines
+                    <Download className="h-3.5 w-3.5" /> Download Guidelines
                   </button>
                 </div>
               ))}
@@ -405,10 +408,10 @@ export default function InnovationPage() {
         {/* Right Column: Transparency Leaderboard */}
         <div className="space-y-6">
           <Panel 
-            title="Transparency Leaderboard & Seeded Pilot Tracker"
+            title="Funded Pilots & Project Tracker"
             headerAction={
               <span className="text-[11px] font-bold text-slate-500 flex items-center gap-1">
-                <Award className="h-3.5 w-3.5 text-amber-600" /> Peer Scored & Audited
+                <Award className="h-3.5 w-3.5 text-amber-600" /> Expert Evaluated
               </span>
             }
           >
@@ -417,12 +420,11 @@ export default function InnovationPage() {
                 <thead className="bg-[#F8FAFC] text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">
                   <tr>
                     <th className="px-4 py-3 font-bold">Pilot ID</th>
-                    <th className="px-4 py-3 font-bold">Proposal Title</th>
-                    <th className="px-4 py-3 font-bold">Lead Investigator & Org</th>
-                    <th className="px-4 py-3 font-bold">Grant</th>
+                    <th className="px-4 py-3 font-bold">Project Title</th>
+                    <th className="px-4 py-3 font-bold">Team Lead & Org</th>
+                    <th className="px-4 py-3 font-bold">Grant Amount</th>
                     <th className="px-4 py-3 font-bold">Status</th>
-                    <th className="px-4 py-3 font-bold text-center">Jury Rubric</th>
-                    <th className="px-4 py-3 font-bold text-right">Community Votes</th>
+                    <th className="px-4 py-3 font-bold text-center">Jury Rubric</th>                    <th className="px-4 py-3 font-bold text-right">Community Votes</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-200 bg-white">
@@ -458,8 +460,7 @@ export default function InnovationPage() {
                             className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-sm border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 hover:border-slate-400 transition-colors"
                           >
                             <Star className="h-3.5 w-3.5 text-amber-500" />
-                            <span>Score Rubric</span>
-                          </button>
+                            <span>Score Rubric</span>                          </button>
                         )}
                       </td>
                       <td className="px-4 py-3.5 text-right">
@@ -481,7 +482,7 @@ export default function InnovationPage() {
               </table>
             </div>
             <div className="p-4 border-t border-slate-200 bg-slate-50 text-[11px] text-slate-500 flex justify-between items-center">
-              <span>Displaying {pilotsList.length} active technology proposals in review and implementation.</span>
+              <span>Showing {pilotsList.length} active innovation projects currently funded and in progress.</span>
               <span className="font-mono text-slate-600">DoLR Evaluation Cycle 2025–26</span>
             </div>
           </Panel>
@@ -539,9 +540,9 @@ export default function InnovationPage() {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Technical Abstract & Methodology *</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Project Description & Plan *</label>
                   <textarea 
-                    placeholder="Describe empirical framework, ground-truthing datasets, and anticipated policy impact..." 
+                    placeholder="Describe your idea, how you plan to test it, and the benefits for citizens or government..." 
                     className="w-full border border-slate-300 px-3 py-2 text-xs h-24 resize-none focus-ring bg-white"
                     {...register('abstract')}
                   />
@@ -561,7 +562,7 @@ export default function InnovationPage() {
 
                 <div className="border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600 flex items-start gap-2">
                   <CheckCircle2 className="h-4 w-4 text-[#15803D] shrink-0 mt-0.5" />
-                  <p>Proposals undergo double-blind peer review by the DoLR & Survey of India Technical Evaluation Board.</p>
+                  <p>Proposals are reviewed by the expert technical committee before grants are approved.</p>
                 </div>
               </div>
               
@@ -597,8 +598,7 @@ export default function InnovationPage() {
                 </div>
                 <div>
                   <h3 className="font-serif text-base font-bold text-[#1E293B]">
-                    Technical Committee Jury Rubric
-                  </h3>
+                    Technical Committee Jury Rubric                  </h3>
                   <p className="text-xs text-slate-500 font-mono">
                     Evaluation Matrix for {evaluatingPilot.id} • {evaluatingPilot.title}
                   </p>
@@ -633,8 +633,7 @@ export default function InnovationPage() {
                   <div className="flex justify-between items-center">
                     <div>
                       <span className="font-bold text-slate-800">1. Technical Scalability & DILRMP/ULPIN Architecture</span>
-                      <p className="text-[11px] text-slate-500">API throughput, database micro-indexing, adherence to ISO 19152 LADM & NIC cadastral schema.</p>
-                    </div>
+                      <p className="text-[11px] text-slate-500">API throughput, database micro-indexing, adherence to ISO 19152 LADM & NIC cadastral schema.</p>                    </div>
                     <span className="font-mono font-bold text-sm text-blue-700 bg-blue-50 px-2.5 py-1 border border-blue-200 shrink-0">
                       {rubricScores.scalability} / 25
                     </span>
@@ -653,8 +652,7 @@ export default function InnovationPage() {
                   <div className="flex justify-between items-center">
                     <div>
                       <span className="font-bold text-slate-800">2. Ground Feasibility & Field Cadastral Usability</span>
-                      <p className="text-[11px] text-slate-500">Ease of adoption by Patwaris/Talathis, offline sync resilience, RTK-GPS integration tolerances.</p>
-                    </div>
+                      <p className="text-[11px] text-slate-500">Ease of adoption by Patwaris/Talathis, offline sync resilience, RTK-GPS integration tolerances.</p>                    </div>
                     <span className="font-mono font-bold text-sm text-blue-700 bg-blue-50 px-2.5 py-1 border border-blue-200 shrink-0">
                       {rubricScores.feasibility} / 25
                     </span>
@@ -673,8 +671,7 @@ export default function InnovationPage() {
                   <div className="flex justify-between items-center">
                     <div>
                       <span className="font-bold text-slate-800">3. Regulatory & Legal Tenability (LARR Act & Tenancy Codes)</span>
-                      <p className="text-[11px] text-slate-500">Compliance with RFCTLARR Act 2013, Forest Rights Act 2006, state revenue land tribunal precedent.</p>
-                    </div>
+                      <p className="text-[11px] text-slate-500">Compliance with RFCTLARR Act 2013, Forest Rights Act 2006, state revenue land tribunal precedent.</p>                    </div>
                     <span className="font-mono font-bold text-sm text-blue-700 bg-blue-50 px-2.5 py-1 border border-blue-200 shrink-0">
                       {rubricScores.regulatory} / 25
                     </span>
@@ -693,8 +690,7 @@ export default function InnovationPage() {
                   <div className="flex justify-between items-center">
                     <div>
                       <span className="font-bold text-slate-800">4. Socio-Economic & Smallholder Equity Impact</span>
-                      <p className="text-[11px] text-slate-500">Protection of marginal and tribal landholders, gender-equal joint titling, reduction in court litigation costs.</p>
-                    </div>
+                      <p className="text-[11px] text-slate-500">Protection of marginal and tribal landholders, gender-equal joint titling, reduction in court litigation costs.</p>                    </div>
                     <span className="font-mono font-bold text-sm text-blue-700 bg-blue-50 px-2.5 py-1 border border-blue-200 shrink-0">
                       {rubricScores.impact} / 25
                     </span>
@@ -716,8 +712,7 @@ export default function InnovationPage() {
                 <textarea
                   value={juryNotes}
                   onChange={(e) => setJuryNotes(e.target.value)}
-                  placeholder="Record specific technical caveats, field pilot validation requirements, or advisory remarks..."
-                  className="w-full border border-slate-300 p-2.5 text-xs h-20 resize-none focus-ring bg-white"
+                  placeholder="Record specific technical caveats, field pilot validation requirements, or advisory remarks..."                  className="w-full border border-slate-300 p-2.5 text-xs h-20 resize-none focus-ring bg-white"
                 />
               </div>
 

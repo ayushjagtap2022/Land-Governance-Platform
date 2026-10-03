@@ -90,10 +90,170 @@ type TemporalStats = {
 const indiaCenter: [number, number] = [20.5937, 78.9629];
 
 const districtFacts: DistrictFact[] = [
-  { district: 'Pune', state: 'Maharashtra', coordinates: [18.52, 73.86], villages: '1,874', modernization: 88, disputes: 14.2, cards: '412,860', risk: 'Moderate' },
-  { district: 'Bhopal', state: 'Madhya Pradesh', coordinates: [23.26, 77.41], villages: '1,542', modernization: 72, disputes: 18.7, cards: '286,410', risk: 'High' },
-  { district: 'Lucknow', state: 'Uttar Pradesh', coordinates: [26.85, 80.95], villages: '2,106', modernization: 69, disputes: 21.4, cards: '531,220', risk: 'Moderate' },
-  { district: 'Bengaluru Urban', state: 'Karnataka', coordinates: [12.97, 77.59], villages: '1,026', modernization: 91, disputes: 9.8, cards: '198,740', risk: 'Low' },
+  { district: 'Pune', state: 'Maharashtra', coordinates: [18.5204, 73.8567], villages: '1,874', modernization: 93, disputes: 18.2, cards: '1,697,293', risk: 'Low', digitization_status: 'Digitized' },
+  { district: 'Mumbai Suburban', state: 'Maharashtra', coordinates: [19.0760, 72.8777], villages: '87', modernization: 94, disputes: 22.5, cards: '1,684,253', risk: 'Low', digitization_status: 'Digitized' },
+  { district: 'Nagpur', state: 'Maharashtra', coordinates: [21.1458, 79.0882], villages: '1,624', modernization: 92, disputes: 24.1, cards: '837,642', risk: 'Low', digitization_status: 'Digitized' },
+  { district: 'Bengaluru Urban', state: 'Karnataka', coordinates: [12.9716, 77.5946], villages: '1,026', modernization: 95, disputes: 15.6, cards: '1,731,879', risk: 'Low', digitization_status: 'Digitized' },
+  { district: 'Mysuru', state: 'Karnataka', coordinates: [12.2958, 76.6394], villages: '1,340', modernization: 89, disputes: 19.8, cards: '540,202', risk: 'Low', digitization_status: 'Digitized' },
+  { district: 'Lucknow', state: 'Uttar Pradesh', coordinates: [26.8467, 80.9462], villages: '2,106', modernization: 88, disputes: 32.4, cards: '826,170', risk: 'Moderate', digitization_status: 'Digitized' },
+  { district: 'Varanasi', state: 'Uttar Pradesh', coordinates: [25.3176, 82.9739], villages: '1,328', modernization: 86, disputes: 36.8, cards: '661,831', risk: 'Moderate', digitization_status: 'Digitized' },
+  { district: 'Gautam Buddha Nagar', state: 'Uttar Pradesh', coordinates: [28.5355, 77.3910], villages: '312', modernization: 96, disputes: 27.2, cards: '296,675', risk: 'Moderate', digitization_status: 'Digitized' },
+  { district: 'Bhopal', state: 'Madhya Pradesh', coordinates: [23.2599, 77.4126], villages: '1,542', modernization: 87, disputes: 29.4, cards: '426,790', risk: 'Moderate', digitization_status: 'Digitized' },
+  { district: 'Indore', state: 'Madhya Pradesh', coordinates: [22.7196, 75.8577], villages: '680', modernization: 94, disputes: 23.8, cards: '589,805', risk: 'Low', digitization_status: 'Digitized' },
+  { district: 'Ahmedabad', state: 'Gujarat', coordinates: [23.0225, 72.5714], villages: '556', modernization: 95, disputes: 17.5, cards: '1,298,560', risk: 'Low', digitization_status: 'Digitized' },
+  { district: 'Surat', state: 'Gujarat', coordinates: [21.1702, 72.8311], villages: '714', modernization: 94, disputes: 21.4, cards: '1,094,637', risk: 'Low', digitization_status: 'Digitized' },
+  { district: 'Jaipur', state: 'Rajasthan', coordinates: [26.9124, 75.7873], villages: '2,369', modernization: 88, disputes: 28.6, cards: '1,192,712', risk: 'Moderate', digitization_status: 'Digitized' },
+  { district: 'Jodhpur', state: 'Rajasthan', coordinates: [26.2389, 73.0243], villages: '1,842', modernization: 82, disputes: 32.1, cards: '663,660', risk: 'Moderate', digitization_status: 'Digitized' },
+  { district: 'Chennai', state: 'Tamil Nadu', coordinates: [13.0827, 80.2707], villages: '55', modernization: 98, disputes: 16.4, cards: '836,411', risk: 'Low', digitization_status: 'Digitized' },
+  { district: 'Patna', state: 'Bihar', coordinates: [25.5941, 85.1376], villages: '1,388', modernization: 78, disputes: 44.5, cards: '1,050,923', risk: 'Moderate', digitization_status: 'Digitized' },
+  { district: 'Kolkata', state: 'West Bengal', coordinates: [22.5726, 88.3639], villages: '42', modernization: 96, disputes: 24.8, cards: '809,404', risk: 'Low', digitization_status: 'Digitized' },
+  { district: 'New Delhi', state: 'NCT of Delhi', coordinates: [28.6139, 77.2090], villages: '112', modernization: 99, disputes: 14.2, cards: '24,068', risk: 'Low', digitization_status: 'Digitized' },
+  { district: 'Hyderabad', state: 'Telangana', coordinates: [17.3850, 78.4867], villages: '65', modernization: 97, disputes: 18.6, cards: '709,798', risk: 'Low', digitization_status: 'Digitized' },
+];
+
+type InfrastructureCorridor = {
+  id: string;
+  name: string;
+  agency: string;
+  type: 'Industrial' | 'Freight Railway' | 'Expressway';
+  lengthKm: number;
+  status: 'Operational / Phased' | 'Under Construction' | 'Land Acquisition Phase';
+  acquisitionProgressPct: number;
+  parcelsAcquired: string;
+  directDisbursementCr: number;
+  points: [number, number][];
+  description: string;
+  nodes: string[];
+  statesCovered: string[];
+};
+
+const nationalCorridors: InfrastructureCorridor[] = [
+  {
+    id: 'corridor-dmic',
+    name: 'Delhi-Mumbai Industrial Corridor (DMIC)',
+    agency: 'National Industrial Corridor Development Corp (NICDC)',
+    type: 'Industrial',
+    lengthKm: 1504,
+    status: 'Operational / Phased',
+    acquisitionProgressPct: 92.4,
+    parcelsAcquired: '48,230 parcels',
+    directDisbursementCr: 34800,
+    statesCovered: ['Delhi', 'Haryana', 'Rajasthan', 'Gujarat', 'Maharashtra'],
+    nodes: ['Dadri Multi-Modal Logistics Hub', 'Dholera Special Investment Region', 'Shendra-Bidkin Industrial Area', 'Dighi Port Node'],
+    description: 'High-impact 150-km influence zone along Western DFC leveraging smart industrial cities and automated land titling.',
+    points: [
+      [28.55, 77.55],
+      [28.36, 76.94],
+      [27.98, 76.38],
+      [26.91, 75.78],
+      [24.58, 73.71],
+      [23.02, 72.57],
+      [22.25, 72.19],
+      [22.30, 73.18],
+      [21.17, 72.83],
+      [19.29, 73.06],
+      [18.95, 72.95]
+    ]
+  },
+  {
+    id: 'corridor-wdfc',
+    name: 'Western Dedicated Freight Corridor (WDFC)',
+    agency: 'Dedicated Freight Corridor Corp of India (DFCCIL)',
+    type: 'Freight Railway',
+    lengthKm: 1506,
+    status: 'Operational / Phased',
+    acquisitionProgressPct: 98.7,
+    parcelsAcquired: '62,400 parcels',
+    directDisbursementCr: 28150,
+    statesCovered: ['Uttar Pradesh', 'Haryana', 'Rajasthan', 'Gujarat', 'Maharashtra'],
+    nodes: ['Dadri Freight Terminal', 'Rewari Interchange', 'Sanand Logistics Park', 'JNPT Port Railhead'],
+    description: 'Double-stack electric freight corridor connecting inland northern industrial clusters to maritime gateway ports.',
+    points: [
+      [28.55, 77.55],
+      [28.18, 76.62],
+      [26.87, 75.24],
+      [26.45, 74.64],
+      [25.73, 73.36],
+      [24.17, 72.43],
+      [23.00, 72.38],
+      [21.70, 72.99],
+      [20.38, 72.90],
+      [18.95, 72.95]
+    ]
+  },
+  {
+    id: 'corridor-edfc',
+    name: 'Eastern Dedicated Freight Corridor (EDFC)',
+    agency: 'DFCCIL / Ministry of Railways',
+    type: 'Freight Railway',
+    lengthKm: 1875,
+    status: 'Operational / Phased',
+    acquisitionProgressPct: 96.2,
+    parcelsAcquired: '71,900 parcels',
+    directDisbursementCr: 31400,
+    statesCovered: ['Punjab', 'Haryana', 'Uttar Pradesh', 'Bihar', 'Jharkhand', 'West Bengal'],
+    nodes: ['Ludhiana Dry Port', 'Khurja Junction', 'Prayagraj Operations Centre', 'Sonnagar Mineral Terminal', 'Dankuni Terminus'],
+    description: 'Electrified high-density heavy-haul railway for coal, steel, and agricultural cargo transit across the Indo-Gangetic plain.',
+    points: [
+      [30.90, 75.85],
+      [29.96, 77.55],
+      [28.25, 77.85],
+      [27.18, 78.01],
+      [26.45, 80.33],
+      [25.43, 81.84],
+      [25.28, 83.12],
+      [24.96, 84.18],
+      [23.80, 86.44],
+      [22.68, 88.30]
+    ]
+  },
+  {
+    id: 'corridor-samruddhi',
+    name: 'Samruddhi Mahamarg (Mumbai-Nagpur Super Communication Expressway)',
+    agency: 'Maharashtra State Road Development Corp (MSRDC)',
+    type: 'Expressway',
+    lengthKm: 701,
+    status: 'Operational / Phased',
+    acquisitionProgressPct: 99.8,
+    parcelsAcquired: '28,500 parcels',
+    directDisbursementCr: 8400,
+    statesCovered: ['Maharashtra'],
+    nodes: ['JNPT / Bhiwandi Terminal', 'Igatpuri Ghat Node', 'Chhatrapati Sambhajinagar SEZ', 'Jalna Dry Port', 'Wardha Industrial Hub', 'Nagpur MIHAN'],
+    description: '120 km/h access-controlled greenfield expressway connecting 10 districts with digitized land pooling models.',
+    points: [
+      [19.29, 73.06],
+      [19.70, 73.56],
+      [19.85, 74.00],
+      [19.87, 75.34],
+      [19.84, 75.88],
+      [20.48, 77.49],
+      [20.74, 78.60],
+      [21.14, 79.08]
+    ]
+  },
+  {
+    id: 'corridor-bangalore-chennai',
+    name: 'Bengaluru-Chennai Expressway (NE-7 / Bharatmala Phase 1)',
+    agency: 'National Highways Authority of India (NHAI)',
+    type: 'Expressway',
+    lengthKm: 262,
+    status: 'Under Construction',
+    acquisitionProgressPct: 91.5,
+    parcelsAcquired: '14,800 parcels',
+    directDisbursementCr: 5600,
+    statesCovered: ['Karnataka', 'Andhra Pradesh', 'Tamil Nadu'],
+    nodes: ['Hoskote Tech Cluster', 'Bangarapet Logistics Node', 'Chittoor Industrial Area', 'Sriperumbudur Auto SEZ', 'Chennai Port Link'],
+    description: 'Tri-state high-speed transit spine reducing container logistics time from 7 hours to 2.5 hours.',
+    points: [
+      [13.07, 77.79],
+      [13.00, 77.94],
+      [12.98, 78.19],
+      [13.20, 78.75],
+      [13.21, 79.10],
+      [12.92, 79.33],
+      [12.97, 79.94]
+    ]
+  }
 ];
 
 type InfrastructureCorridor = {
@@ -286,11 +446,10 @@ function MapToolbar({ mode, onModeChange, onExport, onReset, onUploadGeoJSON }: 
 function MapNavigation({ onReset }: { onReset: () => void }) {
   const map = useMap();
   return (
-    <div className="absolute bottom-16 left-3 z-[1000] flex flex-col border border-slate-400 bg-white shadow-sm">
+    <div className="absolute bottom-16 left-3.5 z-[900] flex flex-col rounded-xs border border-slate-300 bg-white shadow-md">
       <button className="focus-ring p-2 hover:bg-slate-100" data-testid="button-map-zoom-in" type="button" aria-label="Zoom in" onClick={() => map.zoomIn()}><ZoomIn className="h-4 w-4 text-[#244562]" /></button>
       <button className="focus-ring border-t border-slate-300 p-2 hover:bg-slate-100" data-testid="button-map-zoom-out" type="button" aria-label="Zoom out" onClick={() => map.zoomOut()}><ZoomOut className="h-4 w-4 text-[#244562]" /></button>
-      <button className="focus-ring border-t border-slate-300 p-2 hover:bg-slate-100" data-testid="button-map-reset-control" type="button" aria-label="Reset map extent" onClick={() => { map.setView(indiaCenter, 5); onReset(); }}><RotateCcw className="h-4 w-4 text-[#244562]" /></button>
-    </div>
+      <button className="focus-ring border-t border-slate-300 p-2 hover:bg-slate-100" data-testid="button-map-reset-control" type="button" aria-label="Reset map extent" onClick={() => { map.setView(indiaCenter, 5); onReset(); }}><RotateCcw className="h-4 w-4 text-[#244562]" /></button>    </div>
   );
 }
 
@@ -317,22 +476,87 @@ function MapPointer({ mode, onCoordinate, onZoom }: { mode: 'idle' | 'measure' |
 }
 
 function LayerControl({ layers, onToggle, onOpacity }: { layers: Record<LayerKey, LayerState>; onToggle: (key: LayerKey) => void; onOpacity: (key: LayerKey, value: number) => void }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const activeCount = Object.values(layers).filter((l) => l.visible).length;
+
+  if (!isOpen) {
+    return (
+      <button
+        type="button"
+        onClick={() => setIsOpen(true)}
+        className="absolute top-4 right-4 z-[1000] flex items-center gap-2 rounded-xs border border-slate-300 bg-white/95 px-3.5 py-2 text-xs font-bold text-[#132f4c] shadow-md backdrop-blur-md hover:bg-white hover:border-[#132f4c] transition-all focus-ring"
+        data-testid="button-open-map-layers"
+        title="Open Map Layers Panel"
+      >
+        <Layers className="h-4 w-4 text-[#d97706]" />
+        <span>Map Layers</span>
+        <span className="ml-0.5 rounded-full bg-[#132f4c] px-1.5 py-0.2 text-[10px] font-mono text-white">
+          {activeCount}
+        </span>
+      </button>
+    );
+  }
+
   return (
-    <div className="absolute right-3 top-3 z-[1000] w-[285px] border border-slate-400 bg-white/95 shadow-md" data-testid="panel-map-layers">
-      <div className="border-b border-slate-300 bg-[#132f4c] px-4 py-3 text-xs font-bold text-white"><span className="flex items-center gap-2"><MapIcon className="h-4 w-4 text-[#f2b134]" />Map Layers</span></div>
-      <div className="divide-y divide-slate-200">
+    <div
+      className="absolute top-4 right-4 z-[1000] w-[310px] rounded-xs border border-slate-300 bg-white/95 shadow-xl backdrop-blur-md"
+      data-testid="panel-map-layers"
+    >
+      <div className="flex items-center justify-between border-b border-slate-300 bg-[#132f4c] px-3.5 py-2.5 text-xs font-bold text-white">
+        <span className="flex items-center gap-2">
+          <Layers className="h-4 w-4 text-[#f2b134]" />
+          <span>Map Layers ({activeCount} Active)</span>
+        </span>
+        <button
+          type="button"
+          onClick={() => setIsOpen(false)}
+          className="p-1 rounded text-slate-300 hover:text-white hover:bg-white/10 transition-colors focus-ring"
+          title="Minimize Layers"
+          aria-label="Close Map Layers"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+      <div className="divide-y divide-slate-200/80 max-h-[380px] overflow-y-auto">
         {(Object.keys(layers) as LayerKey[]).map((key) => {
           const layer = layers[key];
           return (
-            <div className="p-3" key={key}>
-              <label className="flex items-start gap-2 text-[11px] font-bold text-[#244562]">
-                <input className="mt-0.5 h-3.5 w-3.5 accent-[#244562]" data-testid={`checkbox-map-layer-${key}`} type="checkbox" checked={layer.visible} onChange={() => onToggle(key)} />
-                <span>{layer.label}<span className="mt-1 block text-[10px] font-normal text-slate-500">{layer.description}</span></span>
+            <div className="p-3 hover:bg-slate-50/60 transition-colors" key={key}>
+              <label className="flex items-start gap-2.5 cursor-pointer">
+                <input
+                  className="mt-0.5 h-4 w-4 rounded accent-[#132f4c] cursor-pointer"
+                  data-testid={`checkbox-map-layer-${key}`}
+                  type="checkbox"
+                  checked={layer.visible}
+                  onChange={() => onToggle(key)}
+                />
+                <span className="flex-1">
+                  <span className="text-xs font-bold text-[#132f4c] block">
+                    {layer.label}
+                  </span>
+                  <span className="mt-0.5 block text-[11px] font-medium text-slate-600 leading-tight">
+                    {layer.description}
+                  </span>
+                </span>
               </label>
-              <div className="mt-2 flex items-center gap-2 pl-5">
-                <span className="h-2 w-2" style={{ backgroundColor: layer.color }} />
-                <input className="h-1 flex-1 accent-[#244562]" data-testid={`slider-map-opacity-${key}`} type="range" min="0" max="1" step="0.05" value={layer.opacity} onChange={(event) => onOpacity(key, Number(event.target.value))} />
-                <span className="w-8 text-right font-mono text-[10px] text-slate-500">{Math.round(layer.opacity * 100)}%</span>
+              <div className="mt-2.5 flex items-center gap-2 pl-6.5">
+                <span
+                  className="h-2.5 w-2.5 rounded-full border border-slate-300 shrink-0"
+                  style={{ backgroundColor: layer.color }}
+                />
+                <input
+                  className="h-1.5 flex-1 accent-[#132f4c] cursor-pointer"
+                  data-testid={`slider-map-opacity-${key}`}
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={layer.opacity}
+                  onChange={(event) => onOpacity(key, Number(event.target.value))}
+                />
+                <span className="w-10 text-right font-mono text-xs font-bold text-slate-700">
+                  {Math.round(layer.opacity * 100)}%
+                </span>
               </div>
             </div>
           );
@@ -378,8 +602,7 @@ export default function MapPage() {
   useEffect(() => {
     if (!isPlaying) return;
     const interval = setInterval(() => {
-      setYear((prev) => (prev >= 2024 ? 1999 : prev + 1));
-    }, 1200);
+      setYear((prev) => (prev >= 2024 ? 1999 : prev + 1));    }, 1200);
     return () => clearInterval(interval);
   }, [isPlaying]);
 
@@ -590,8 +813,7 @@ export default function MapPage() {
         <div>
           <p className="section-kicker mb-2">Spatial data access / national view</p>
           <h1 className="font-serif text-3xl font-semibold tracking-tight text-[#132f4c] md:text-4xl" data-testid="text-page-title-gis-map">Geospatial GIS Visualization Engine</h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Explore cadastral modernization, land-use classification, disputes and climate exposure across all 640 Indian districts through an accountable temporal map.</p>
-        </div>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Explore cadastral modernization, land-use classification, disputes and climate exposure across all 640 Indian districts through an accountable temporal map.</p>        </div>
         <MapToolbar mode={mode} onModeChange={(nextMode) => { setMode(nextMode); setMeasurePoints([]); setAoiPoints([]); }} onExport={() => setNotice('Map view export queued as PNG/PDF.')} onReset={resetExtent} onUploadGeoJSON={handleUploadGeoJSON} />
       </div>
       {notice && <div className="mb-4 flex items-center justify-between border border-[#b7d4c1] bg-[#f0f8f1] p-3 text-xs font-semibold text-[#287449]" data-testid="status-map-action"><span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4" />{notice}</span><button className="focus-ring" type="button" aria-label="Dismiss map notice" onClick={() => setNotice('')}><X className="h-4 w-4" /></button></div>}
@@ -698,14 +920,13 @@ export default function MapPage() {
                         </div>
                       </div>
                     </Popup>
-                  </CircleMarker>
-                );
+                  </CircleMarker>                );
               })}
               {aoiPoints.length >= 3 && <Polygon positions={aoiPoints} pathOptions={{ color: '#9b6300', weight: 2, dashArray: '5 4', fillColor: '#f2b134', fillOpacity: 0.18 }} />}
               {aoiPoints.map((point, index) => <CircleMarker center={point} key={`aoi-point-${index}`} radius={4} pathOptions={{ color: '#9b6300', fillColor: '#f2b134', fillOpacity: 1 }} />)}
               <MapPointer mode={mode} onCoordinate={handleCoordinate} onZoom={setZoom} />
               <MapNavigation onReset={resetExtent} />
-              <ScaleControl position="bottomleft" imperial={false} maxWidth={120} />
+              <ScaleControl position="bottomleft" imperial={false} maxWidth={100} />
             </MapContainer>
 
             {/* Real-time Year Era Badge */}
@@ -716,16 +937,14 @@ export default function MapPage() {
                   {year >= 2020 ? 'SVAMITVA Drone Era' : year >= 2016 ? 'DILRMP 2.0 Resurvey' : year >= 2008 ? 'NLRMP Pilot Launch' : 'Pre-DILRMP Manual'}
                 </span>
               </div>
-              <div className="text-[10px] text-slate-500 mt-1 flex justify-between">
-                <span>{filteredDistricts.length} Districts Plotted</span>
+              <div className="text-[10px] text-slate-500 mt-1 flex justify-between">                <span>{filteredDistricts.length} Districts Plotted</span>
                 <span className="font-semibold text-[#287449]">{temporalStats.cadastral_digitization_pct}% Modernized</span>
               </div>
             </div>
 
             {/* Earth Observation (EO) & ISRO Bhuvan Spectral Band Selector (PS 26019 Item 13) */}
             {layers.satellite.visible && (
-              <div className="absolute top-20 left-3 z-[1000] border border-slate-300 bg-white/95 p-2.5 shadow-md backdrop-blur-xs max-w-xs" data-testid="panel-spectral-bands">
-                <div className="flex items-center justify-between gap-2 border-b border-slate-200 pb-1.5 mb-1.5">
+              <div className="absolute top-20 left-3 z-[1000] border border-slate-300 bg-white/95 p-2.5 shadow-md backdrop-blur-xs max-w-xs" data-testid="panel-spectral-bands">                <div className="flex items-center justify-between gap-2 border-b border-slate-200 pb-1.5 mb-1.5">
                   <div className="flex items-center gap-1.5 text-xs font-bold text-[#132f4c]">
                     <Satellite className="h-3.5 w-3.5 text-blue-600" />
                     <span>ISRO / EO Spectral Bands</span>
@@ -779,8 +998,7 @@ export default function MapPage() {
             <LayerControl layers={layers} onToggle={toggleLayer} onOpacity={setLayerOpacity} />
 
             {/* Dynamic Metric Switcher & Legend */}
-            <div className="absolute bottom-3 right-3 z-[1000] border border-slate-400 bg-white/95 px-3 py-2 text-[10px] text-slate-700 shadow-sm max-w-sm">
-              <div className="flex items-center justify-between gap-3 mb-1.5 pb-1 border-b border-slate-200">
+            <div className="absolute bottom-3 right-3 z-[1000] border border-slate-400 bg-white/95 px-3 py-2 text-[10px] text-slate-700 shadow-sm max-w-sm">              <div className="flex items-center justify-between gap-3 mb-1.5 pb-1 border-b border-slate-200">
                 <span className="font-bold text-[#132f4c]">Display Metric</span>
                 <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded border border-slate-200">
                   <button
@@ -830,8 +1048,7 @@ export default function MapPage() {
                   }`}
                 >
                   {isPlaying ? <Pause className="h-3.5 w-3.5 fill-current" /> : <Play className="h-3.5 w-3.5 fill-current" />}
-                  {isPlaying ? 'Pause Playback' : 'Play Timeline (1999–2024)'}
-                </button>
+                  {isPlaying ? 'Pause Playback' : 'Play Timeline (1999–2024)'}                </button>
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-base font-bold text-[#132f4c]">{year}</span>
                   <span className="rounded bg-[#eef2f5] px-2.5 py-0.5 text-[11px] font-semibold text-[#244562] border border-slate-200">
@@ -843,8 +1060,7 @@ export default function MapPage() {
               {/* Quick Jump Buttons */}
               <div className="flex flex-wrap gap-1.5">
                 {[
-                  { yr: 1999, label: '1999 Baseline' },
-                  { yr: 2008, label: '2008 NLRMP' },
+                  { yr: 1999, label: '1999 Baseline' },                  { yr: 2008, label: '2008 NLRMP' },
                   { yr: 2016, label: '2016 DILRMP 2.0' },
                   { yr: 2020, label: '2020 SVAMITVA' },
                   { yr: 2024, label: '2024 Present' },
@@ -869,8 +1085,7 @@ export default function MapPage() {
               <input
                 type="range"
                 data-testid="input-temporal-slider"
-                min="1999"
-                max="2024"
+                min="1999"                max="2024"
                 step="1"
                 value={year}
                 onChange={(e) => { setYear(Number(e.target.value)); setIsPlaying(false); }}
@@ -881,15 +1096,13 @@ export default function MapPage() {
                 <span>2008 (NLRMP Digital Push)</span>
                 <span>2016 (DILRMP 2.0)</span>
                 <span>2020 (SVAMITVA Drones)</span>
-                <span>2024 (94.2% Modernized)</span>
-              </div>
+                <span>2024 (94.2% Modernized)</span>              </div>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-2 border border-slate-400 border-t-0 bg-[#132f4c] px-3 py-2 text-[10px] text-white shadow-sm">
             <div className="flex items-center gap-3 font-mono"><span>LAT {coords?.lat != null ? coords.lat.toFixed(4) : '20.5937'}</span><span>LON {coords?.lng != null ? coords.lng.toFixed(4) : '78.9629'}</span><span>ZOOM {zoom}</span><span>SCALE {scaleLabel}</span></div>
-            <div className="flex items-center gap-2">{mode === 'measure' && <span className="text-[#f2b134]">{measurePoints.length < 2 ? 'Click two points to measure' : `${distanceKm} km measured`}</span>}{mode === 'aoi' && <span className="text-[#f2b134]">{aoiPoints.length < 3 ? 'Click 3–5 points to draw AOI' : 'AOI polygon active'}</span>}<span className="text-slate-300">National Map · {year}</span></div>
-          </div>
+            <div className="flex items-center gap-2">{mode === 'measure' && <span className="text-[#f2b134]">{measurePoints.length < 2 ? 'Click two points to measure' : `${distanceKm} km measured`}</span>}{mode === 'aoi' && <span className="text-[#f2b134]">{aoiPoints.length < 3 ? 'Click 3–5 points to draw AOI' : 'AOI polygon active'}</span>}<span className="text-slate-300">National Map · {year}</span></div>          </div>
           {mode === 'measure' && measurePoints.length === 2 && <div className="mt-3 border border-[#b9cce0] bg-[#eef4fa] p-3 text-xs text-[#244562]" data-testid="status-map-measure-result"><span className="font-bold">Distance measurement:</span> {distanceKm} km between the selected coordinates.</div>}
         </div>
 
@@ -900,14 +1113,12 @@ export default function MapPage() {
               <p className="section-kicker mb-1">National Cadastral Directory</p>
               <h2 className="text-sm font-bold text-[#244562]">Search 640 Indian Districts</h2>
             </div>
-            <div className="p-3 space-y-2.5">
-              <div>
+            <div className="p-3 space-y-2.5">              <div>
                 <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Filter by State / UT</label>
                 <select
                   value={selectedStateFilter}
                   onChange={(e) => setSelectedStateFilter(e.target.value)}
-                  className="w-full py-1 px-2 text-xs border border-slate-300 outline-none focus:ring-1 focus:ring-[#244562] bg-white font-medium text-slate-700"
-                >
+                  className="w-full py-1 px-2 text-xs border border-slate-300 outline-none focus:ring-1 focus:ring-[#244562] bg-white font-medium text-slate-700"                >
                   {uniqueStates.map(st => (
                     <option key={st} value={st}>{st === 'ALL' ? 'All States & UTs (National View)' : st}</option>
                   ))}
@@ -921,26 +1132,23 @@ export default function MapPage() {
                   placeholder="Filter district name..."
                   value={districtSearch}
                   onChange={(e) => setDistrictSearch(e.target.value)}
-                  className="w-full pl-8 pr-3 py-1.5 border border-slate-300 text-xs focus:ring-1 focus:ring-[#244562] outline-none"
+                  className="w-full pl-8 pr-3 py-1.5 border border-slate-300 text-xs focus:ring-1 focus:ring-[#132f4c] outline-none rounded-xs"
                 />
               </div>
 
-              <div className="max-h-48 overflow-y-auto divide-y divide-slate-100 text-xs border border-slate-100">
-                {filteredDistricts.slice(0, 100).map((d, i) => (
+              <div className="max-h-48 overflow-y-auto divide-y divide-slate-100 text-xs border border-slate-100">                {filteredDistricts.slice(0, 100).map((d, i) => (
                   <button
                     key={`${d.state}-${d.district}-${i}`}
                     type="button"
                     onClick={() => setSelectedDistrict(d)}
-                    className="w-full text-left py-1.5 px-2 hover:bg-slate-50 flex items-center justify-between transition-colors"
-                  >
+                    className="w-full text-left py-1.5 px-2 hover:bg-slate-50 flex items-center justify-between transition-colors"                  >
                     <div>
                       <span className="font-semibold text-slate-800 block text-xs">{d.district}</span>
                       <span className="text-[10px] text-slate-500">{d.state}</span>
                     </div>
                     <div className="flex items-center gap-1.5">
                       <span className="font-mono text-[10px] text-slate-500">{d.modernization}%</span>
-                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${d.digitization_status === 'Digitized' || d.modernization >= 70 ? 'bg-emerald-100 text-emerald-700' : d.modernization >= 35 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
-                        {d.digitization_status || (d.modernization >= 70 ? 'Digitized' : d.modernization >= 35 ? 'In-Progress' : 'Legacy Paper')}
+                      <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${d.digitization_status === 'Digitized' || d.modernization >= 70 ? 'bg-emerald-100 text-emerald-700' : d.modernization >= 35 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>                        {d.digitization_status || (d.modernization >= 70 ? 'Digitized' : d.modernization >= 35 ? 'In-Progress' : 'Legacy Paper')}
                       </span>
                     </div>
                   </button>
@@ -965,8 +1173,7 @@ export default function MapPage() {
                   <span className="font-mono font-bold text-[#287449]">{temporalStats.cadastral_digitization_pct}%</span>
                 </div>
                 <div className="h-2 bg-slate-100 overflow-hidden rounded-xs">
-                  <div className="h-full bg-[#287449] transition-all duration-300" style={{ width: `${temporalStats.cadastral_digitization_pct}%` }} />
-                </div>
+                  <div className="h-full bg-[#287449] transition-all duration-300" style={{ width: `${temporalStats.cadastral_digitization_pct}%` }} />                </div>
               </div>
 
               <div>
@@ -975,8 +1182,7 @@ export default function MapPage() {
                   <span className="font-mono font-bold text-[#c4a35a]">{temporalStats.net_sown_area_pct}%</span>
                 </div>
                 <div className="h-2 bg-slate-100 overflow-hidden rounded-xs">
-                  <div className="h-full bg-[#c4a35a] transition-all duration-300" style={{ width: `${temporalStats.net_sown_area_pct}%` }} />
-                </div>
+                  <div className="h-full bg-[#c4a35a] transition-all duration-300" style={{ width: `${temporalStats.net_sown_area_pct}%` }} />                </div>
               </div>
 
               <div>
@@ -985,8 +1191,7 @@ export default function MapPage() {
                   <span className="font-mono font-bold text-[#b23b32]">{temporalStats.non_agricultural_built_up_pct}%</span>
                 </div>
                 <div className="h-2 bg-slate-100 overflow-hidden rounded-xs">
-                  <div className="h-full bg-[#b23b32] transition-all duration-300" style={{ width: `${temporalStats.non_agricultural_built_up_pct * 3}%` }} />
-                </div>
+                  <div className="h-full bg-[#b23b32] transition-all duration-300" style={{ width: `${temporalStats.non_agricultural_built_up_pct * 3}%` }} />                </div>
               </div>
 
               <div>
@@ -1000,8 +1205,7 @@ export default function MapPage() {
               </div>
 
               <div className="border-t border-slate-100 pt-2.5 flex items-center justify-between text-[11px]">
-                <span className="text-slate-500">SVAMITVA Cards:</span>
-                <span className="font-bold text-[#132f4c]">
+                <span className="text-slate-500">SVAMITVA Cards:</span>                <span className="font-bold text-[#132f4c]">
                   {temporalStats.svamitva_cards_issued_cr > 0 ? `${temporalStats.svamitva_cards_issued_cr} Cr Issued` : 'Pre-Launch'}
                 </span>
               </div>
@@ -1022,8 +1226,7 @@ export default function MapPage() {
               <p className="flex items-center gap-2">
                 <CloudRain className="h-4 w-4 text-[#2563eb]" />
                 Click colored climate polygons for IMD rainfall and groundwater stress analysis (PS 26015).
-              </p>
-            </div>
+              </p>            </div>
           </div>
         </aside>
       </div>
@@ -1044,7 +1247,7 @@ export default function MapPage() {
             {/* Sticky Header */}
             <div className="flex shrink-0 items-start justify-between border-b border-slate-200 bg-[#eef2f5] p-5">
               <div>
-                <p className="section-kicker mb-1">Administrative Factsheet / Technical View</p>
+                <p className="section-kicker mb-1">District Profile</p>
                 <h2 className="font-serif text-xl font-bold text-[#132f4c]">District: {selectedDistrict.district}</h2>
                 <p className="mt-1 text-xs text-slate-600">
                   <span className="font-semibold text-[#244562]">State / UT:</span> {selectedDistrict.state}
@@ -1069,11 +1272,11 @@ export default function MapPage() {
                   <p className="mt-2 font-mono text-xl font-bold text-[#132f4c]">{selectedDistrict.villages}</p>
                 </div>
                 <div className="border border-slate-200 bg-slate-50/50 p-3 shadow-2xs">
-                  <p className="text-[11px] text-slate-500 font-medium">Cadastral modernization</p>
+                  <p className="text-[11px] text-slate-500 font-medium">Land record digitization</p>
                   <p className="mt-2 font-mono text-xl font-bold text-[#287449]">{selectedDistrict.modernization}%</p>
                 </div>
                 <div className="border border-slate-200 bg-slate-50/50 p-3 shadow-2xs">
-                  <p className="text-[11px] text-slate-500 font-medium">Disputes / 1,000 owners</p>
+                  <p className="text-[11px] text-slate-500 font-medium">Disputes per 1,000 owners</p>
                   <p className="mt-2 font-mono text-xl font-bold text-[#9b6300]">{selectedDistrict.disputes}</p>
                 </div>
                 <div className="border border-slate-200 bg-slate-50/50 p-3 shadow-2xs">
@@ -1091,8 +1294,7 @@ export default function MapPage() {
                     : 'border-[#b7d4c1] bg-[#f0f8f1]'
                 }`}
               >
-                <p className="text-xs font-bold text-[#244562]">Land Dispute &amp; Vulnerability Profile</p>
-                <p className="mt-2 flex items-center gap-2 text-sm font-bold text-[#244562]">
+                <p className="text-xs font-bold text-[#244562]">Land Dispute &amp; Vulnerability Profile</p>                <p className="mt-2 flex items-center gap-2 text-sm font-bold text-[#244562]">
                   <span
                     className={`h-2.5 w-2.5 rounded-full ${
                       selectedDistrict.risk === 'High'
@@ -1109,14 +1311,13 @@ export default function MapPage() {
                     ? 'Elevated litigation density and boundary fragmentation. Recommended for drone resurvey prioritization.'
                     : selectedDistrict.risk === 'Moderate'
                     ? 'Moderate litigation risk with active digitization underway.'
-                    : 'Low boundary litigation density and high RoR georeferencing maturity.'}
-                </p>
+                    : 'Low boundary litigation density and high RoR georeferencing maturity.'}                </p>
               </div>
 
               <div className="border border-slate-200 bg-slate-50 p-3.5 text-xs">
-                <p className="font-bold text-[#244562] mb-1">Cadastral Resurvey Status</p>
+                <p className="font-bold text-[#244562] mb-1">Drone Survey Status</p>
                 <p className="text-slate-600 text-[11px] leading-relaxed">
-                  Sub-5cm drone survey and CORS base station network integration in progress under DILRMP / SVAMITVA protocols.
+                  High-precision drone surveys are being conducted to create accurate property maps under the DILRMP and SVAMITVA programmes.
                 </p>
               </div>
             </div>
@@ -1129,7 +1330,7 @@ export default function MapPage() {
                 href={`/repository?search=${encodeURIComponent(selectedDistrict.district)}&state=${encodeURIComponent(selectedDistrict.state)}`}
               >
                 <MapPin className="h-4 w-4" />
-                Open District Legal &amp; Cadastral Records in Repository
+                Open District Records in Document Library
               </Link>
             </div>
           </div>
@@ -1152,8 +1353,7 @@ export default function MapPage() {
             {/* Header */}
             <div className="flex shrink-0 items-start justify-between border-b border-slate-200 bg-[#f4f7f9] p-5">
               <div>
-                <p className="section-kicker mb-1">Climate Vulnerability Layer (PS 26015)</p>
-                <h2 className="font-serif text-lg font-bold text-[#132f4c]">{selectedClimateZone.zone}</h2>
+                <p className="section-kicker mb-1">Climate Vulnerability Layer (PS 26015)</p>                <h2 className="font-serif text-lg font-bold text-[#132f4c]">{selectedClimateZone.zone}</h2>
                 <p className="mt-1 text-xs text-slate-600">
                   <span className="font-semibold text-[#244562]">Hazard Category:</span> {selectedClimateZone.category}
                 </p>

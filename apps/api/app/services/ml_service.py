@@ -142,8 +142,12 @@ class MLService:
         return {
             "model_id": "MOD-DISPUTE-RF-01",
             "algorithm": "RandomForestRegressor (120 Trees)",
+            "state_name": state_name,
+            "district_name": district_name,
+            "predicted_dispute_risk": round(mean_pred, 2),
             "predicted_dispute_risk_index": round(mean_pred, 2),
             "risk_band": "High" if mean_pred > 65 else ("Moderate" if mean_pred > 40 else "Low"),
+            "risk_tier": "High" if mean_pred > 65 else ("Moderate" if mean_pred > 40 else "Low"),
             "district_min": round(float(np.min(preds)), 2),
             "district_max": round(float(np.max(preds)), 2),
             "districts_evaluated": len(target_rows),

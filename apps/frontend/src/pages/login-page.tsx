@@ -1,7 +1,7 @@
 /**
  * Login Page — Authenticates users via the FastAPI backend.
  */
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -10,6 +10,8 @@ import { LogIn, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
+import { IndiaFlag } from '@/components/common/IndiaFlag';
+import { StateEmblem } from '@/components/common/StateEmblem';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -30,7 +32,6 @@ export default function LoginPage() {
   const [ssoOtp, setSsoOtp] = useState('');
   const [ssoOtpSent, setSsoOtpSent] = useState(false);
   const [digiLockerConsent, setDigiLockerConsent] = useState(true);
-
   const handleSsoLogin = () => {
     setIsLoading(true);
     setTimeout(() => {
@@ -47,8 +48,7 @@ export default function LoginPage() {
       toast.success('National Single Sign-On Verified (MeriPehchan / Jan Parichay)', {
         description: 'Level-3 High Assurance Token granted by NIC Identity Federation Gateway.'
       });
-      setLocation('/analytics');
-    }, 600);
+      setLocation('/analytics');    }, 600);
   };
 
   const {
@@ -66,7 +66,7 @@ export default function LoginPage() {
       const { access_token, user } = res.data;
       login(access_token, user);
       toast.success(`Welcome back, ${user.full_name}!`);
-      setLocation('/repository');
+      setLocation(redirectTarget.startsWith('/') ? redirectTarget : '/repository');
     } catch (err: any) {
       const message = err.response?.data?.detail || 'Login failed. Please try again.';
       toast.error(message);
@@ -88,52 +88,69 @@ export default function LoginPage() {
           National Land Governance Platform
         </h1>
         <p className="mt-1 text-xs text-slate-500 font-medium">
-          Department of Land Resources • Ministry of Rural Development, Government of India
+          Department of Land Resources • Ministry of Rural Development, Government of India        </p>
+        <h1 className="mt-1 font-serif text-2xl sm:text-3xl font-bold text-[#132f4c]">
+          National Land Governance Platform
+        </h1>
+        <p className="mt-1 text-xs text-slate-500 font-medium">
+          Centralized Single Sign-On &amp; Verified Role-Based Access Gateway
         </p>
+        {/* Balanced, centered tricolor bar */}
+        <div className="flex h-1 w-20 overflow-hidden rounded-full mx-auto my-2 shadow-2xs">
+          <span className="w-1/3 bg-[#FF9933]" />
+          <span className="w-1/3 bg-[#FFFFFF] border-y border-slate-200" />
+          <span className="w-1/3 bg-[#138808]" />
+        </div>
       </div>
 
+      {/* Alert banner if redirected due to auth requirement */}
+      {redirectTarget && redirectTarget !== '/repository' && (
+        <div className="mb-5 max-w-lg w-full border-l-4 border-[#b8860b] bg-[#fff8e8] p-3 text-xs text-[#8c6508] shadow-2xs rounded-r-xs">
+          <p className="font-bold flex items-center gap-1.5">
+            <ShieldCheck className="h-4 w-4 text-[#b8860b] shrink-0" />
+            Authentication Required
+          </p>
+          <p className="mt-1 text-[11px] leading-relaxed">
+            Please sign in to access the National Land Governance Repository and your requested search query.
+          </p>
+        </div>
+      )}
+
       {/* Login card */}
-      <div className="w-full max-w-lg border border-slate-300 bg-white shadow-md">
-        {/* Navigation Tabs */}
+      <div className="w-full max-w-lg border border-slate-300 bg-white shadow-md">        {/* Navigation Tabs */}
         <div className="grid grid-cols-2 border-b border-slate-300 bg-slate-100 text-xs font-bold text-center">
           <button
             type="button"
             onClick={() => setAuthTab('standard')}
-            className={`py-3 px-4 border-b-2 transition-colors ${
-              authTab === 'standard'
+            className={`py-3 px-4 border-b-2 transition-colors ${              authTab === 'standard'
                 ? 'border-[#132f4c] bg-white text-[#132f4c]'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
-            Institutional Account
-          </button>
+            Institutional Account          </button>
           <button
             type="button"
             onClick={() => setAuthTab('janparichay')}
-            className={`py-3 px-4 border-b-2 transition-colors flex items-center justify-center gap-2 ${
-              authTab === 'janparichay'
+            className={`py-3 px-4 border-b-2 transition-colors flex items-center justify-center gap-2 ${              authTab === 'janparichay'
                 ? 'border-orange-500 bg-white text-orange-950 font-bold'
                 : 'border-transparent text-slate-500 hover:text-slate-800'
             }`}
           >
             <span className="flex h-4 w-4 items-center justify-center rounded-full bg-orange-500 text-[9px] text-white font-bold">🇮🇳</span>
-            <span>MeriPehchan / Jan Parichay</span>
-          </button>
+            <span>MeriPehchan / Jan Parichay</span>          </button>
         </div>
 
         {authTab === 'standard' ? (
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-6">
             <div>
-              <label htmlFor="email" className="mb-1 block text-xs font-semibold text-slate-700">
-                Email Address
+              <label htmlFor="email" className="mb-1 block text-xs font-semibold text-slate-700">                Email Address
               </label>
               <input
                 id="email"
                 type="email"
                 autoComplete="email"
                 placeholder="you@institution.ac.in"
-                className="focus-ring h-9 w-full border border-slate-300 px-3 text-xs bg-white"
-                {...register('email')}
+                className="focus-ring h-9 w-full border border-slate-300 px-3 text-xs bg-white"                {...register('email')}
               />
               {errors.email && (
                 <p className="mt-1 text-xs text-red-600">{errors.email.message}</p>
@@ -143,22 +160,19 @@ export default function LoginPage() {
             <div>
               <label htmlFor="password" className="mb-1 block text-xs font-semibold text-slate-700">
                 Password
-              </label>
-              <div className="relative">
+              </label>              <div className="relative">
                 <input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   autoComplete="current-password"
                   placeholder="••••••••"
-                  className="focus-ring h-9 w-full border border-slate-300 px-3 pr-10 text-xs bg-white"
-                  {...register('password')}
+                  className="focus-ring h-9 w-full border border-slate-300 px-3 pr-10 text-xs bg-white"                  {...register('password')}
                 />
                 <button
                   type="button"
                   className="absolute right-3 top-2 text-slate-400 hover:text-slate-600"
                   onClick={() => setShowPassword(!showPassword)}
-                  tabIndex={-1}
-                >
+                  tabIndex={-1}                >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
@@ -170,8 +184,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className="focus-ring flex h-9 w-full items-center justify-center gap-2 bg-[#244562] text-xs font-bold text-white hover:bg-[#132f4c] disabled:opacity-60 disabled:cursor-wait cursor-pointer transition-colors"
-            >
+              className="focus-ring flex h-9 w-full items-center justify-center gap-2 bg-[#244562] text-xs font-bold text-white hover:bg-[#132f4c] disabled:opacity-60 disabled:cursor-wait cursor-pointer transition-colors"            >
               {isLoading ? (
                 'Signing in...'
               ) : (
@@ -185,8 +198,7 @@ export default function LoginPage() {
           /* Jan Parichay Government SSO Form */
           <div className="p-6 space-y-4">
             <div className="rounded-xs border border-amber-200 bg-amber-50/70 p-3 text-xs text-amber-900 flex items-start gap-2.5">
-              <span className="text-base">🏛️</span>
-              <div>
+              <span className="text-base">🏛️</span>              <div>
                 <strong className="block font-semibold">Government of India Single Sign-On Gateway</strong>
                 <span className="text-[11px] text-amber-800">
                   Federated Identity Gateway managed by National Informatics Centre (NIC) for certified DoLR, Survey of India, and State Revenue Officers.
@@ -202,8 +214,7 @@ export default function LoginPage() {
                 <select
                   value={ssoDepartment}
                   onChange={(e) => setSsoDepartment(e.target.value)}
-                  className="w-full border border-slate-300 px-3 py-2 text-xs focus-ring bg-white"
-                >
+                  className="w-full border border-slate-300 px-3 py-2 text-xs focus-ring bg-white"                >
                   <option value="Department of Land Resources (DoLR), MoRD">Department of Land Resources (DoLR), MoRD</option>
                   <option value="Survey of India (SVAMITVA Directorate)">Survey of India (SVAMITVA Directorate)</option>
                   <option value="National Informatics Centre (Land Records Division)">National Informatics Centre (Land Records Division)</option>
@@ -220,8 +231,7 @@ export default function LoginPage() {
                   type="text"
                   value={ssoOfficerId}
                   onChange={(e) => setSsoOfficerId(e.target.value)}
-                  className="w-full border border-slate-300 px-3 py-1.5 text-xs font-mono focus-ring bg-white"
-                />
+                  className="w-full border border-slate-300 px-3 py-1.5 text-xs font-mono focus-ring bg-white"                />
               </div>
 
               <div>
@@ -250,8 +260,7 @@ export default function LoginPage() {
                   placeholder={ssoOtpSent ? "Enter 6-digit OTP (Simulated: 849201)" : "Click 'Send OTP' above"}
                   value={ssoOtp}
                   onChange={(e) => setSsoOtp(e.target.value)}
-                  className="w-full border border-slate-300 px-3 py-1.5 text-xs font-mono focus-ring bg-white"
-                />
+                  className="w-full border border-slate-300 px-3 py-1.5 text-xs font-mono focus-ring bg-white"                />
               </div>
 
               <label className="flex items-start gap-2 pt-1 text-xs text-slate-600 cursor-pointer">
@@ -262,8 +271,7 @@ export default function LoginPage() {
                   className="mt-0.5 accent-blue-600"
                 />
                 <span>
-                  Authorize DigiLocker authentication & verify official credentials with CERT-In Level-3 digital audit log.
-                </span>
+                  Authorize DigiLocker authentication & verify official credentials with CERT-In Level-3 digital audit log.                </span>
               </label>
 
               <button
@@ -277,8 +285,7 @@ export default function LoginPage() {
                 ) : (
                   <>
                     <span className="font-bold">🇮🇳</span>
-                    <span>Authenticate via MeriPehchan / Jan Parichay</span>
-                  </>
+                    <span>Authenticate via MeriPehchan / Jan Parichay</span>                  </>
                 )}
               </button>
             </div>

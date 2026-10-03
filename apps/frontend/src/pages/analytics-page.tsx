@@ -3,6 +3,7 @@ import {
   AlertCircle,
   Award,
   ChevronRight,
+  ChevronDown,
   Download,
   FileCheck2,
   FileText,
@@ -25,6 +26,15 @@ import {
   Trophy,
   X,
 } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+
 
 export type NlgiState = {
   rank: number;
@@ -110,24 +120,26 @@ const colors = {
 };
 
 function Breadcrumb({ current }: { current: string }) {
+  const { t } = useLanguage();
   return (
     <div className="mb-4 flex items-center gap-2 text-xs text-slate-500" data-testid="text-breadcrumb">
-      <span>National Land Governance Platform</span>
+      <span>{t('app_name')}</span>
       <ChevronRight className="h-3 w-3" />
-      <span className="font-semibold text-[#1E293B]">{current}</span>
+      <span className="font-semibold text-[#1E293B]">{t(current)}</span>
     </div>
   );
 }
 
 function PageFrame({ title, kicker, description, children, actions }: { title: string; kicker: string; description: string; children: React.ReactNode; actions?: React.ReactNode }) {
+  const { t } = useLanguage();
   return (
     <section className="w-full px-4 py-5 md:px-8 md:py-7">
       <Breadcrumb current={title} />
       <div className="mb-6 flex flex-col justify-between gap-4 border-b border-slate-300 pb-5 lg:flex-row lg:items-end">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">{kicker}</p>
-          <h1 className="font-serif text-3xl font-semibold tracking-tight text-[#1E293B] md:text-4xl" data-testid="text-page-title-analytics">{title}</h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{description}</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">{t(kicker)}</p>
+          <h1 className="font-serif text-3xl font-semibold tracking-tight text-[#1E293B] md:text-4xl" data-testid="text-page-title-analytics">{t(title)}</h1>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{t(description)}</p>
         </div>
         {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
       </div>
@@ -305,9 +317,9 @@ export default function AnalyticsPage() {
 
   return (
     <PageFrame
-      kicker="Executive Intelligence / Official Decision Support"
-      title="National Land Analytics & Decision-Support"
-      description="Compare policy performance, cadastral modernization progress, and land dispute resolution metrics across participating regions using empirical MoAFW, IMD, and Census records."
+      kicker="Reports & insights / data dashboard"
+      title="National Land Analytics & Reports"
+      description="Compare how different regions are performing on land record digitization, dispute resolution, and policy implementation using government data."
       actions={
         <div className="flex flex-wrap gap-2">
           <button
@@ -321,75 +333,104 @@ export default function AnalyticsPage() {
           </button>
           <button 
             onClick={handleExportCsv}
-            className="focus-ring flex items-center gap-2 border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors" 
-            type="button"
+            className="focus-ring flex items-center gap-2 border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors"             type="button"
+            data-testid="button-dolr-dossier"
           >
-            <Table2 className="h-3.5 w-3.5" /> Export CSV
+            <FileCheck2 className="h-3.5 w-3.5 text-[#d97706]" />
+            DoLR Summary Report
           </button>
-          <button 
-            onClick={handlePrintBriefing}
-            className="focus-ring flex items-center gap-2 border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors" 
-            type="button"
-          >
-            <Printer className="h-3.5 w-3.5" /> Print Briefing
-          </button>
-          <button 
-            onClick={handleDownloadPdf}
-            className="focus-ring flex items-center gap-2 border border-[#1E293B] bg-[#1E293B] px-3 py-2 text-xs font-bold text-white hover:bg-slate-800 transition-colors" 
-            type="button"
-          >
-            <Download className="h-3.5 w-3.5" /> Download PDF
-          </button>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="focus-ring flex items-center gap-2 border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 transition-colors shadow-2xs rounded-sm"
+                type="button"
+                data-testid="button-export-actions"
+              >
+                <Download className="h-3.5 w-3.5 text-slate-500" />
+                <span>Export &amp; Share</span>
+                <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-52 border border-slate-200 bg-white p-1 text-xs shadow-lg z-50">
+              <DropdownMenuItem
+                className="flex cursor-pointer items-center gap-2 px-2.5 py-2 font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#132f4c]"
+                onClick={handleDownloadPdf}
+                data-testid="button-download-pdf"
+              >
+                <Download className="h-3.5 w-3.5 text-slate-500" />
+                <span>Download PDF Briefing</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="flex cursor-pointer items-center gap-2 px-2.5 py-2 font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#132f4c]"
+                onClick={handleExportCsv}
+                data-testid="button-export-csv"
+              >
+                <Table2 className="h-3.5 w-3.5 text-slate-500" />
+                <span>Export Data (CSV)</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator className="my-1 bg-slate-200" />
+              <DropdownMenuItem
+                className="flex cursor-pointer items-center gap-2 px-2.5 py-2 font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#132f4c]"
+                onClick={handlePrintBriefing}
+                data-testid="button-print-briefing"
+              >
+                <Printer className="h-3.5 w-3.5 text-slate-500" />
+                <span>Print Dossier Briefing</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       }
     >
       {/* Top-Level Executive KPI Bar */}
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <div className="border border-slate-200 bg-white p-3.5 shadow-xs">
+        <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs hover:border-slate-300 transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Coverage Monitored</span>
-            <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Coverage Monitored</span>
+            <span className="flex h-2 w-2 rounded-full bg-emerald-500" title="Live coverage"></span>
           </div>
-          <p className="mt-1 text-2xl font-bold font-mono text-[#1E293B]">640 Districts</p>
-          <p className="mt-0.5 text-[10px] text-slate-500 font-medium">36 States & UTs · Pan-India</p>
+          <p className="mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-[#132f4c]">640 Districts</p>
+          <p className="mt-1 text-xs text-slate-500 font-medium">36 States &amp; UTs · Pan-India</p>
         </div>
 
-        <div className="border border-slate-200 bg-white p-3.5 shadow-xs">
+        <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs hover:border-slate-300 transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Surveyed Area ({primaryRegion})</span>
-            <span className="text-[10px] font-mono font-bold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded">MoAFW</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Surveyed Area ({primaryRegion})</span>
+            <span className="rounded-sm bg-blue-50 px-1.5 py-0.5 text-[10px] font-bold text-blue-700 border border-blue-200">MoAFW</span>
           </div>
-          <p className="mt-1 text-2xl font-bold font-mono text-[#1D4ED8]">{reportingArea}</p>
-          <p className="mt-0.5 text-[10px] text-slate-500 font-medium">Cadastral Reporting Area</p>
+          <p className="mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-[#1D4ED8]">{reportingArea}</p>
+          <p className="mt-1 text-xs text-slate-500 font-medium">Official Surveyed Area</p>
         </div>
 
-        <div className="border border-slate-200 bg-white p-3.5 shadow-xs">
+        <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs hover:border-slate-300 transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">State Compliance Score</span>
-            <span className="flex items-center text-[10px] font-bold text-emerald-700">
-              <ArrowUpRight className="h-3 w-3" /> +4.2%
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">State Compliance Score</span>
+            <span className="flex items-center text-xs font-bold text-emerald-700">
+              <ArrowUpRight className="h-3.5 w-3.5" /> +4.2%
             </span>
           </div>
-          <p className="mt-1 text-2xl font-bold font-mono text-emerald-700">{compliancePct}%</p>
-          <p className="mt-0.5 text-[10px] text-slate-500 font-medium">DILRMP Standard Alignment</p>
+          <p className="mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-emerald-700">{compliancePct}%</p>
+          <p className="mt-1 text-xs text-slate-500 font-medium">Digital Records Standard Compliance</p>
         </div>
 
-        <div className="border border-slate-200 bg-white p-3.5 shadow-xs">
+        <div className="rounded-sm border border-slate-200 bg-white p-4 shadow-xs hover:border-slate-300 transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Net Sown Ratio</span>
-            <span className="text-[10px] font-mono font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">Agrarian</span>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Net Sown Ratio</span>
+            <span className="rounded-sm bg-amber-50 px-1.5 py-0.5 text-[10px] font-bold text-amber-700 border border-amber-200">Agrarian</span>
           </div>
-          <p className="mt-1 text-2xl font-bold font-mono text-amber-800">{agriPct}%</p>
-          <p className="mt-0.5 text-[10px] text-slate-500 font-medium">Active Cropland Cultivation</p>
+          <p className="mt-2 text-2xl sm:text-3xl font-bold tracking-tight text-amber-800">{agriPct}%</p>
+          <p className="mt-1 text-xs text-slate-500 font-medium">Active Cropland Cultivation</p>
         </div>
       </div>
+
 
       {showAnomaly && activeTab === 4 && (
         <div className="mb-6 flex items-start gap-3 border-l-4 border-[#B91C1C] bg-[#FEF2F2] p-4 text-sm text-[#7F1D1D]">
           <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-[#B91C1C]" />
           <div>
-            <p className="font-bold text-[#B91C1C]">Official Anomaly Warning: Abnormal 34% spike in agricultural boundary disputes detected in District Pune over Q3 2025.</p>
-            <p className="mt-1 font-medium">Recommended Action: Prioritize drone resurvey, fast-track settlement courts, and cadastral verification.</p>
+            <p className="font-bold text-[#B91C1C]">Notice: 34% spike in agricultural boundary disputes detected in Pune district over Q3 2025.</p>
+            <p className="mt-1 font-medium">Recommended Action: Prioritize drone resurvey, fast-track settlement courts, and ground boundary verification.</p>
           </div>
         </div>
       )}
@@ -445,8 +486,8 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* Navigation Tabs with Lucide Icons */}
-      <div className="mb-6 flex flex-wrap border-b border-slate-300 bg-white">
+      {/* Navigation Tabs with Lucide Icons - Clean horizontal scrolling with no wrap */}
+      <div className="mb-6 flex items-center overflow-x-auto whitespace-nowrap scrollbar-none border-b border-slate-300 bg-white rounded-t-sm shadow-2xs">
         {tabs.map((tab, idx) => {
           const Icon = tab.icon;
           const isActive = activeTab === idx;
@@ -454,16 +495,18 @@ export default function AnalyticsPage() {
             <button
               key={tab.label}
               onClick={() => setActiveTab(idx)}
-              className={`flex items-center gap-2 px-4 py-3 text-xs font-bold focus-ring transition-all ${
+              className={`shrink-0 flex items-center gap-2 px-4 py-3 text-xs font-bold focus-ring border-b-2 transition-all ${
                 isActive
-                  ? 'border-b-2 border-[#1E293B] text-[#1E293B] bg-slate-50'
-                  : 'text-slate-500 hover:text-slate-800 hover:bg-slate-50 border-b-2 border-transparent'
+                  ? 'border-[#132f4c] text-[#132f4c] bg-slate-50/80 font-extrabold'
+                  : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
               }`}
             >
-              <Icon className={`h-4 w-4 ${isActive ? 'text-[#1E293B]' : 'text-slate-400'}`} />
+              <Icon className={`h-4 w-4 ${isActive ? 'text-[#132f4c]' : 'text-slate-400'}`} />
               <span>{tab.label}</span>
               {tab.badge && (
-                <span className="ml-1 text-[9px] px-1.5 py-0.2 bg-emerald-100 text-emerald-800 font-bold uppercase rounded-sm">
+                <span className={`ml-1 text-[9px] px-1.5 py-0.5 rounded-sm font-bold uppercase border ${
+                  isActive ? 'bg-emerald-100 text-emerald-900 border-emerald-300' : 'bg-slate-100 text-slate-700 border-slate-200'
+                }`}>
                   {tab.badge}
                 </span>
               )}
@@ -495,8 +538,7 @@ export default function AnalyticsPage() {
               <div className="border border-slate-200 bg-white p-3.5 shadow-xs">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Policy Citation Index (h)</span>
                 <p className="mt-1 text-2xl font-bold font-mono text-[#1E293B]">{dashboardData?.kpis?.citation_impact_h_index ?? 34}</p>
-                <p className="mt-0.5 text-[10px] text-purple-700 font-medium">Statutory Precedent Impact</p>
-              </div>
+                <p className="mt-0.5 text-[10px] text-purple-700 font-medium">Statutory Precedent Impact</p>              </div>
             </div>
 
             <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
@@ -507,8 +549,7 @@ export default function AnalyticsPage() {
                 <div className="p-4 bg-slate-50 border-b border-slate-200 text-xs text-slate-600 flex items-center justify-between">
                   <span>Growth in statutory gazette analyses, legal tenure studies, and drone survey whitepapers.</span>
                   <span className="font-semibold text-emerald-700">CAG & DoLR Library Index</span>
-                </div>
-                <div className="h-[340px] p-4">
+                </div>                <div className="h-[340px] p-4">
                   <ResponsiveContainer width="100%" height="100%">
                     <ComposedChart data={dashboardData?.timeline ?? [
                       { year: '2014', statutory_acts: 12, empirical_studies: 45, citations: 320 },
@@ -526,8 +567,7 @@ export default function AnalyticsPage() {
                       <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
                       <Bar yAxisId="left" dataKey="statutory_acts" name="Statutory Acts / Rules" fill={colors.navy} radius={[2, 2, 0, 0]} />
                       <Bar yAxisId="left" dataKey="empirical_studies" name="Empirical Research Papers" fill={colors.emerald} radius={[2, 2, 0, 0]} />
-                      <Line yAxisId="right" type="monotone" dataKey="citations" name="Policy Citations" stroke={colors.crimson} strokeWidth={2.5} dot={{ r: 4 }} />
-                    </ComposedChart>
+                      <Line yAxisId="right" type="monotone" dataKey="citations" name="Policy Citations" stroke={colors.crimson} strokeWidth={2.5} dot={{ r: 4 }} />                    </ComposedChart>
                   </ResponsiveContainer>
                 </div>
               </Panel>
@@ -535,8 +575,7 @@ export default function AnalyticsPage() {
               <Panel title="Leading Research Bodies & Themes">
                 <div className="p-4 space-y-4 text-xs">
                   <div>
-                    <p className="font-bold text-[#1E293B] mb-2 uppercase text-[10px] tracking-wider text-slate-500">Top Research Contributors</p>
-                    <div className="space-y-2">
+                    <p className="font-bold text-[#1E293B] mb-2 uppercase text-[10px] tracking-wider text-slate-500">Top Research Contributors</p>                    <div className="space-y-2">
                       {(dashboardData?.top_institutions ?? [
                         { name: "NCAER (Land Records Index)", papers: 142 },
                         { name: "NITI Aayog Land Governance Cell", papers: 118 },
@@ -546,8 +585,7 @@ export default function AnalyticsPage() {
                       ]).map((inst: any, i: number) => (
                         <div key={i} className="flex items-center justify-between border-b border-slate-100 pb-1.5">
                           <span className="font-medium text-slate-700 truncate max-w-[210px]">{inst.name}</span>
-                          <span className="font-mono font-bold text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded text-[11px]">{inst.papers}</span>
-                        </div>
+                          <span className="font-mono font-bold text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded text-[11px]">{inst.papers}</span>                        </div>
                       ))}
                     </div>
                   </div>
@@ -567,8 +605,7 @@ export default function AnalyticsPage() {
                             <span className="font-mono font-bold">{th.share}%</span>
                           </div>
                           <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                            <div className="h-full bg-blue-600" style={{ width: `${th.share}%` }} />
-                          </div>
+                            <div className="h-full bg-blue-600" style={{ width: `${th.share}%` }} />                          </div>
                         </div>
                       ))}
                     </div>
@@ -604,15 +641,13 @@ export default function AnalyticsPage() {
                 <p className="mt-0.5 text-[10px] text-emerald-700 font-medium">24/7 Web/CSC Delivery</p>
               </div>
             </div>
-
             <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
               <Panel 
                 title={`Mutation Velocity & Processing Days: ${primaryRegion}`}
                 headerAction={<span className="text-[11px] text-emerald-700 font-bold font-mono">14.2 Days (Current Average)</span>}
               >
                 <div className="p-4 bg-slate-50 border-b border-slate-200 text-xs text-slate-600">
-                  Measures turnaround time from land sale deed registration to RoR / Khatauni mutation update in Tehsil servers.
-                </div>
+                  Measures turnaround time from land sale deed registration to RoR / Khatauni mutation update in Tehsil servers.                </div>
                 <div className="h-[340px] p-4">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={dashboardData?.mutation_velocity ?? [
@@ -637,8 +672,7 @@ export default function AnalyticsPage() {
                 </div>
               </Panel>
 
-              <Panel title="National Statutory Reform Tracker">
-                <div className="p-4 space-y-3 text-xs">
+              <Panel title="National Statutory Reform Tracker">                <div className="p-4 space-y-3 text-xs">
                   {(dashboardData?.statutory_reforms ?? [
                     { policy: "Model Agricultural Land Leasing Act", enacted_states: 8, drafting_states: 14, status: "Active Adoption" },
                     { policy: "DILRMP Auto-Mutation via SRO Sync", enacted_states: 22, drafting_states: 8, status: "Broad Deployment" },
@@ -911,8 +945,7 @@ export default function AnalyticsPage() {
                     { program: "SVAMITVA Drone Survey Flights", achieved: 86.1, unit: "% Villages Covered", color: "#15803D" },
                     { program: "SVAMITVA Property Cards Generated", achieved: 74.2, unit: "% Eligible Households", color: "#059669" },
                     { program: "DILRMP Record of Rights (RoR) Online", achieved: 94.7, unit: "% Villages", color: "#1E293B" },
-                    { program: "DILRMP Cadastral Map Vectorization", achieved: 78.4, unit: "% Village Cadastres", color: "#2563EB" },
-                    { program: "Sub-Registrar & Revenue Office Web-Sync", achieved: 84.1, unit: "% SRO Offices", color: "#B45309" },
+                    { program: "DILRMP Cadastral Map Vectorization", achieved: 78.4, unit: "% Village Cadastres", color: "#2563EB" },                    { program: "Sub-Registrar & Revenue Office Web-Sync", achieved: 84.1, unit: "% SRO Offices", color: "#B45309" },
                     { program: "Modern Land Record Rooms (MLRR)", achieved: 91.2, unit: "% Tehsils Established", color: "#475569" },
                   ]).map((prog: any, i: number) => (
                     <div key={i}>
@@ -968,8 +1001,7 @@ export default function AnalyticsPage() {
               <div className="border border-slate-200 bg-white p-3.5 shadow-xs">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Cadastral Vectorization</span>
                 <p className="mt-1 text-2xl font-bold font-mono text-[#1E293B]">{dashboardData?.kpis?.cadastral_vectorization_pct ?? 78.4}%</p>
-                <p className="mt-0.5 text-[10px] text-emerald-700 font-medium">Pan-India Cadastre</p>
-              </div>
+                <p className="mt-0.5 text-[10px] text-emerald-700 font-medium">Pan-India Cadastre</p>              </div>
               <div className="border border-slate-200 bg-white p-3.5 shadow-xs">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Survey Drone Resolution</span>
                 <p className="mt-1 text-2xl font-bold font-mono text-emerald-700">{dashboardData?.kpis?.survey_resolution_gsd ?? "Sub-5cm"}</p>
@@ -991,8 +1023,7 @@ export default function AnalyticsPage() {
               <Panel title="Remote Sensing & Earth Observation Sensor Grid">
                 <div className="p-4 space-y-3 text-xs">
                   {(dashboardData?.spatial_resolutions ?? [
-                    { source: "Survey of India Drone Cadastre", resolution: "3-5 cm GSD", coverage: "Abadi / Inhabited Rural Areas", use_case: "SVAMITVA Property Cards" },
-                    { source: "Cartosat-2/3 Satellite Imageries", resolution: "0.25 - 0.5 m", coverage: "National Cadastral Grid", use_case: "Agricultural Parcel Verification" },
+                    { source: "Survey of India Drone Cadastre", resolution: "3-5 cm GSD", coverage: "Abadi / Inhabited Rural Areas", use_case: "SVAMITVA Property Cards" },                    { source: "Cartosat-2/3 Satellite Imageries", resolution: "0.25 - 0.5 m", coverage: "National Cadastral Grid", use_case: "Agricultural Parcel Verification" },
                     { source: "Sentinel-2 & Landsat-8/9", resolution: "10 - 30 m", coverage: "Multi-Spectral Pan-India", use_case: "Land-Use Transition & Forestry" },
                     { source: "VIIRS / DMSP Nightlights", resolution: "500 m / 750 m", coverage: "National Daily", use_case: "Economic Radiance & Dispute Risk ML" },
                   ]).map((sens: any, i: number) => (
@@ -1051,8 +1082,7 @@ export default function AnalyticsPage() {
                     National Land Governance Index (NLGI)
                   </h2>
                   <p className="mt-1 text-xs text-slate-600 max-w-3xl leading-relaxed">
-                    Composite national benchmarking framework evaluating all 28 States &amp; 7 UTs on Cadastral Digitization (30%), RoR-SRO Integration (25%), SVAMITVA Coverage (20%), and Dispute Resolution Velocity (25%).
-                  </p>
+                    Composite national benchmarking framework evaluating all 28 States &amp; 7 UTs on Cadastral Digitization (30%), RoR-SRO Integration (25%), SVAMITVA Coverage (20%), and Dispute Resolution Velocity (25%).                  </p>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -1155,8 +1185,7 @@ export default function AnalyticsPage() {
                       <th className="py-3 px-4 text-center">Cadastral Digitized</th>
                       <th className="py-3 px-4 text-center">RoR-SRO Linked</th>
                       <th className="py-3 px-4 text-center">SVAMITVA Cards</th>
-                      <th className="py-3 px-4 text-center">Dispute Velocity</th>
-                      <th className="py-3 px-4 text-right">Action</th>
+                      <th className="py-3 px-4 text-center">Dispute Velocity</th>                      <th className="py-3 px-4 text-right">Action</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
@@ -1214,8 +1243,7 @@ export default function AnalyticsPage() {
                               }}
                               className="focus-ring px-2.5 py-1 text-[11px] font-bold text-[#1E293B] border border-slate-300 bg-white hover:bg-slate-100 transition-colors"
                             >
-                              Inspect State
-                            </button>
+                              Inspect State                            </button>
                           </td>
                         </tr>
                       );
@@ -1277,8 +1305,7 @@ export default function AnalyticsPage() {
             {/* Executive Highlights Grid */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
               <div className="border border-slate-300 p-3 bg-slate-50 text-center">
-                <p className="text-[10px] font-bold text-slate-500 uppercase">Cadastral Digitization</p>
-                <p className="font-mono text-xl font-bold text-[#1E293B] mt-0.5">94.2%</p>
+                <p className="text-[10px] font-bold text-slate-500 uppercase">Cadastral Digitization</p>                <p className="font-mono text-xl font-bold text-[#1E293B] mt-0.5">94.2%</p>
                 <p className="text-[10px] text-emerald-700 font-semibold">+18.4% since 2020</p>
               </div>
               <div className="border border-slate-300 p-3 bg-slate-50 text-center">
@@ -1307,8 +1334,7 @@ export default function AnalyticsPage() {
                 Pursuant to the mandate of the <strong>National Land Modernization Program (DILRMP)</strong> and the <strong>SVAMITVA Drone Resurvey Scheme</strong>, this Executive Policy Dossier evaluates structural reforms across all 35 States and Union Territories. Accelerated RoR-SRO computerization and CORS baseline station deployments have established single-truth geospatial property boundaries across 640 districts.
               </p>
               <p>
-                State performance exhibits divergence: Top-tier states like <strong>Maharashtra (89.4)</strong>, <strong>Karnataka (88.1)</strong>, and <strong>Gujarat (86.7)</strong> have accomplished 96%+ cadastral georeferencing and automated deed registration. Conversely, hill states and North-Eastern territories require specialized technical assistance to overcome terrain-induced GPS attenuation.
-              </p>
+                State performance exhibits divergence: Top-tier states like <strong>Maharashtra (89.4)</strong>, <strong>Karnataka (88.1)</strong>, and <strong>Gujarat (86.7)</strong> have accomplished 96%+ cadastral georeferencing and automated deed registration. Conversely, hill states and North-Eastern territories require specialized technical assistance to overcome terrain-induced GPS attenuation.              </p>
             </div>
 
             {/* Section 2: NLGI Top 5 vs Bottom 5 Performance Matrix */}
@@ -1356,8 +1382,7 @@ export default function AnalyticsPage() {
               </h3>
               <ol className="list-decimal pl-5 space-y-2 text-[11px] leading-relaxed">
                 <li>
-                  <strong>Mandatory e-Courts &amp; ULPIN Interoperability:</strong> Mandate civil courts to verify parcel 14-digit ULPIN (Bhu-Aadhaar) through DoLR API before granting interim land title injunctions, curtailing frivolous boundary litigation.
-                </li>
+                  <strong>Mandatory e-Courts &amp; ULPIN Interoperability:</strong> Mandate civil courts to verify parcel 14-digit ULPIN (Bhu-Aadhaar) through DoLR API before granting interim land title injunctions, curtailing frivolous boundary litigation.                </li>
                 <li>
                   <strong>Universal CORS Densification:</strong> Authorize ₹420 Cr capital outlay under Survey of India to establish 180 additional Continuously Operating Reference Stations across Himachal Pradesh, Uttarakhand, and North-Eastern States.
                 </li>
@@ -1365,8 +1390,7 @@ export default function AnalyticsPage() {
                   <strong>Statutory 45-Day Conversion Limit:</strong> Standardize state Land Revenue Codes to mandate automated deeming of agricultural-to-non-agricultural zoning clearances after 45 days of un-objected application.
                 </li>
                 <li>
-                  <strong>Automated Encroachment Satellite Audits:</strong> Enable weekly NRSC Bhuvan spectral alerts to District Collectors upon unauthorized deforestation or built-up encroachment on public revenue commons.
-                </li>
+                  <strong>Automated Encroachment Satellite Audits:</strong> Enable weekly NRSC Bhuvan spectral alerts to District Collectors upon unauthorized deforestation or built-up encroachment on public revenue commons.                </li>
               </ol>
             </div>
 

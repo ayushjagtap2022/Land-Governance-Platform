@@ -21,7 +21,7 @@ def get_gis_layers():
 @router.get("/districts", summary="List Districts with Spatial Coordinates & Demographics")
 def list_spatial_districts(
     state: Optional[str] = Query(None, description="Optional state filter"),
-    year: int = Query(2024, ge=1999, le=2025, description="Year for multi-temporal land governance indicators (1999-2025)"),
+    year: int = Query(2024, ge=1950, le=2025, description="Year for multi-temporal land governance indicators (1950-2025)"),
     limit: int = Query(640, ge=1, le=1000, description="District limit")
 ):
     """Returns real Indian districts with lat/lng, Census population, modernization %, and dispute risk."""
@@ -29,7 +29,7 @@ def list_spatial_districts(
 
 @router.get("/temporal-stats", summary="Get National Land Transitions & Digitization Progress for Year")
 def get_temporal_statistics(
-    year: int = Query(2024, ge=1999, le=2025, description="Year for multi-temporal land use progression (1999-2025)")
+    year: int = Query(2024, ge=1950, le=2025, description="Year for multi-temporal land use progression (1950-2025)")
 ):
     """Returns MoAFW-derived land use percentages, cadastral digitization %, and SVAMITVA cards for the selected year."""
     return geodata_service.get_temporal_stats(year=year)
@@ -37,7 +37,7 @@ def get_temporal_statistics(
 @router.get("/geojson/{layer_key}", summary="Get GeoJSON FeatureCollection for Layer")
 def get_geojson_layer(
     layer_key: str,
-    year: int = Query(2024, ge=1999, le=2025, description="Year for multi-temporal land use time-slider")
+    year: int = Query(2024, ge=1950, le=2025, description="Year for multi-temporal land use time-slider")
 ):
     """Returns GeoJSON FeatureCollection for cadastral survey plots, LULC zones, or climate risks."""
     return geodata_service.get_geojson_layer(layer_key=layer_key, year=year)

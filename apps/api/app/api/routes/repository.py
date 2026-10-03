@@ -699,8 +699,13 @@ async def get_documents(
 
         # Filter and format
         formatted = []
+        seen_titles = set()
         for d, sim in scored_docs:
             doc_dict = format_document_dict(d, similarity=sim)
+            normalized_title = (doc_dict.get("title") or "").strip().lower()
+            if normalized_title and normalized_title in seen_titles:
+                continue
+            seen_titles.add(normalized_title)
             
             # Apply state filter
             if state and state != "All India":
@@ -831,7 +836,15 @@ async def get_recommended_documents(
         if not all_docs:
             return []
 
-        formatted = [format_document_dict(d) for d in all_docs]
+        formatted = []
+        seen_rec_titles = set()
+        for d in all_docs:
+            d_dict = format_document_dict(d)
+            norm_title = (d_dict.get("title") or "").strip().lower()
+            if norm_title and norm_title in seen_rec_titles:
+                continue
+            seen_rec_titles.add(norm_title)
+            formatted.append(d_dict)
         r = (role or "Researcher").lower()
 
         if "official" in r or "admin" in r:

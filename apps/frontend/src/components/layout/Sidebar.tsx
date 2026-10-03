@@ -18,26 +18,31 @@ import {
 } from 'lucide-react';
 import { Link, useLocation } from 'wouter';
 import { useRole, type Role } from '@/context/RoleContext';
+import { useLanguage } from '@/context/LanguageContext';
 
-type NavItem = { label: string; href: string; icon: typeof Home; roles: Role[] };
+type NavItem = { label: string; hiLabel: string; href: string; icon: typeof Home; roles: Role[] };
 const baseRoles: Role[] = ['Public', 'Researcher', 'Official', 'Institution Admin', 'Super Admin'];
 const navItems: NavItem[] = [
-  { label: 'Overview', href: '/', icon: Home, roles: baseRoles },
-  { label: 'Repository', href: '/repository', icon: BookOpen, roles: baseRoles },
-  { label: 'GIS Map', href: '/map', icon: Map, roles: baseRoles },
-  { label: 'Innovation Portal', href: '/innovation', icon: Lightbulb, roles: baseRoles },
-  { label: 'Workspaces', href: '/workspaces', icon: Home, roles: ['Researcher', 'Super Admin'] },
-  { label: 'AI Assistant', href: '/assistant', icon: MessageSquareText, roles: ['Researcher', 'Super Admin'] },
-  { label: 'Synthesis', href: '/synthesis', icon: Sparkles, roles: ['Researcher', 'Super Admin'] },
-  { label: 'Policy Simulator', href: '/simulate', icon: SlidersHorizontal, roles: ['Official', 'Institution Admin', 'Super Admin'] },
-  { label: 'Analytics Hub', href: '/analytics', icon: BarChart3, roles: ['Official', 'Institution Admin', 'Super Admin'] },
-  { label: 'Admin Console', href: '/admin', icon: Settings2, roles: ['Official', 'Institution Admin', 'Super Admin'] },
-  { label: 'Developer API', href: '/developers', icon: Code2, roles: ['Official', 'Institution Admin', 'Super Admin'] },
+  { label: 'Overview', hiLabel: 'अवलोकन', href: '/', icon: Home, roles: baseRoles },
+  { label: 'Repository', hiLabel: 'दस्तावेज़ भंडार', href: '/repository', icon: BookOpen, roles: baseRoles },
+  { label: 'GIS Map', hiLabel: 'भू-मानचित्र', href: '/map', icon: Map, roles: baseRoles },
+  { label: 'Innovation Portal', hiLabel: 'नवाचार मंच', href: '/innovation', icon: Lightbulb, roles: baseRoles },
+  { label: 'Workspaces', hiLabel: 'कार्यक्षेत्र', href: '/workspaces', icon: Home, roles: ['Researcher', 'Super Admin'] },
+  { label: 'AI Assistant', hiLabel: 'एआई सहायक', href: '/assistant', icon: MessageSquareText, roles: ['Researcher', 'Super Admin'] },
+  { label: 'Synthesis', hiLabel: 'संश्लेषण', href: '/synthesis', icon: Sparkles, roles: ['Researcher', 'Super Admin'] },
+  { label: 'Policy Simulator', hiLabel: 'नीति सिमुलेटर', href: '/simulate', icon: SlidersHorizontal, roles: ['Official', 'Institution Admin', 'Super Admin'] },
+  { label: 'Analytics Hub', hiLabel: 'विश्लेषण केंद्र', href: '/analytics', icon: BarChart3, roles: ['Official', 'Institution Admin', 'Super Admin'] },
+  { label: 'Admin Console', hiLabel: 'प्रशासन कंसोल', href: '/admin', icon: Settings2, roles: ['Official', 'Institution Admin', 'Super Admin'] },
+  { label: 'Developer API', hiLabel: 'डेवलपर एपीआई', href: '/developers', icon: Code2, roles: ['Official', 'Institution Admin', 'Super Admin'] },
 ];
 
 export function Sidebar() {
   const { activeRole, evaluatorMode } = useRole();
+  const { isHindi, t } = useLanguage();
   const [location] = useLocation();
+
+  const isRouteActive = (href: string, currentLoc: string) =>
+    currentLoc === href || (href !== '/' && currentLoc.startsWith(href));
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     try {
       return localStorage.getItem('nlgp_sidebar_collapsed') === 'true';
@@ -57,7 +62,6 @@ export function Sidebar() {
   };
 
   const visible = navItems.filter((item) => evaluatorMode || activeRole === 'Super Admin' || item.roles.includes(activeRole));
-
   return (
     <aside
       className={`flex shrink-0 flex-col border-b border-slate-300 bg-[#1b3a57] text-slate-100 transition-all duration-300 ease-in-out md:min-h-[calc(100dvh-124px)] md:border-b-0 md:border-r md:border-[#34516a] ${
@@ -68,16 +72,18 @@ export function Sidebar() {
       <div className={`flex items-center border-b border-[#34516a] py-3 ${collapsed ? 'justify-center px-2' : 'justify-between px-4'}`}>
         {!collapsed && (
           <div className="min-w-0 pr-2 overflow-hidden">
-            <p className="truncate text-[10px] font-bold uppercase tracking-[0.18em] text-[#f2b134]">Platform workspace</p>
-            <p className="truncate mt-0.5 text-xs font-semibold text-slate-200">{activeRole} view</p>
+            <p className="truncate text-[10px] font-bold uppercase tracking-[0.18em] text-[#f2b134]">{t('platform_workspace')}</p>
+            <p className="truncate mt-0.5 text-xs font-semibold text-slate-200">
+              {activeRole === 'Public' ? t('public_access') : `${t(activeRole)} ${t('portal')}`}
+            </p>
           </div>
         )}
         <button
           type="button"
           onClick={toggleCollapsed}
           className="focus-ring flex h-7 w-7 items-center justify-center rounded-xs border border-white/20 bg-white/10 text-slate-300 hover:bg-white/20 hover:text-white transition-colors"
-          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          title={collapsed ? t('expand_sidebar') : t('collapse_sidebar')}
+          aria-label={collapsed ? t('expand_sidebar') : t('collapse_sidebar')}
           data-testid="button-toggle-sidebar"
         >
           {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
@@ -86,10 +92,9 @@ export function Sidebar() {
 
       {/* Navigation Items */}
       <nav aria-label="Primary navigation" className="flex gap-1 overflow-x-auto p-2 md:block md:space-y-0.5">
-        {visible.map(({ label, href, icon: Icon }) => {
-          const isActive =
-            (href === '/' && location === '/') ||
-            (href !== '/' && location.startsWith(href));
+        {visible.map(({ label, hiLabel, href, icon: Icon }) => {
+          const isActive = isRouteActive(href, location);
+          const displayLabel = isHindi ? hiLabel : label;
 
           return (
             <Link
@@ -105,16 +110,16 @@ export function Sidebar() {
               data-testid={`link-nav-${label.toLowerCase().replaceAll(' ', '-')}`}
               href={href}
               key={`${label}-${href}`}
-              title={collapsed ? label : undefined}
+              title={collapsed ? displayLabel : undefined}
             >
               <Icon
                 className={`h-4 w-4 shrink-0 ${
                   isActive ? 'text-[#f2b134]' : 'text-slate-400 group-hover:text-slate-200'
                 }`}
               />
-              {!collapsed && <span className="truncate">{label}</span>}
+              {!collapsed && <span className="truncate">{displayLabel}</span>}
               {collapsed && (
-                <span className="sr-only">{label}</span>
+                <span className="sr-only">{displayLabel}</span>
               )}
             </Link>
           );
@@ -124,12 +129,14 @@ export function Sidebar() {
       {/* Sidebar Footer */}
       <div className="mt-auto hidden border-t border-[#34516a] p-3 md:block">
         {!collapsed ? (
-          <div className="flex items-start gap-2 text-[11px] leading-4 text-slate-400">
+          <div className="flex items-start gap-2.5 text-[11px] leading-4 text-slate-400">
             <FileText className="mt-0.5 h-4 w-4 shrink-0 text-[#f2b134]" />
-            <p>
-              SIH PS 26019<br />
-              <span className="text-slate-500">National Digital Platform for Land Governance</span>
-            </p>
+            <div>
+              <span className="inline-flex items-center rounded-[3px] border border-[#f2b134]/40 bg-[#f2b134]/15 px-1.5 py-0.5 text-[9px] font-mono font-bold text-[#f2b134] tracking-wider">
+                SIH PS 26019
+              </span>
+              <p className="mt-1 text-[10px] text-slate-400">National Land Governance Platform</p>
+            </div>
           </div>
         ) : (
           <div className="flex justify-center" title="SIH PS 26019 - National Land Governance Platform">

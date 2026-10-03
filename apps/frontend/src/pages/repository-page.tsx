@@ -5,6 +5,7 @@ import {
   ChevronRight,
   CircleHelp,
   Clock3,
+  Copy,
   Download,
   Eye,
   FileArchive,
@@ -14,6 +15,7 @@ import {
   Languages,
   LockKeyhole,
   Map,
+  MoreVertical,
   Search,
   Sparkles,
   UploadCloud,
@@ -22,8 +24,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { useRole } from '@/context/RoleContext';
-import { CitationModal } from '@/components/common/CitationModal';
-import { toast } from 'sonner';
+import { CitationModal } from '@/components/common/CitationModal';import { toast } from 'sonner';
 import {
   type LandDocument,
   type RepositoryDocumentType,
@@ -79,17 +80,18 @@ const recordTypeClass: Record<RepositoryRecordType, string> = {
   'Research Studies': 'border-[#b7d4c1] bg-[#f0f8f1] text-[#287449]',
   'Acts / Gazettes': 'border-[#b9cce0] bg-[#eef4fa] text-[#244562]',
   Datasets: 'border-slate-300 bg-slate-100 text-slate-700',
-  'Field Case Studies': 'border-[#c084fc] bg-[#faf5ff] text-[#7e22ce]',
-};
+  'Field Case Studies': 'border-[#c084fc] bg-[#faf5ff] text-[#7e22ce]',};
+
 
 type UploadStage = 'idle' | 'uploading' | 'ocr' | 'metadata' | 'review' | 'committed';
 
 function Breadcrumb({ current }: { current: string }) {
+  const { t } = useLanguage();
   return (
     <div className="mb-4 flex items-center gap-2 text-xs text-slate-500" data-testid="text-breadcrumb">
-      <span>National Land Governance Platform</span>
+      <span>{t('app_name')}</span>
       <ChevronRight className="h-3 w-3" />
-      <span className="font-semibold text-[#244562]">{current}</span>
+      <span className="font-semibold text-[#244562]">{t(current)}</span>
     </div>
   );
 }
@@ -107,14 +109,15 @@ function PageFrame({
   children: React.ReactNode;
   actions?: React.ReactNode;
 }) {
+  const { t } = useLanguage();
   return (
     <section className="w-full px-4 py-5 md:px-8 md:py-7">
       <Breadcrumb current={title} />
       <div className="mb-6 flex flex-col justify-between gap-4 border-b border-slate-300 pb-5 lg:flex-row lg:items-end">
         <div>
-          <p className="section-kicker mb-2">{kicker}</p>
-          <h1 className="font-serif text-3xl font-semibold tracking-tight text-[#132f4c] md:text-4xl" data-testid="text-page-title-land-governance-repository">{title}</h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{description}</p>
+          <p className="section-kicker mb-2">{t(kicker)}</p>
+          <h1 className="font-serif text-3xl font-semibold tracking-tight text-[#132f4c] md:text-4xl" data-testid="text-page-title-land-governance-repository">{t(title)}</h1>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{t(description)}</p>
         </div>
         {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
       </div>
@@ -272,17 +275,17 @@ function UploadModal({ onClose, onCommitSuccess }: { onClose: () => void; onComm
   const stageLabel = stage === 'uploading'
     ? 'Uploading to staging server...'
     : stage === 'ocr'
-      ? 'Running Tesseract OCR on scanned land record...'
-      : 'Auto-extracting metadata via NLP (Title, Issuing Authority, Year)...';
+      ? 'Running text recognition on scanned document...'
+      : 'Auto-extracting document details (Title, Authority, Year)...';
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#132f4c]/45 p-4" role="dialog" aria-modal="true" aria-label="Upload document or dataset">
       <div className="max-h-[92vh] w-full max-w-2xl overflow-y-auto border border-slate-400 bg-white shadow-2xl">
         <div className="flex items-start justify-between border-b border-slate-300 bg-[#eef2f5] p-5">
           <div>
-            <p className="section-kicker mb-2">National registry / staged ingestion</p>
+            <p className="section-kicker mb-2">Document library / upload and review</p>
             <h2 className="text-xl font-bold text-[#132f4c]">Upload Document / Dataset</h2>
-            <p className="mt-1 text-xs text-slate-600">Files are staged, OCR-processed and reviewed before registry commit.</p>
+            <p className="mt-1 text-xs text-slate-600">Uploaded files are processed, reviewed, and then added to the library.</p>
           </div>
           <button className="focus-ring border border-slate-400 px-2 py-1 text-xs font-bold" data-testid="button-close-upload" type="button" onClick={onClose}><X className="h-4 w-4" /></button>
         </div>
@@ -460,7 +463,7 @@ function PreviewDrawer({ document, onClose, onCite }: { document: LandDocument; 
       <div className="h-full w-full max-w-lg overflow-y-auto border-l border-slate-300 bg-white shadow-xl">
         <div className="flex items-start justify-between border-b border-slate-300 bg-[#eef2f5] p-5">
           <div>
-            <p className="section-kicker mb-2">Inline preview / {document.refId}</p>
+            <p className="section-kicker mb-2">Document preview / {document.refId}</p>
             <h2 className="text-lg font-bold text-[#132f4c]">{document.title}</h2>
           </div>
           <button className="focus-ring border border-slate-400 px-2 py-1 text-xs font-bold" data-testid="button-close-inline-preview" type="button" onClick={onClose}><X className="h-4 w-4" /></button>
@@ -571,7 +574,66 @@ function PreviewDrawer({ document, onClose, onCite }: { document: LandDocument; 
   );
 }
 
+function DocumentActionMenu({
+  document,
+  onCite,
+  onVersionHistory,
+}: {
+  document: LandDocument;
+  onCite: () => void;
+  onVersionHistory: () => void;
+}) {
+  const handleCopyRef = () => {
+    const textToCopy = document.refId || document.id;
+    navigator.clipboard.writeText(textToCopy);
+    toast.success(`Copied Reference ID (${textToCopy}) to clipboard`);
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          className="focus-ring flex h-8 w-8 items-center justify-center rounded-sm border border-slate-300 bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 hover:border-slate-400 transition-colors"
+          data-testid={`button-more-actions-${document.id}`}
+          type="button"
+          aria-label={`Additional actions for ${document.title}`}
+        >
+          <MoreVertical className="h-4 w-4" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-48 border border-slate-200 bg-white p-1 text-xs shadow-lg z-50">
+        <DropdownMenuItem
+          className="flex cursor-pointer items-center gap-2 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#244562]"
+          data-testid={`button-cite-${document.id}`}
+          onClick={onCite}
+        >
+          <Quote className="h-3.5 w-3.5 text-slate-500" />
+          <span>Cite Instrument</span>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="flex cursor-pointer items-center gap-2 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#244562]"
+          data-testid={`button-version-history-${document.id}`}
+          onClick={onVersionHistory}
+        >
+          <History className="h-3.5 w-3.5 text-slate-500" />
+          <span>Version History</span>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator className="my-1 bg-slate-200" />
+        <DropdownMenuItem
+          className="flex cursor-pointer items-center gap-2 px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 hover:text-[#244562]"
+          data-testid={`button-copy-ref-${document.id}`}
+          onClick={handleCopyRef}
+        >
+          <Copy className="h-3.5 w-3.5 text-slate-500" />
+          <span>Copy Ref ID</span>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 export default function RepositoryPage() {
+
   const { activeRole } = useRole();
   const isPublic = activeRole === 'Public';
   const [query, setQuery] = useState('');
@@ -617,8 +679,26 @@ export default function RepositoryPage() {
     }
   };
 
+  const { language: globalLang, setLanguage: setGlobalLang } = useLanguage();
   const [searchMode, setSearchMode] = useState<'exact' | 'semantic'>('exact');
-  const [language, setLanguage] = useState<'English' | 'हिन्दी'>('English');
+  const [language, setLanguage] = useState<'English' | 'हिन्दी'>(globalLang === 'hi' ? 'हिन्दी' : 'English');
+
+  useEffect(() => {
+    setLanguage(globalLang === 'hi' ? 'हिन्दी' : 'English');
+  }, [globalLang]);
+
+  const handleLanguageChange = (newLang: 'English' | 'हिन्दी') => {
+    setLanguage(newLang);
+    setGlobalLang(newLang === 'हिन्दी' ? 'hi' : 'en');
+  };
+
+  const metadataRefreshDate = useMemo(() => {
+    return new Date().toLocaleDateString(language === 'हिन्दी' ? 'hi-IN' : 'en-GB', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+  }, [language]);
   const [state, setState] = useState('All India');
   const [level, setLevel] = useState('All Levels');
   const [theme, setTheme] = useState('All Themes');
@@ -683,7 +763,38 @@ export default function RepositoryPage() {
     return () => window.clearTimeout(timer);
   }, [query, searchMode]);
 
-  const filtered = useMemo(() => docList.filter((document) => {
+  // Deduplicate docList to ensure each entry is distinct and meaningful
+  const deduplicatedDocList = useMemo(() => {
+    const seen = new Set<string>();
+    return docList.filter((doc) => {
+      const key = (doc.title || '').trim().toLowerCase().replace(/\s+/g, ' ');
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [docList]);
+
+  // Deduplicate recommendations
+  const distinctRecommendations = useMemo(() => {
+    const seen = new Set<string>();
+    return recommendations.filter((rec) => {
+      const key = (rec.title || '').trim().toLowerCase().replace(/\s+/g, ' ');
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [recommendations]);
+
+  const hasActiveFilters =
+    query.trim() !== '' ||
+    state !== 'All India' ||
+    level !== 'All Levels' ||
+    theme !== 'All Themes' ||
+    documentType !== 'All types' ||
+    yearFrom !== '2010' ||
+    yearTo !== '2026';
+
+  const filtered = useMemo(() => deduplicatedDocList.filter((document) => {
     const normalizedQuery = query.trim().toLowerCase();
     const searchText = `${document.refId} ${document.title} ${document.department} ${document.stateRegion} ${document.theme} ${document.summary}`.toLowerCase();
     const queryWords = normalizedQuery.split(/\s+/).filter(Boolean);
@@ -699,14 +810,15 @@ export default function RepositoryPage() {
     const matchesYear = document.year >= Number(yearFrom) && document.year <= Number(yearTo);
 
     return matchesSearch && matchesState && matchesLevel && matchesTheme && matchesDocType && matchesYear;
-  }), [docList, documentType, level, query, searchMode, state, theme, yearFrom, yearTo]);
+  }), [deduplicatedDocList, documentType, level, query, searchMode, state, theme, yearFrom, yearTo]);
 
   const fallbackNational = useMemo(() => {
-    return docList.filter((d) => d.stateRegion === 'All India' || d.administrativeLevel === 'National');
-  }, [docList]);
+    return deduplicatedDocList.filter((d) => d.stateRegion === 'All India' || d.administrativeLevel === 'National');
+  }, [deduplicatedDocList]);
 
   const isFallback = filtered.length === 0 && query.trim().length > 0 && fallbackNational.length > 0;
   const displayRecords = isFallback ? fallbackNational : filtered;
+
 
   const clearFilters = () => {
     setQuery('');
@@ -797,9 +909,9 @@ export default function RepositoryPage() {
 
   return (
     <PageFrame
-      kicker="Central knowledge repository / verified registry"
+      kicker="Document library / verified records"
       title="Land Governance Repository"
-      description="Search, review and stage policy records, legal instruments, research studies and geospatial datasets for India's land-governance programmes."
+      description="Search, browse, and manage policy records, legal documents, research studies, and map data for India's land governance programmes."
       actions={
         <>
           {!isPublic && <button className="focus-ring flex items-center gap-2 bg-[#244562] px-3 py-2 text-xs font-bold text-white hover:bg-[#132f4c]" data-testid="button-upload-document" type="button" onClick={() => setUploadOpen(true)}><UploadCloud className="h-3.5 w-3.5" />Upload Document / Dataset</button>}
@@ -853,7 +965,7 @@ export default function RepositoryPage() {
           <Panel className="mt-5" eyebrow="Registry note" title="Source standards">
             <div className="p-4 text-xs leading-5 text-slate-600">
               <p className="flex items-center gap-2 font-semibold text-[#287449]"><CheckCircle2 className="h-4 w-4" />Officially indexed sources</p>
-              <p className="mt-3">Metadata is reviewed before publication. Confidential records remain visible to authorised personas only.</p>
+              <p className="mt-3">Metadata is reviewed before publication. Confidential records remain visible to authorized officials only.</p>
             </div>
           </Panel>
         </aside>
@@ -893,39 +1005,168 @@ export default function RepositoryPage() {
           <Panel className="mb-5">
             <div className="border-b border-slate-200 p-4">
               <div className="flex flex-col gap-3 lg:flex-row">
-                <div className="relative min-w-0 flex-1">
-                  <label className="sr-only" htmlFor="repository-search">Search repository</label>
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
-                  <input className="focus-ring h-10 w-full border border-slate-300 pl-9 pr-3 text-sm" data-testid="input-repository-search" id="repository-search" placeholder={language === 'English' ? 'Search by reference, title, authority, state or theme' : 'संदर्भ, शीर्षक, प्राधिकरण या विषय खोजें'} value={query} onChange={(event) => setQuery(event.target.value)} />
+                <div className="relative min-w-0 flex-1">                  <label className="sr-only" htmlFor="repository-search">Search repository</label>
+                  <Search className="absolute left-3.5 top-3 h-4 w-4 text-slate-400" />
+                  <input
+                    className="focus-ring h-10 w-full rounded-sm border border-slate-300 pl-10 pr-9 text-sm text-slate-900 placeholder:text-slate-400 focus:border-[#244562]"
+                    data-testid="input-repository-search"
+                    id="repository-search"
+                    placeholder={language === 'English' ? 'Search by reference ID, title, authority, state, or theme (e.g. SVAMITVA, DILRMP)' : 'संदर्भ आईडी, शीर्षक, प्राधिकरण या विषय खोजें (उदा. SVAMITVA, DILRMP)'}
+                    value={query}
+                    onChange={(event) => setQuery(event.target.value)}
+                  />
+                  {query && (
+                    <button
+                      onClick={() => setQuery('')}
+                      className="absolute right-3 top-3 text-slate-400 hover:text-slate-600"
+                      type="button"
+                      aria-label="Clear search query"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  )}
                 </div>
-                <div className="flex shrink-0 items-center gap-1">
-                  <SearchModeButton active={searchMode === 'exact'} onClick={() => setSearchMode('exact')} testId="button-search-exact">Exact Match</SearchModeButton>
-                  <SearchModeButton active={searchMode === 'semantic'} onClick={() => setSearchMode('semantic')} testId="button-search-semantic">AI Semantic Search</SearchModeButton>
-                </div>
-                <div className="flex shrink-0 items-center gap-1 border-l border-slate-200 pl-3">
-                  <Languages className="h-4 w-4 text-slate-500" />
-                  <SearchModeButton active={language === 'English'} onClick={() => setLanguage('English')} testId="button-search-language-english">English</SearchModeButton>
-                  <SearchModeButton active={language === 'हिन्दी'} onClick={() => setLanguage('हिन्दी')} testId="button-search-language-hindi">हिन्दी</SearchModeButton>
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3 shrink-0">
+                  <div className="flex items-center gap-1">
+                    <SearchModeButton active={searchMode === 'exact'} onClick={() => setSearchMode('exact')} testId="button-search-exact">Exact Match</SearchModeButton>
+                    <SearchModeButton active={searchMode === 'semantic'} onClick={() => setSearchMode('semantic')} testId="button-search-semantic">AI Semantic Search</SearchModeButton>
+                  </div>
+                  <div className="flex items-center gap-1 border-l border-slate-200 pl-2.5 sm:pl-3">
+                    <Languages className="h-4 w-4 text-slate-500 shrink-0" />
+                    <SearchModeButton active={language === 'English'} onClick={() => handleLanguageChange('English')} testId="button-search-language-english">English</SearchModeButton>
+                    <SearchModeButton active={language === 'हिन्दी'} onClick={() => handleLanguageChange('हिन्दी')} testId="button-search-language-hindi">हिन्दी</SearchModeButton>
+                  </div>
                 </div>
               </div>
+
+              {/* Active Filter Chips Bar */}
+              {hasActiveFilters && (
+                <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-slate-100 pt-3 text-xs">
+                  <span className="font-semibold text-slate-500 mr-1">Active filters:</span>
+                  {query.trim() && (
+                    <span className="inline-flex items-center gap-1 rounded-sm bg-[#eef4fa] px-2 py-0.5 text-xs font-medium text-[#244562] border border-[#b9cce0]">
+                      &quot;{query}&quot;
+                      <button onClick={() => setQuery('')} className="hover:text-red-600"><X className="h-3 w-3" /></button>
+                    </span>
+                  )}
+                  {state !== 'All India' && (
+                    <span className="inline-flex items-center gap-1 rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 border border-slate-200">
+                      State: {state}
+                      <button onClick={() => setState('All India')} className="hover:text-red-600"><X className="h-3 w-3" /></button>
+                    </span>
+                  )}
+                  {level !== 'All Levels' && (
+                    <span className="inline-flex items-center gap-1 rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 border border-slate-200">
+                      Level: {level}
+                      <button onClick={() => setLevel('All Levels')} className="hover:text-red-600"><X className="h-3 w-3" /></button>
+                    </span>
+                  )}
+                  {theme !== 'All Themes' && (
+                    <span className="inline-flex items-center gap-1 rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 border border-slate-200">
+                      Theme: {theme}
+                      <button onClick={() => setTheme('All Themes')} className="hover:text-red-600"><X className="h-3 w-3" /></button>
+                    </span>
+                  )}
+                  {documentType !== 'All types' && (
+                    <span className="inline-flex items-center gap-1 rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 border border-slate-200">
+                      Type: {documentType}
+                      <button onClick={() => setDocumentType('All types')} className="hover:text-red-600"><X className="h-3 w-3" /></button>
+                    </span>
+                  )}
+                  {(yearFrom !== '2010' || yearTo !== '2026') && (
+                    <span className="inline-flex items-center gap-1 rounded-sm bg-slate-100 px-2 py-0.5 text-xs font-medium text-slate-700 border border-slate-200">
+                      Years: {yearFrom}–{yearTo}
+                      <button onClick={() => { setYearFrom('2010'); setYearTo('2026'); }} className="hover:text-red-600"><X className="h-3 w-3" /></button>
+                    </span>
+                  )}
+                  <button
+                    onClick={clearFilters}
+                    className="ml-auto text-xs font-bold text-[#244562] hover:underline"
+                    type="button"
+                  >
+                    Reset all
+                  </button>
+                </div>
+              )}
             </div>
-            <div className="flex flex-col gap-2 border-t border-slate-200 bg-slate-50 px-4 py-2 text-xs text-slate-600 md:flex-row md:items-center md:justify-between">
-              <span data-testid="text-repository-result-count">
+            <div className="flex flex-col gap-2 border-t border-slate-200 bg-slate-50 px-4 py-2.5 text-xs text-slate-600 sm:flex-row sm:items-center sm:justify-between">
+              <span data-testid="text-repository-result-count" className="font-medium text-slate-700">
                 {isFallback 
                   ? `Showing ${displayRecords.length} applicable National Frameworks for "${query}"`
-                  : `${filtered.length} of ${docList.length} registry records shown`
+                  : `${filtered.length} of ${deduplicatedDocList.length} distinct registry records shown`
                 }
               </span>
-              <span className="flex items-center gap-1 text-[11px]"><Map className="h-3.5 w-3.5" />Metadata index refreshed 18 Jun 2024</span>
+              <span className="flex items-center gap-1.5 text-[11px] text-slate-500" data-testid="text-metadata-refresh-date">
+                <Clock3 className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                <span>
+                  {language === 'हिन्दी' ? `मेटाडेटा अनुक्रमणिका अद्यतन: ${metadataRefreshDate}` : `Metadata index refreshed ${metadataRefreshDate}`}
+                </span>
+              </span>
             </div>
           </Panel>
 
+          {/* 2. Key Recommendations Grid (Placed directly below Search) */}
+          {distinctRecommendations.length > 0 && (
+            <div className="rounded-sm border border-[#b9cce0] bg-[#f0f4f8] p-4 shadow-xs">
+              <div className="mb-3 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-[#d97706]" />
+                  <h2 className="text-xs font-bold uppercase tracking-wider text-[#132f4c]">
+                    Recommended Policy &amp; Legal Instruments
+                  </h2>
+                  <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-900 border border-amber-200">
+                    {activeRole} Profile
+                  </span>
+                </div>
+                <span className="text-[11px] text-slate-500 font-medium hidden sm:inline">
+                  AI discovery based on administrative role
+                </span>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                {distinctRecommendations.slice(0, 4).map((rec) => (
+                  <button
+                    key={rec.id}
+                    onClick={() => setSelectedPreview(rec)}
+                    className="focus-ring group flex flex-col justify-between rounded-sm border border-slate-200 bg-white p-3.5 text-left hover:border-[#244562] hover:shadow-xs transition-all"
+                    type="button"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-1 mb-2">
+                        <span className="font-mono text-[10px] font-bold text-[#244562] bg-[#eef4fa] px-1.5 py-0.5 border border-[#b9cce0] rounded-xs">
+                          {rec.refId}
+                        </span>
+                        <span className="text-[10px] font-medium text-slate-500">
+                          {rec.year}
+                        </span>
+                      </div>
+                      <p className="font-bold text-xs text-[#132f4c] group-hover:text-[#244562] line-clamp-2 leading-snug">
+                        {rec.title}
+                      </p>
+                      <p className="mt-1 text-[11px] text-slate-500 font-normal line-clamp-1">
+                        {rec.department}
+                      </p>
+                    </div>
+                    <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-2.5">
+                      <span className="inline-block text-[10px] font-medium text-slate-700 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                        {rec.theme}
+                      </span>
+                      <span className="text-xs font-bold text-[#244562] group-hover:translate-x-0.5 transition-transform">
+                        Preview &rarr;
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Fallback National Frameworks Notice */}
           {isFallback && (
-            <div className="mb-5 flex items-start justify-between gap-3 border border-[#e9c68a] bg-[#fff8e8] p-4 text-xs shadow-xs">
+            <div className="flex items-start justify-between gap-3 rounded-sm border border-amber-300 bg-amber-50/80 p-4 text-xs shadow-xs">
               <div className="flex items-start gap-3">
-                <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-[#9b6300]" />
+                <Sparkles className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
                 <div>
-                  <p className="font-bold text-[#8a5a0a]">
+                  <p className="font-bold text-amber-900">
                     Showing Pan-India and National Regulatory Frameworks applicable across &quot;{query}&quot;
                   </p>
                   <p className="mt-1 text-slate-700 leading-relaxed">
@@ -935,7 +1176,7 @@ export default function RepositoryPage() {
               </div>
               <button
                 onClick={clearFilters}
-                className="focus-ring shrink-0 border border-[#e9c68a] bg-white px-3 py-1.5 text-xs font-bold text-[#8a5a0a] hover:bg-[#fff4dd]"
+                className="focus-ring shrink-0 rounded-sm border border-amber-300 bg-white px-3 py-1.5 text-xs font-bold text-amber-900 hover:bg-amber-100"
                 type="button"
               >
                 Clear search
@@ -943,36 +1184,49 @@ export default function RepositoryPage() {
             </div>
           )}
 
+          {/* 3. Official Registry Records Table */}
           <Panel>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[1120px] border-collapse text-left text-xs">
-                <thead className="bg-[#eef2f5] text-[10px] uppercase tracking-wider text-slate-600">
+              <table className="w-full min-w-[1040px] border-collapse text-left text-xs">
+                <thead className="bg-[#f1f5f9] text-[11px] uppercase tracking-wider text-slate-700 font-bold border-b border-slate-300">
                   <tr>
-                    <th className="border-b border-slate-300 px-4 py-3 font-bold">Gazette / Document Ref ID</th>
-                    <th className="border-b border-slate-300 px-4 py-3 font-bold">Title &amp; Issuing Authority</th>
-                    <th className="border-b border-slate-300 px-4 py-3 font-bold">State / Region</th>
-                    <th className="border-b border-slate-300 px-4 py-3 font-bold">Category Tag</th>
-                    <th className="border-b border-slate-300 px-4 py-3 font-bold">Date Published</th>
-                    <th className="border-b border-slate-300 px-4 py-3 font-bold">Version</th>
-                    <th className="border-b border-slate-300 px-4 py-3 font-bold text-right">Actions</th>
+                    <th className="px-4 py-3.5">Ref ID &amp; Type</th>
+                    <th className="px-4 py-3.5">Title &amp; Issuing Authority</th>
+                    <th className="px-4 py-3.5">Jurisdiction</th>
+                    <th className="px-4 py-3.5">Category Tag</th>
+                    <th className="px-4 py-3.5 whitespace-nowrap">Published</th>
+                    <th className="px-4 py-3.5 whitespace-nowrap">Version</th>
+                    <th className="px-4 py-3.5 text-right whitespace-nowrap">Actions</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-slate-200">
                   {displayRecords.map((document) => {
                     const restricted = isPublic && document.visibility === 'Confidential / Intra-Ministry';
                     return (
-                      <tr className="hover:bg-[#f8fafb]" data-testid={`row-registry-document-${document.id}`} key={document.id}>
-                        <td className="border-b border-slate-200 px-4 py-3 align-top">
-                          <p className="font-mono text-[11px] font-bold text-[#244562]">{document.refId}</p>
-                          <p className="mt-1 text-[10px] text-slate-500">{document.documentType}</p>
+                      <tr
+                        className="hover:bg-slate-50/80 transition-colors"
+                        data-testid={`row-registry-document-${document.id}`}
+                        key={document.id}
+                      >
+                        <td className="px-4 py-3.5 align-top whitespace-nowrap">
+                          <span className="font-mono text-xs font-bold text-[#244562] block">
+                            {document.refId}
+                          </span>
+                          <span className="mt-1 inline-block text-[11px] text-slate-500">
+                            {document.documentType}
+                          </span>
                         </td>
-                        <td className="max-w-[260px] border-b border-slate-200 px-4 py-3 align-top">
-                          <p className="font-bold text-[#244562]">{document.title}</p>
-                          <p className="mt-1 text-[11px] text-slate-500">{document.department}</p>
+                        <td className="px-4 py-3.5 align-top min-w-[280px] max-w-[420px]">
+                          <p className="font-semibold text-sm text-[#132f4c] leading-snug">
+                            {document.title}
+                          </p>
+                          <p className="mt-1 text-xs text-slate-500 font-normal">
+                            {document.department}
+                          </p>
                         </td>
-                        <td className="border-b border-slate-200 px-4 py-3 align-top text-slate-600">{document.stateRegion}<p className="mt-1 text-[10px] text-slate-400">{document.administrativeLevel}</p></td>
-                        <td className="border-b border-slate-200 px-4 py-3 align-top">
-                          <span className={`inline-flex border px-2 py-1 text-[10px] font-bold ${recordTypeClass[document.recordType]}`}>{document.recordType}</span>
+                        <td className="px-4 py-3.5 align-top whitespace-nowrap">
+                          <p className="text-xs font-semibold text-slate-800">{document.stateRegion}</p>
+                          <p className="mt-0.5 text-[11px] text-slate-500 font-normal">{document.administrativeLevel}</p>
                         </td>
                         <td className="border-b border-slate-200 px-4 py-3 align-top text-slate-600">{document.published}</td>
                         <td className="border-b border-slate-200 px-4 py-3 align-top"><span className="border border-slate-300 bg-slate-50 px-2 py-1 font-mono text-[10px] font-bold text-slate-700">{document.version}</span></td>
@@ -982,10 +1236,33 @@ export default function RepositoryPage() {
                             <button className="focus-ring flex items-center gap-1 border border-slate-300 px-2 py-1.5 text-[10px] font-bold text-[#244562] hover:bg-slate-100" type="button" onClick={() => setCitationDoc(document)}><Quote className="h-3 w-3" />Cite</button>
                             <button className="focus-ring flex items-center gap-1 border border-slate-300 px-2 py-1.5 text-[10px] font-bold text-[#244562] hover:bg-slate-100" data-testid={`button-version-history-${document.id}`} type="button" onClick={() => setSelectedVersion(document)}><History className="h-3 w-3" />History</button>
                             <button className="focus-ring flex items-center gap-1 border border-[#244562] px-2 py-1.5 text-[10px] font-bold text-[#244562] hover:bg-slate-100 disabled:cursor-not-allowed disabled:border-slate-300 disabled:text-slate-400" data-testid={`button-download-${document.id}`} type="button" disabled={restricted} onClick={() => downloadDocument(document)}>
-                              {restricted ? <LockKeyhole className="h-3 w-3" /> : <Download className="h-3 w-3" />}{restricted ? 'Restricted' : 'Download'}
+                              {restricted ? <LockKeyhole className="h-3 w-3" /> : <Download className="h-3 w-3" />}{restricted ? 'Restricted' : 'Download'}                            </button>
+                            <button
+                              className={`focus-ring inline-flex items-center gap-1 rounded-sm border px-2.5 py-1.5 text-xs font-semibold transition-colors ${
+                                restricted
+                                  ? 'cursor-not-allowed border-slate-200 bg-slate-100 text-slate-400'
+                                  : 'border-[#244562] bg-[#244562] text-white hover:bg-[#132f4c]'
+                              }`}
+                              data-testid={`button-download-${document.id}`}
+                              type="button"
+                              disabled={restricted}
+                              onClick={() => downloadDocument(document)}
+                            >
+                              {restricted ? <LockKeyhole className="h-3.5 w-3.5" /> : <Download className="h-3.5 w-3.5" />}
+                              <span>{restricted ? 'Restricted' : 'Download'}</span>
                             </button>
+                            <DocumentActionMenu
+                              document={document}
+                              onCite={() => setCitationDoc(document)}
+                              onVersionHistory={() => setSelectedVersion(document)}
+                            />
                           </div>
-                          {restricted && <p className="mt-1 flex justify-end items-center gap-1 text-[10px] text-slate-500"><LockKeyhole className="h-3 w-3" />Confidential / Intra-Ministry</p>}
+                          {restricted && (
+                            <p className="mt-1 flex items-center justify-end gap-1 text-[10px] text-slate-400 font-medium">
+                              <LockKeyhole className="h-3 w-3" />
+                              Confidential
+                            </p>
+                          )}
                         </td>
                       </tr>
                     );
@@ -993,8 +1270,12 @@ export default function RepositoryPage() {
                   {!displayRecords.length && (
                     <tr>
                       <td className="px-4 py-12 text-center text-slate-500" colSpan={7}>
-                        No registry records match these filters.
-                        <button onClick={clearFilters} className="ml-2 font-bold text-[#244562] underline hover:text-[#132f4c]" type="button">
+                        No registry records match the selected filters.
+                        <button
+                          onClick={clearFilters}
+                          className="ml-2 font-bold text-[#244562] underline hover:text-[#132f4c]"
+                          type="button"
+                        >
                           Reset all filters
                         </button>
                       </td>
@@ -1004,11 +1285,17 @@ export default function RepositoryPage() {
               </table>
             </div>
             <div className="flex items-center justify-between border-t border-slate-200 bg-slate-50 px-4 py-3 text-[11px] text-slate-500">
-              <span>Showing {displayRecords.length} of {docList.length} records</span>
-              <span className="flex items-center gap-1"><FileArchive className="h-3.5 w-3.5" />Supported source formats: PDF · CSV · GeoJSON · SHP</span>
+              <span className="font-medium text-slate-600">
+                Showing {displayRecords.length} of {deduplicatedDocList.length} distinct registry instruments
+              </span>
+              <span className="flex items-center gap-1.5">
+                <FileArchive className="h-3.5 w-3.5 text-slate-400" />
+                Verified Formats: PDF · HTML · CSV · GeoJSON
+              </span>
             </div>
           </Panel>
         </div>
+
       </div>
       {selectedVersion && <VersionDrawer document={selectedVersion} onClose={() => setSelectedVersion(null)} />}
       {selectedPreview && <PreviewDrawer document={selectedPreview} onClose={() => setSelectedPreview(null)} onCite={(doc) => setCitationDoc(doc)} />}

@@ -27,6 +27,51 @@ import { useAuthStore } from '@/stores/authStore';
 import { useChat } from '@/hooks/use-chat';
 import api from '@/lib/api';
 import { toast } from 'sonner';
+import { useLanguage } from '@/context/LanguageContext';
+
+export type DocumentRevision = {
+  version: string;
+  timestamp: string;
+  author: string;
+  authorRole: string;
+  summary: string;
+  content: string;
+};
+
+export const initialRevisions: DocumentRevision[] = [
+  {
+    version: 'v2.4 (Current)',
+    timestamp: '12 minutes ago',
+    author: 'Dr. Rajesh Verma',
+    authorRole: 'Joint Secretary, DoLR',
+    summary: 'Added CORS base station baseline spacing (sub-5cm RTK validation requirements).',
+    content: `# National Cadastral Resurvey Standards\n\n## Section 4: RTK & Drone Tolerances\n- Continuous Operating Reference Stations (CORS) network density must not exceed 50km baseline spacing.\n- Ground Sampling Distance (GSD) for inhabited rural abadi parcels fixed at sub-5cm.\n- All cadastral vertices must tie into datum WGS-84 / UTM 43N.\n\n## Section 5: Dispute Fast-Tracking\n- Interim boundaries subject to public display at Gram Panchayat for 30 statutory days.`,
+  },
+  {
+    version: 'v2.3',
+    timestamp: '2 hours ago',
+    author: 'Smt. Ananya Rao',
+    authorRole: 'Senior GIS Scientist, NRSC',
+    summary: 'Integrated Forest Rights Act (FRA 2006) buffer clause and Bhuvan LISS-IV alignment.',
+    content: `# National Cadastral Resurvey Standards\n\n## Section 3: Forest & Tribal Land Demarcation\n- Cadastral survey teams must overlay FRA community forest rights layers before locking survey boundaries.\n- Remote sensing verification required for reserve forest boundaries.`,
+  },
+  {
+    version: 'v2.2',
+    timestamp: 'Yesterday at 4:30 PM',
+    author: 'Shri K. Raman',
+    authorRole: 'Director of Land Records, Maharashtra',
+    summary: 'Standardized 14-digit ULPIN parcel format alignment across all State Revenue Codes.',
+    content: `# National Cadastral Resurvey Standards\n\n## Section 2: Unique Land Parcel Identification Number (ULPIN)\n- Bhu-Aadhaar (14 digits) generated algorithmically from parcel polygon centroid coordinates.`,
+  },
+  {
+    version: 'v2.1',
+    timestamp: '3 days ago',
+    author: 'Dr. Rajesh Verma',
+    authorRole: 'Joint Secretary, DoLR',
+    summary: 'Initial Inter-Departmental Committee working draft adopted.',
+    content: `# National Cadastral Resurvey Standards\n\nWorking Committee Draft for state consultation and inter-ministerial harmonization.`,
+  },
+];
 
 export type DocumentRevision = {
   version: string;
@@ -73,24 +118,26 @@ export const initialRevisions: DocumentRevision[] = [
 ];
 
 function Breadcrumb({ current }: { current: string }) {
+  const { t } = useLanguage();
   return (
     <div className="mb-4 flex items-center gap-2 text-xs text-slate-500">
-      <span>National Land Governance Platform</span>
+      <span>{t('app_name')}</span>
       <ChevronRight className="h-3 w-3" />
-      <span className="font-semibold text-[#1E293B]">{current}</span>
+      <span className="font-semibold text-[#1E293B]">{t(current)}</span>
     </div>
   );
 }
 
 function PageFrame({ title, kicker, description, children, actions }: { title: string; kicker: string; description: string; children: React.ReactNode; actions?: React.ReactNode }) {
+  const { t } = useLanguage();
   return (
     <section className="w-full px-4 py-5 md:px-8 md:py-7">
       <Breadcrumb current={title} />
       <div className="mb-6 flex flex-col justify-between gap-4 border-b border-slate-300 pb-5 lg:flex-row lg:items-end">
         <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">{kicker}</p>
-          <h1 className="font-serif text-3xl font-semibold tracking-tight text-[#1E293B] md:text-4xl">{title}</h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{description}</p>
+          <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">{t(kicker)}</p>
+          <h1 className="font-serif text-3xl font-semibold tracking-tight text-[#1E293B] md:text-4xl">{t(title)}</h1>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">{t(description)}</p>
         </div>
         {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
       </div>
@@ -395,9 +442,9 @@ export default function WorkspacesPage() {
     const project = projects.find(p => p.id === selectedProject);
     return (
       <PageFrame
-        kicker="Collaborative Workspace"
+        kicker="Team Workspace"
         title={project?.title || 'Workspace'}
-        description="Shared document library, collaborative notes, real-time consultation, and milestone tracking."
+        description="Shared documents, collaborative notes, team discussions, and progress tracking."
         actions={
           <div className="flex gap-2">
             <button 
@@ -416,7 +463,7 @@ export default function WorkspacesPage() {
               className="focus-ring flex items-center gap-2 border border-[#1E293B] bg-[#1E293B] px-3 py-2 text-xs font-bold text-white hover:bg-slate-800"
               onClick={() => setShowInviteModal(true)}
             >
-              <Plus className="h-3.5 w-3.5" /> Invite Partner
+              <Plus className="h-3.5 w-3.5" /> Invite Member
             </button>
           </div>
         }
@@ -441,8 +488,7 @@ export default function WorkspacesPage() {
           <div className="flex items-center gap-3">
             <span className="text-xs font-bold text-[#1E293B] flex items-center gap-1.5">
               <UsersRound className="h-4 w-4 text-emerald-600" />
-              Active Co-Authors (Live Session):
-            </span>
+              Active Co-Authors (Live Session):            </span>
             <div className="flex items-center gap-2">
               {activeCollaborators.map((c, i) => (
                 <div
@@ -459,20 +505,19 @@ export default function WorkspacesPage() {
 
           <div className="flex items-center gap-2 text-xs text-blue-800 bg-blue-50 px-2.5 py-1 rounded border border-blue-200">
             <Sparkles className="h-3.5 w-3.5 text-blue-600" />
-            <span>Simultaneous Multi-Cursor Sync Active</span>
-          </div>
+            <span>Simultaneous Multi-Cursor Sync Active</span>          </div>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
           {/* Milestone Kanban & Task Tracker */}
           <Panel 
-            title="Milestone & Deliverable Tracker"
+            title="Tasks &amp; Milestones Tracker"
             headerAction={
               <button 
                 onClick={() => setShowAddTaskModal(true)}
                 className="inline-flex items-center gap-1 text-[11px] font-bold text-[#1E293B] hover:text-blue-700"
               >
-                <Plus className="h-3.5 w-3.5" /> Add Deliverable
+                <Plus className="h-3.5 w-3.5" /> Add Task
               </button>
             }
           >
@@ -639,13 +684,13 @@ export default function WorkspacesPage() {
           </Panel>
 
           {/* Shared Document Library */}
-          <Panel title="Shared Document Library & Inter-Agency Artifacts" className="lg:col-span-3">
+          <Panel title="Shared Document Library" className="lg:col-span-3">
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead className="bg-[#F8FAFC] text-[10px] uppercase tracking-wider text-slate-500 border-b border-slate-200">
                   <tr>
-                    <th className="px-4 py-3 font-bold">Research Paper / Statutory Document</th>
-                    <th className="px-4 py-3 font-bold">Originating Agency</th>
+                    <th className="px-4 py-3 font-bold">Document Name</th>
+                    <th className="px-4 py-3 font-bold">Department / Organization</th>
                     <th className="px-4 py-3 font-bold">Annotations</th>
                     <th className="px-4 py-3 text-right">Action</th>
                   </tr>
@@ -666,10 +711,10 @@ export default function WorkspacesPage() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <button 
-                        onClick={() => toast.info('Opening statutory PDF viewer with collaborative margin notes...')}
+                        onClick={() => toast.info('Opening document viewer with comments...')}
                         className="text-[#1E293B] font-bold hover:underline"
                       >
-                        Open Annotator
+                        View &amp; Comment
                       </button>
                     </td>
                   </tr>
@@ -688,10 +733,10 @@ export default function WorkspacesPage() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <button 
-                        onClick={() => toast.info('Opening document annotator...')}
+                        onClick={() => toast.info('Opening document viewer...')}
                         className="text-[#1E293B] font-bold hover:underline"
                       >
-                        Open Annotator
+                        View &amp; Comment
                       </button>
                     </td>
                   </tr>
@@ -706,14 +751,14 @@ export default function WorkspacesPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1E293B]/40 p-4">
             <div className="w-full max-w-md bg-white shadow-xl border border-slate-300">
               <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 bg-slate-50">
-                <h3 className="font-bold text-[#1E293B]">Schedule Milestone Deliverable</h3>
+                <h3 className="font-bold text-[#1E293B]">Add a New Task / Deliverable</h3>
                 <button onClick={() => setShowAddTaskModal(false)} className="text-slate-500 hover:text-[#1E293B]">
                   <X className="h-5 w-5" />
                 </button>
               </div>
               <div className="p-5 space-y-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Deliverable Title *</label>
+                  <label className="block text-xs font-semibold text-slate-700 mb-1">Task Title *</label>
                   <input 
                     type="text" 
                     placeholder="e.g. Cadastral Boundary Ground-Truthing Report" 
@@ -744,7 +789,7 @@ export default function WorkspacesPage() {
                   disabled={!newTaskTitle.trim()}
                   className="px-4 py-2 text-xs font-bold bg-[#1E293B] hover:bg-slate-800 disabled:opacity-50 text-white flex items-center gap-1.5"
                 >
-                  <Plus className="h-3.5 w-3.5" /> Schedule Deliverable
+                  <Plus className="h-3.5 w-3.5" /> Create Task
                 </button>
               </div>
             </div>
@@ -756,7 +801,7 @@ export default function WorkspacesPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#1E293B]/40 p-4">
             <div className="w-full max-w-md bg-white shadow-xl border border-slate-300">
               <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 bg-slate-50">
-                <h3 className="font-bold text-[#1E293B]">Invite Partner Institution</h3>
+                <h3 className="font-bold text-[#1E293B]">Invite Collaborator</h3>
                 <button onClick={() => setShowInviteModal(false)} className="text-slate-500 hover:text-[#1E293B]"><X className="h-5 w-5" /></button>
               </div>
               <div className="p-5 space-y-4">
@@ -784,7 +829,7 @@ export default function WorkspacesPage() {
                 </div>
                 <div className="bg-slate-50 p-3 border border-slate-200 text-xs text-slate-600 flex items-start gap-2">
                   <Shield className="h-4 w-4 shrink-0 text-[#15803D]" />
-                  <p>Institutions must be verified by DoLR or an accredited state academy to access Cabinet Draft workspaces.</p>
+                  <p>Only invited and verified members can access this workspace.</p>
                 </div>
               </div>
               <div className="border-t border-slate-200 px-5 py-4 flex justify-end gap-2 bg-slate-50">
@@ -902,9 +947,9 @@ export default function WorkspacesPage() {
 
   return (
     <PageFrame
-      kicker="Inter-institutional research interface"
+      kicker="Team Collaboration / Working Groups"
       title="Collaborative Workspaces"
-      description="Joint working groups for universities, state revenue departments, and DoLR officials to draft policies and review boundary data."
+      description="Shared spaces for government officials, researchers, and institutions to work together on land policies, documents, and projects."
       actions={
         <button 
           className="focus-ring flex items-center gap-2 border border-[#1E293B] bg-[#1E293B] px-3 py-2 text-xs font-bold text-white hover:bg-slate-800" 
@@ -955,9 +1000,9 @@ export default function WorkspacesPage() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Research Focus / Description</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">Description</label>
                 <textarea 
-                  placeholder="Outline inter-institutional objectives and target outputs..."
+                  placeholder="Briefly describe the purpose and goals of this workspace..."
                   value={newDesc}
                   onChange={e => setNewDesc(e.target.value)}
                   rows={3}
@@ -966,7 +1011,7 @@ export default function WorkspacesPage() {
               </div>
               <div className="bg-slate-50 p-3 border border-slate-200 text-xs text-slate-600 flex items-start gap-2">
                 <Shield className="h-4 w-4 shrink-0 text-[#15803D]" />
-                <p>New workspaces automatically provide real-time threaded chat, task kanbans, and shared document annotators.</p>
+                <p>Each workspace includes real-time chat, task tracking, and shared document collaboration.</p>
               </div>
             </div>
             <div className="border-t border-slate-200 px-5 py-4 flex justify-end gap-2 bg-slate-50">
@@ -981,7 +1026,7 @@ export default function WorkspacesPage() {
                 disabled={!newTitle.trim()}
                 className="px-4 py-2 text-xs font-bold bg-[#1E293B] hover:bg-slate-800 disabled:opacity-50 text-white flex items-center gap-2"
               >
-                <Plus className="h-3.5 w-3.5" /> Initialize Workspace
+                <Plus className="h-3.5 w-3.5" /> Create Workspace
               </button>
             </div>
           </div>

@@ -74,14 +74,61 @@ STATE_SPANS: Dict[str, tuple[float, float]] = {
 CACHE_FILE = Path(__file__).resolve().parent.parent / "ml_models" / "district_features_cache.csv"
 INDIASAT_GEOJSON = Path(__file__).resolve().parent.parent / "data" / "indiasat_landcover.geojson"
 
+FALLBACK_DISTRICTS: List[Dict[str, Any]] = [
+    {"district_name": "Pune", "state_name": "MAHARASHTRA", "latitude": 18.5204, "longitude": 73.8567, "population": 9429408, "electric_lighting_ratio": 0.94, "target_dispute_risk": 18.2, "economic_density_index": 88.4, "forest_cover_pct": 14.5, "net_sown_pct": 52.8, "non_agri_land_pct": 14.2, "irrigation_intensity_pct": 42.0, "canal_share_pct": 28.0, "well_share_pct": 65.0},
+    {"district_name": "Mumbai Suburban", "state_name": "MAHARASHTRA", "latitude": 19.0760, "longitude": 72.8777, "population": 9356962, "electric_lighting_ratio": 0.99, "target_dispute_risk": 22.5, "economic_density_index": 96.8, "forest_cover_pct": 8.2, "net_sown_pct": 4.1, "non_agri_land_pct": 78.4, "irrigation_intensity_pct": 5.0, "canal_share_pct": 0.0, "well_share_pct": 10.0},
+    {"district_name": "Nagpur", "state_name": "MAHARASHTRA", "latitude": 21.1458, "longitude": 79.0882, "population": 4653570, "electric_lighting_ratio": 0.91, "target_dispute_risk": 24.1, "economic_density_index": 72.5, "forest_cover_pct": 21.3, "net_sown_pct": 56.4, "non_agri_land_pct": 11.2, "irrigation_intensity_pct": 36.0, "canal_share_pct": 32.0, "well_share_pct": 58.0},
+    {"district_name": "Nashik", "state_name": "MAHARASHTRA", "latitude": 19.9975, "longitude": 73.7898, "population": 6107187, "electric_lighting_ratio": 0.88, "target_dispute_risk": 26.4, "economic_density_index": 68.2, "forest_cover_pct": 19.4, "net_sown_pct": 58.7, "non_agri_land_pct": 10.5, "irrigation_intensity_pct": 48.0, "canal_share_pct": 25.0, "well_share_pct": 70.0},
+    {"district_name": "Thane", "state_name": "MAHARASHTRA", "latitude": 19.2183, "longitude": 72.9781, "population": 11060148, "electric_lighting_ratio": 0.96, "target_dispute_risk": 28.5, "economic_density_index": 92.1, "forest_cover_pct": 32.4, "net_sown_pct": 24.6, "non_agri_land_pct": 38.2, "irrigation_intensity_pct": 18.0, "canal_share_pct": 12.0, "well_share_pct": 45.0},
+    {"district_name": "Bengaluru Urban", "state_name": "KARNATAKA", "latitude": 12.9716, "longitude": 77.5946, "population": 9621551, "electric_lighting_ratio": 0.98, "target_dispute_risk": 15.6, "economic_density_index": 98.2, "forest_cover_pct": 6.8, "net_sown_pct": 18.2, "non_agri_land_pct": 68.4, "irrigation_intensity_pct": 22.0, "canal_share_pct": 0.0, "well_share_pct": 85.0},
+    {"district_name": "Mysuru", "state_name": "KARNATAKA", "latitude": 12.2958, "longitude": 76.6394, "population": 3001127, "electric_lighting_ratio": 0.92, "target_dispute_risk": 19.8, "economic_density_index": 64.5, "forest_cover_pct": 18.6, "net_sown_pct": 61.2, "non_agri_land_pct": 9.4, "irrigation_intensity_pct": 54.0, "canal_share_pct": 48.0, "well_share_pct": 44.0},
+    {"district_name": "Dharwad", "state_name": "KARNATAKA", "latitude": 15.4589, "longitude": 75.0078, "population": 1847023, "electric_lighting_ratio": 0.90, "target_dispute_risk": 21.2, "economic_density_index": 61.8, "forest_cover_pct": 9.8, "net_sown_pct": 68.4, "non_agri_land_pct": 11.2, "irrigation_intensity_pct": 38.0, "canal_share_pct": 35.0, "well_share_pct": 55.0},
+    {"district_name": "Lucknow", "state_name": "UTTAR PRADESH", "latitude": 26.8467, "longitude": 80.9462, "population": 4589838, "electric_lighting_ratio": 0.86, "target_dispute_risk": 32.4, "economic_density_index": 76.4, "forest_cover_pct": 7.4, "net_sown_pct": 64.2, "non_agri_land_pct": 18.9, "irrigation_intensity_pct": 78.0, "canal_share_pct": 42.0, "well_share_pct": 54.0},
+    {"district_name": "Varanasi", "state_name": "UTTAR PRADESH", "latitude": 25.3176, "longitude": 82.9739, "population": 3676841, "electric_lighting_ratio": 0.84, "target_dispute_risk": 36.8, "economic_density_index": 69.2, "forest_cover_pct": 3.8, "net_sown_pct": 71.5, "non_agri_land_pct": 16.4, "irrigation_intensity_pct": 82.0, "canal_share_pct": 38.0, "well_share_pct": 59.0},
+    {"district_name": "Gautam Buddha Nagar", "state_name": "UTTAR PRADESH", "latitude": 28.5355, "longitude": 77.3910, "population": 1648195, "electric_lighting_ratio": 0.95, "target_dispute_risk": 27.2, "economic_density_index": 91.5, "forest_cover_pct": 5.2, "net_sown_pct": 42.1, "non_agri_land_pct": 46.8, "irrigation_intensity_pct": 86.0, "canal_share_pct": 30.0, "well_share_pct": 68.0},
+    {"district_name": "Prayagraj", "state_name": "UTTAR PRADESH", "latitude": 25.4358, "longitude": 81.8463, "population": 5954391, "electric_lighting_ratio": 0.82, "target_dispute_risk": 38.6, "economic_density_index": 62.4, "forest_cover_pct": 4.6, "net_sown_pct": 72.8, "non_agri_land_pct": 14.1, "irrigation_intensity_pct": 74.0, "canal_share_pct": 45.0, "well_share_pct": 52.0},
+    {"district_name": "Bhopal", "state_name": "MADHYA PRADESH", "latitude": 23.2599, "longitude": 77.4126, "population": 2371061, "electric_lighting_ratio": 0.89, "target_dispute_risk": 29.4, "economic_density_index": 74.8, "forest_cover_pct": 16.2, "net_sown_pct": 54.6, "non_agri_land_pct": 19.2, "irrigation_intensity_pct": 62.0, "canal_share_pct": 24.0, "well_share_pct": 72.0},
+    {"district_name": "Indore", "state_name": "MADHYA PRADESH", "latitude": 22.7196, "longitude": 75.8577, "population": 3276697, "electric_lighting_ratio": 0.93, "target_dispute_risk": 23.8, "economic_density_index": 84.2, "forest_cover_pct": 12.4, "net_sown_pct": 62.8, "non_agri_land_pct": 16.4, "irrigation_intensity_pct": 68.0, "canal_share_pct": 18.0, "well_share_pct": 78.0},
+    {"district_name": "Gwalior", "state_name": "MADHYA PRADESH", "latitude": 26.2183, "longitude": 78.1828, "population": 2032036, "electric_lighting_ratio": 0.88, "target_dispute_risk": 34.2, "economic_density_index": 66.8, "forest_cover_pct": 14.8, "net_sown_pct": 58.2, "non_agri_land_pct": 15.6, "irrigation_intensity_pct": 58.0, "canal_share_pct": 36.0, "well_share_pct": 60.0},
+    {"district_name": "Ahmedabad", "state_name": "GUJARAT", "latitude": 23.0225, "longitude": 72.5714, "population": 7214225, "electric_lighting_ratio": 0.97, "target_dispute_risk": 17.5, "economic_density_index": 94.6, "forest_cover_pct": 3.6, "net_sown_pct": 68.4, "non_agri_land_pct": 22.8, "irrigation_intensity_pct": 56.0, "canal_share_pct": 44.0, "well_share_pct": 52.0},
+    {"district_name": "Surat", "state_name": "GUJARAT", "latitude": 21.1702, "longitude": 72.8311, "population": 6081322, "electric_lighting_ratio": 0.96, "target_dispute_risk": 21.4, "economic_density_index": 91.2, "forest_cover_pct": 6.8, "net_sown_pct": 59.4, "non_agri_land_pct": 28.5, "irrigation_intensity_pct": 64.0, "canal_share_pct": 52.0, "well_share_pct": 44.0},
+    {"district_name": "Vadodara", "state_name": "GUJARAT", "latitude": 22.3072, "longitude": 73.1812, "population": 4165626, "electric_lighting_ratio": 0.94, "target_dispute_risk": 19.8, "economic_density_index": 82.5, "forest_cover_pct": 8.4, "net_sown_pct": 64.2, "non_agri_land_pct": 18.2, "irrigation_intensity_pct": 52.0, "canal_share_pct": 40.0, "well_share_pct": 56.0},
+    {"district_name": "Jaipur", "state_name": "RAJASTHAN", "latitude": 26.9124, "longitude": 75.7873, "population": 6626178, "electric_lighting_ratio": 0.91, "target_dispute_risk": 28.6, "economic_density_index": 81.4, "forest_cover_pct": 5.8, "net_sown_pct": 58.6, "non_agri_land_pct": 24.2, "irrigation_intensity_pct": 44.0, "canal_share_pct": 12.0, "well_share_pct": 84.0},
+    {"district_name": "Jodhpur", "state_name": "RAJASTHAN", "latitude": 26.2389, "longitude": 73.0243, "population": 3687002, "electric_lighting_ratio": 0.86, "target_dispute_risk": 32.1, "economic_density_index": 62.4, "forest_cover_pct": 1.4, "net_sown_pct": 48.2, "non_agri_land_pct": 14.8, "irrigation_intensity_pct": 28.0, "canal_share_pct": 34.0, "well_share_pct": 62.0},
+    {"district_name": "Udaipur", "state_name": "RAJASTHAN", "latitude": 24.5854, "longitude": 73.7125, "population": 3068420, "electric_lighting_ratio": 0.84, "target_dispute_risk": 29.8, "economic_density_index": 59.8, "forest_cover_pct": 28.4, "net_sown_pct": 34.6, "non_agri_land_pct": 16.2, "irrigation_intensity_pct": 32.0, "canal_share_pct": 18.0, "well_share_pct": 76.0},
+    {"district_name": "Chennai", "state_name": "TAMIL NADU", "latitude": 13.0827, "longitude": 80.2707, "population": 4646732, "electric_lighting_ratio": 0.99, "target_dispute_risk": 16.4, "economic_density_index": 97.4, "forest_cover_pct": 4.2, "net_sown_pct": 1.2, "non_agri_land_pct": 88.4, "irrigation_intensity_pct": 10.0, "canal_share_pct": 0.0, "well_share_pct": 50.0},
+    {"district_name": "Coimbatore", "state_name": "TAMIL NADU", "latitude": 11.0168, "longitude": 76.9558, "population": 3458045, "electric_lighting_ratio": 0.96, "target_dispute_risk": 18.2, "economic_density_index": 86.8, "forest_cover_pct": 22.4, "net_sown_pct": 44.2, "non_agri_land_pct": 24.5, "irrigation_intensity_pct": 48.0, "canal_share_pct": 22.0, "well_share_pct": 74.0},
+    {"district_name": "Patna", "state_name": "BIHAR", "latitude": 25.5941, "longitude": 85.1376, "population": 5838465, "electric_lighting_ratio": 0.78, "target_dispute_risk": 44.5, "economic_density_index": 71.2, "forest_cover_pct": 1.8, "net_sown_pct": 68.2, "non_agri_land_pct": 21.4, "irrigation_intensity_pct": 72.0, "canal_share_pct": 40.0, "well_share_pct": 56.0},
+    {"district_name": "Gaya", "state_name": "BIHAR", "latitude": 24.7914, "longitude": 85.0002, "population": 4391418, "electric_lighting_ratio": 0.72, "target_dispute_risk": 46.8, "economic_density_index": 54.6, "forest_cover_pct": 12.8, "net_sown_pct": 59.4, "non_agri_land_pct": 16.2, "irrigation_intensity_pct": 58.0, "canal_share_pct": 46.0, "well_share_pct": 48.0},
+    {"district_name": "Kolkata", "state_name": "WEST BENGAL", "latitude": 22.5726, "longitude": 88.3639, "population": 4496694, "electric_lighting_ratio": 0.98, "target_dispute_risk": 24.8, "economic_density_index": 96.2, "forest_cover_pct": 2.1, "net_sown_pct": 0.5, "non_agri_land_pct": 92.4, "irrigation_intensity_pct": 8.0, "canal_share_pct": 0.0, "well_share_pct": 30.0},
+    {"district_name": "North 24 Parganas", "state_name": "WEST BENGAL", "latitude": 22.7230, "longitude": 88.4800, "population": 10009781, "electric_lighting_ratio": 0.89, "target_dispute_risk": 36.4, "economic_density_index": 82.4, "forest_cover_pct": 6.8, "net_sown_pct": 54.2, "non_agri_land_pct": 32.4, "irrigation_intensity_pct": 64.0, "canal_share_pct": 28.0, "well_share_pct": 66.0},
+    {"district_name": "New Delhi", "state_name": "NCT OF DELHI", "latitude": 28.6139, "longitude": 77.2090, "population": 133713, "electric_lighting_ratio": 0.99, "target_dispute_risk": 14.2, "economic_density_index": 99.1, "forest_cover_pct": 18.2, "net_sown_pct": 0.8, "non_agri_land_pct": 80.2, "irrigation_intensity_pct": 15.0, "canal_share_pct": 0.0, "well_share_pct": 80.0},
+    {"district_name": "Hyderabad", "state_name": "TELANGANA", "latitude": 17.3850, "longitude": 78.4867, "population": 3943323, "electric_lighting_ratio": 0.98, "target_dispute_risk": 18.6, "economic_density_index": 97.8, "forest_cover_pct": 4.8, "net_sown_pct": 2.4, "non_agri_land_pct": 89.2, "irrigation_intensity_pct": 25.0, "canal_share_pct": 0.0, "well_share_pct": 80.0},
+    {"district_name": "Kamrup Metropolitan", "state_name": "ASSAM", "latitude": 26.1445, "longitude": 91.7362, "population": 1253938, "electric_lighting_ratio": 0.91, "target_dispute_risk": 26.8, "economic_density_index": 78.4, "forest_cover_pct": 34.2, "net_sown_pct": 28.6, "non_agri_land_pct": 32.1, "irrigation_intensity_pct": 20.0, "canal_share_pct": 15.0, "well_share_pct": 70.0},
+    {"district_name": "Ranchi", "state_name": "JHARKHAND", "latitude": 23.3441, "longitude": 85.3096, "population": 2914253, "electric_lighting_ratio": 0.84, "target_dispute_risk": 34.6, "economic_density_index": 68.2, "forest_cover_pct": 29.4, "net_sown_pct": 38.6, "non_agri_land_pct": 22.4, "irrigation_intensity_pct": 26.0, "canal_share_pct": 20.0, "well_share_pct": 68.0},
+    {"district_name": "Khordha", "state_name": "ODISHA", "latitude": 20.1901, "longitude": 85.6200, "population": 2251673, "electric_lighting_ratio": 0.88, "target_dispute_risk": 29.8, "economic_density_index": 74.2, "forest_cover_pct": 24.6, "net_sown_pct": 46.8, "non_agri_land_pct": 21.8, "irrigation_intensity_pct": 48.0, "canal_share_pct": 52.0, "well_share_pct": 42.0},
+    {"district_name": "Raipur", "state_name": "CHHATTISGARH", "latitude": 21.2514, "longitude": 81.6296, "population": 4063872, "electric_lighting_ratio": 0.89, "target_dispute_risk": 28.4, "economic_density_index": 71.4, "forest_cover_pct": 22.8, "net_sown_pct": 54.2, "non_agri_land_pct": 18.6, "irrigation_intensity_pct": 44.0, "canal_share_pct": 56.0, "well_share_pct": 40.0},
+    {"district_name": "Thiruvananthapuram", "state_name": "KERALA", "latitude": 8.5241, "longitude": 76.9366, "population": 3301427, "electric_lighting_ratio": 0.98, "target_dispute_risk": 17.8, "economic_density_index": 85.6, "forest_cover_pct": 28.4, "net_sown_pct": 52.8, "non_agri_land_pct": 16.4, "irrigation_intensity_pct": 34.0, "canal_share_pct": 22.0, "well_share_pct": 68.0},
+    {"district_name": "Dehradun", "state_name": "UTTARAKHAND", "latitude": 30.3165, "longitude": 78.0322, "population": 1696694, "electric_lighting_ratio": 0.95, "target_dispute_risk": 22.4, "economic_density_index": 79.4, "forest_cover_pct": 51.8, "net_sown_pct": 22.4, "non_agri_land_pct": 19.8, "irrigation_intensity_pct": 52.0, "canal_share_pct": 45.0, "well_share_pct": 50.0},
+    {"district_name": "Shimla", "state_name": "HIMACHAL PRADESH", "latitude": 31.1048, "longitude": 77.1734, "population": 814010, "electric_lighting_ratio": 0.96, "target_dispute_risk": 19.2, "economic_density_index": 72.8, "forest_cover_pct": 46.8, "net_sown_pct": 18.2, "non_agri_land_pct": 12.4, "irrigation_intensity_pct": 18.0, "canal_share_pct": 0.0, "well_share_pct": 20.0},
+    {"district_name": "Srinagar", "state_name": "JAMMU AND KASHMIR", "latitude": 34.0837, "longitude": 74.7973, "population": 1236829, "electric_lighting_ratio": 0.92, "target_dispute_risk": 32.4, "economic_density_index": 73.2, "forest_cover_pct": 24.2, "net_sown_pct": 36.4, "non_agri_land_pct": 28.4, "irrigation_intensity_pct": 46.0, "canal_share_pct": 65.0, "well_share_pct": 25.0},
+    {"district_name": "Ludhiana", "state_name": "PUNJAB", "latitude": 30.9010, "longitude": 75.8573, "population": 3498739, "electric_lighting_ratio": 0.97, "target_dispute_risk": 20.8, "economic_density_index": 88.6, "forest_cover_pct": 2.4, "net_sown_pct": 82.4, "non_agri_land_pct": 14.8, "irrigation_intensity_pct": 98.0, "canal_share_pct": 18.0, "well_share_pct": 81.0},
+    {"district_name": "Gurugram", "state_name": "HARYANA", "latitude": 28.4595, "longitude": 77.0266, "population": 1514432, "electric_lighting_ratio": 0.98, "target_dispute_risk": 21.6, "economic_density_index": 98.4, "forest_cover_pct": 4.8, "net_sown_pct": 36.2, "non_agri_land_pct": 54.2, "irrigation_intensity_pct": 84.0, "canal_share_pct": 20.0, "well_share_pct": 78.0},
+]
+
 class GeodataService:
     _instance = None
 
     def __init__(self):
         self.districts_df = pd.DataFrame()
         if CACHE_FILE.exists():
-            self.districts_df = pd.read_csv(CACHE_FILE)
-            self._ensure_coordinates()
+            try:
+                self.districts_df = pd.read_csv(CACHE_FILE)
+                self._ensure_coordinates()
+            except Exception:
+                self.districts_df = pd.DataFrame(FALLBACK_DISTRICTS)
+        else:
+            self.districts_df = pd.DataFrame(FALLBACK_DISTRICTS)
 
         self.indiasat_features = []
         if INDIASAT_GEOJSON.exists():
@@ -181,7 +228,7 @@ class GeodataService:
 
         df = df.head(limit)
         results = []
-        t = max(0.0, min(1.0, (year - 1999) / 25.0))
+        t = max(0.0, min(1.0, (year - 1950) / 74.0))
 
         for _, row in df.iterrows():
             pop = int(row.get("population", 0))
@@ -191,12 +238,12 @@ class GeodataService:
             base_dispute = float(row.get("target_dispute_risk", 35.0))
             
             # Temporal trajectory:
-            # 1999 starts low (3-12% digitization), accelerates through NLRMP (2008), DILRMP 2.0 (2016), and SVAMITVA (2020-2024)
+            # 1950 starts low (0.5-5% digitization), accelerates through NLRMP (2008), DILRMP 2.0 (2016), and SVAMITVA (2020-2024)
             s_curve = (t ** 1.35)
-            modernization = max(3, min(99, int(base_mod * (0.05 + 0.95 * s_curve))))
+            modernization = max(1, min(99, int(base_mod * (0.02 + 0.98 * s_curve))))
             
-            # In 1999, disputes were higher due to boundary confusion & lack of digital titling
-            dispute = round(base_dispute * (1.45 - 0.45 * t), 1)
+            # Historical disputes were higher due to boundary ambiguity & lack of digital cadastre
+            dispute = round(base_dispute * (1.5 - 0.5 * t), 1)
 
             # SVAMITVA cards (scheme started in 2020)
             if year >= 2020:
@@ -231,21 +278,21 @@ class GeodataService:
         return results
 
     def get_temporal_stats(self, year: int = 2024) -> Dict[str, Any]:
-        """Provides national land use and digitization transitions from 1999 to 2024."""
-        # Baseline 1999 to 2024 realistic trajectory based on MoAFW 9-fold land use
-        t = max(0.0, min(1.0, (year - 1999) / 25.0))
+        """Provides national land use and digitization transitions from 1950 to 2024."""
+        # Baseline 1950 to 2024 realistic trajectory based on MoAFW 9-fold land use
+        t = max(0.0, min(1.0, (year - 1950) / 74.0))
         
-        # 1999: Forest 22.8% -> 2024: 24.3%
-        forest_pct = round(22.8 + t * 1.5, 1)
-        # 1999: Net Sown Area 46.2% -> 2024: 43.1% (slight contraction due to urbanization)
-        net_sown_pct = round(46.2 - t * 3.1, 1)
-        # 1999: Non-agricultural / Built-up 7.2% -> 2024: 11.4% (urbanization expansion)
-        non_agri_pct = round(7.2 + t * 4.2, 1)
-        # 1999: Fallow land 8.1% -> 2024: 6.9%
-        fallow_pct = round(8.1 - t * 1.2, 1)
-        # Cadastral digitization: 0% in 1999 -> 35% in 2014 -> 94.2% in 2024
+        # 1950: Forest 14.2% -> 2024: 24.3%
+        forest_pct = round(14.2 + t * 10.1, 1)
+        # 1950: Net Sown Area 41.8% -> 2024: 43.1%
+        net_sown_pct = round(41.8 + t * 1.3, 1)
+        # 1950: Non-agricultural / Built-up 3.3% -> 2024: 11.4% (urbanization expansion)
+        non_agri_pct = round(3.3 + t * 8.1, 1)
+        # 1950: Fallow land 10.5% -> 2024: 6.9%
+        fallow_pct = round(10.5 - t * 3.6, 1)
+        # Cadastral digitization: 0.5% in 1950 -> 15% in 2008 -> 60% in 2018 -> 94.2% in 2024
         if year < 2008:
-            digitized_cadastre_pct = round(max(2.0, (year - 1999) * 1.5), 1)
+            digitized_cadastre_pct = round(max(0.5, (year - 1950) * 0.12), 1)
         elif year < 2018:
             digitized_cadastre_pct = round(15.0 + (year - 2008) * 4.5, 1)
         else:
@@ -253,6 +300,15 @@ class GeodataService:
         
         # SVAMITVA cards (started in 2020)
         svamitva_cards_millions = round(max(0.0, (year - 2020) * 4.2), 2) if year >= 2020 else 0.0
+
+        if year < 2008:
+            milestone = "Post-Independence Land Reforms (Manual Jamabandi)" if year < 1985 else "Computerisation of Land Records (CLR Scheme)"
+        elif year < 2016:
+            milestone = "NLRMP Pilot Computerization (2008)"
+        elif year < 2020:
+            milestone = "DILRMP 2.0 Cadastral Resurvey (2016)"
+        else:
+            milestone = "SVAMITVA Drone Resurvey Active (94.2% Digitized)"
 
         return {
             "year": year,
@@ -263,7 +319,7 @@ class GeodataService:
             "cadastral_digitization_pct": min(95.4, digitized_cadastre_pct),
             "svamitva_cards_issued_cr": svamitva_cards_millions,
             "total_reported_geographical_area_mha": 305.8,
-            "milestone": "MoAFW Land Records Census (Paper)" if year < 2008 else ("NLRMP Pilot Computerization" if year < 2016 else ("DILRMP 2.0 Cadastral Resurvey" if year < 2020 else "SVAMITVA Drone Resurvey Active (94.2% Digitized)"))
+            "milestone": milestone
         }
 
     def get_geojson_layer(self, layer_key: str, year: int = 2024) -> Dict[str, Any]:

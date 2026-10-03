@@ -25,12 +25,10 @@ export function RoleProvider({ children }: { children: ReactNode }) {
   const user = useAuthStore((s) => s.user);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
-  // When a real user is logged in, derive the role from their backend role.
-  // Otherwise, default to 'Researcher' for the demo persona switcher.
   const [activeRole, setActiveRole] = useState<Role>('Researcher');
   const [evaluatorMode, setEvaluatorMode] = useState<boolean>(() => {
     const saved = localStorage.getItem('evaluator_mode');
-    return saved !== null ? saved === 'true' : true; // Default ON for seamless evaluation
+    return saved !== null ? saved === 'true' : true;
   });
 
   const toggleEvaluatorMode = () => {
@@ -58,4 +56,4 @@ export function useRole() {
   const context = useContext(RoleContext);
   if (!context) throw new Error('useRole must be used within RoleProvider');
   return context;
-}
+}

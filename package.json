@@ -11,6 +11,8 @@
   ],
   "scripts": {
     "dev": "turbo run dev",
+    "dev:frontend": "npm --workspace=@land-governance/frontend run dev",
+    "dev:api": "npm --workspace=@land-governance/api-server run dev",
     "build": "turbo run build",
     "typecheck": "tsc --build"
   },

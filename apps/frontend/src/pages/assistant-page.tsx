@@ -32,11 +32,12 @@ type AssistantResponse = {
 };
 
 function Breadcrumb({ current }: { current: string }) {
+  const { t } = useLanguage();
   return (
     <div className="mb-4 flex items-center gap-2 text-xs text-slate-500" data-testid="text-breadcrumb">
-      <span>National Land Governance Platform</span>
+      <span>{t('app_name')}</span>
       <ChevronRight className="h-3 w-3" />
-      <span className="font-semibold text-[#244562]">{current}</span>
+      <span className="font-semibold text-[#244562]">{t(current)}</span>
     </div>
   );
 }
@@ -214,16 +215,16 @@ export default function AssistantPage() {
 
       <div className="mb-6 flex flex-col justify-between gap-4 border-b border-slate-300 pb-5 lg:flex-row lg:items-end">
         <div>
-          <p className="section-kicker mb-2">Research support / statutory decision aid</p>
+          <p className="section-kicker mb-2">AI-powered help / policy questions</p>
           <h1 className="font-serif text-3xl font-semibold tracking-tight text-[#132f4c] md:text-4xl" data-testid="text-page-title-ai-assistant">AI Assistant</h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Ask policy questions and receive structured, traceable answers grounded in the indexed land-governance repository.</p>
+          <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-600">Ask questions about land policies and get clear answers backed by verified government documents from the repository.</p>
         </div>
-        <Link className="focus-ring flex items-center gap-2 border border-[#244562] px-3 py-2 text-xs font-bold text-[#244562] hover:bg-slate-50" data-testid="link-open-synthesis" href="/synthesis"><FileCheck2 className="h-3.5 w-3.5" />Switch to Cross-Doc Synthesis</Link>
+        <Link className="focus-ring flex items-center gap-2 border border-[#244562] px-3 py-2 text-xs font-bold text-[#244562] hover:bg-slate-50" data-testid="link-open-synthesis" href="/synthesis"><FileCheck2 className="h-3.5 w-3.5" />Compare Multiple Documents</Link>
       </div>
 
       <div className="mb-5 flex items-start gap-3 border border-[#b9cce0] bg-[#eef4fa] p-4 text-xs leading-5 text-[#244562]" data-testid="banner-ai-statutory">
         <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0" />
-        <p><span className="font-bold">AI Decision Support Engine</span> — Grounded exclusively on indexed DoLR Gazette notifications, SVAMITVA guidelines, and verified land-governance studies.</p>
+        <p><span className="font-bold">AI-Powered Answers</span> — All answers are based on verified gazette notifications, SVAMITVA guidelines, and official land governance documents only.</p>
       </div>
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
