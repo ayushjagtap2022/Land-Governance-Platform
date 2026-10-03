@@ -222,7 +222,7 @@ class RAGService:
         expanded_query = expand_multilingual_query(query)
         query_words = set(expanded_query.lower().split())
         
-        # Keyword scoring fallback
+        # Keyword scoring with multilingual term expansion (requires overlap > 0)
         scored = []
         for chunk in (await self.load_db_chunks() or self.chunks):
             chunk_words = set(chunk.text.lower().split())
@@ -230,9 +230,13 @@ class RAGService:
             # Bonus if doc title or department matches
             if any(w in chunk.title.lower() for w in query_words):
                 overlap += 4
-            score = overlap / (len(query_words) + 1)
-            scored.append((score, chunk))
+            if overlap > 0:
+                score = overlap / (len(query_words) + 1)
+                scored.append((score, chunk))
         
+        if not scored:
+            return []
+
         scored.sort(key=lambda x: x[0], reverse=True)
         return [c for score, c in scored[:top_k]]
 
@@ -242,7 +246,11 @@ class RAGService:
         if not relevant:
             return AssistantResponse(
                 query=query,
-                bullets=["No verified source passages are indexed for this question. Upload or ingest an authoritative document before relying on an answer."],
+                bullets=[
+                    "No supporting document or verified circular matches this query in the indexed repository.",
+                    "In adherence with the platform's strict verification policy, answers are refused when no authoritative source passage can be verified.",
+                    "Please upload or ingest the relevant policy act or circular into the Knowledge Repository to enable answers."
+                ],
                 source_ids=[],
                 citations=[],
                 grounded=False,
@@ -332,7 +340,7 @@ class RAGService:
             bullets=bullets,
             source_ids=source_ids,
             citations=citations,
-            grounded=True
+            grounded=False
         )
 
 rag_service = RAGService()

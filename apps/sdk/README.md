@@ -1,8 +1,8 @@
-# land-governance-platform
+# land-governance-sdk
 
 > Official TypeScript & JavaScript SDK for the **National Land Governance Platform** (Smart India Hackathon / SIH PS 26019).
 
-[![npm version](https://img.shields.io/npm/v/land-governance-platform.svg?color=cb3837)](https://www.npmjs.com/package/land-governance-platform)
+[![npm version](https://img.shields.io/npm/v/land-governance-sdk.svg?color=cb3837)](https://www.npmjs.com/package/land-governance-sdk)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-3178C6.svg)](https://www.typescriptlang.org/)
 [![Node.js 18+](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen.svg)](https://nodejs.org/)
@@ -30,17 +30,14 @@ A robust, enterprise-grade, fully typed client library designed for developers, 
 ## Installation
 
 ```bash
-# npm
-npm install land-governance-platform
+# npm (Local Monorepo / GitHub direct)
+npm install git+https://github.com/ayushjagtap2022/Land-Governance-Platform.git#subdirectory=apps/sdk
 
-# pnpm
-pnpm add land-governance-platform
+# npm (NPM Registry)
+npm install land-governance-sdk
 
-# yarn
-yarn add land-governance-platform
-
-# bun
-bun add land-governance-platform
+# pnpm / yarn / bun
+pnpm add land-governance-sdk
 ```
 
 ---

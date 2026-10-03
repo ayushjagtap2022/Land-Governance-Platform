@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { LandGovernanceClient, createClient } from '../src/client';
-import { LandGovernanceApiError } from '../src/errors';
+import { LandGovernanceApiError, LandGovernanceNetworkError } from '../src/errors';
 
 describe('LandGovernanceClient', () => {
   it('initializes with default options and all modules', () => {
@@ -168,5 +168,69 @@ describe('LandGovernanceClient', () => {
     client.logout();
     expect(client.isAuthenticated()).toBe(false);
     expect(client.getToken()).toBeUndefined();
+  });
+
+  it('throws LandGovernanceApiError on 401, 403, 404, 429 status codes without falling back to mock data', async () => {
+    for (const status of [401, 403, 404, 429]) {
+      const mockFetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status,
+        statusText: status === 429 ? 'Too Many Requests' : 'Error',
+        headers: new Headers({ 'content-type': 'application/json' }),
+        json: async () => ({ detail: `HTTP ${status} error message` }),
+      });
+
+      const client = new LandGovernanceClient({
+        fetch: mockFetch as any,
+        fallbackToOffline: true,
+      });
+
+      try {
+        await client.repository.list();
+        expect.fail(`Status ${status} should have thrown an error`);
+      } catch (err: any) {
+        expect(err).toBeInstanceOf(LandGovernanceApiError);
+        expect(err.status).toBe(status);
+        if (status === 401) expect(err.isUnauthorized).toBe(true);
+        if (status === 403) expect(err.isForbidden).toBe(true);
+        if (status === 404) expect(err.isNotFound).toBe(true);
+        if (status === 429) expect(err.isRateLimited).toBe(true);
+      }
+    }
+
+  });
+
+  it('verifies simulation golden vector structure parity from single root fixture', async () => {
+    const fs = await import('fs');
+    const path = await import('path');
+    const fixturePath = path.resolve(__dirname, '../../../tests/fixtures/simulation_golden_vectors.json');
+    const goldenAll = JSON.parse(fs.readFileSync(fixturePath, 'utf-8'));
+
+    const defaultVec = goldenAll['digital_cadastre_default'];
+    expect(defaultVec.expected_model_version).toBe('offline_approx_v1');
+    expect(defaultVec.expected_summary.confidence_range).toEqual([88.2, 94.6]);
+    expect(defaultVec.expected_trajectory_years).toBe(7);
+  });
+
+  it('triggers LandGovernanceNetworkError on 500 server error when fallbackToOffline=true', async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      statusText: 'Internal Server Error',
+      headers: new Headers({ 'content-type': 'application/json' }),
+      json: async () => ({ detail: 'Database connection failed' }),
+    });
+
+    const client = new LandGovernanceClient({
+      fetch: mockFetch as any,
+      fallbackToOffline: true,
+    });
+
+    try {
+      await client.geodata.getDistricts();
+      expect.fail('Should have thrown LandGovernanceNetworkError');
+    } catch (err: any) {
+      expect(err).toBeInstanceOf(LandGovernanceNetworkError);
+    }
   });
 });

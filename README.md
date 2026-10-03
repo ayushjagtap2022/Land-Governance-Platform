@@ -2,103 +2,124 @@
 
 **SIH Problem Statement 26019** | Ministry of Rural Development | Department of Land Resources (DoLR)
 
-A national research-and-policy ecosystem — repository + AI search + GIS + analytics + policy simulation + collaboration + innovation portal, unified under role-based access, for researchers, government officials, academic institutions, and the public.
+A unified national research-and-policy ecosystem for land governance — integrating a centralized knowledge repository, AI-assisted policy synthesis, GIS geospatial visualization, empirical analytics dashboards, what-if policy simulation, collaborative workspaces, and an innovation challenges portal, protected under role-based access control (RBAC).
 
 ---
 
-## 📦 Monorepo Structure
+## 📦 Monorepo Architecture
 
 ```
 Land-Governance-Platform/
-├── packages/
-│   ├── frontend/                  # React + Vite + TailwindCSS frontend
-│   ├── api-server/                # Express 5 backend API
-│   └── shared/
-│       ├── db/                    # PostgreSQL + Drizzle ORM schemas
-│       ├── api-zod/               # Shared Zod validation schemas
-│       ├── api-client-react/      # React Query API client hooks
-│       └── api-spec/              # OpenAPI spec + Orval codegen
-├── attached_assets/               # Shared static assets
-├── tsconfig.base.json             # Shared TypeScript config
-└── package.json                   # npm workspaces root
+├── apps/
+│   ├── api/                       # Live FastAPI backend (Python 3.12, SQLModel, PostgreSQL + pgvector)
+│   ├── frontend/                  # React + Vite + TailwindCSS frontend (Port 5173 / 3000)
+│   ├── ai-ml/                     # Trained Scikit-Learn models, training pipelines & district caches
+│   ├── python-sdk/                # Official Python SDK (`land-governance-sdk`) with offline demo engine
+│   └── sdk/                       # Official TypeScript/JavaScript SDK (`land-governance-sdk`)
+├── Land Governance Platform Datasets/ # Real Census 2011 (640 districts), Nightlights & Rainfall panels
+├── tests/
+│   └── fixtures/                  # Canonical golden test vectors (simulation_golden_vectors.json, openapi.json)
+├── PROJECT_STATE_REPORT.md        # Comprehensive evidence-based system audit report
+└── package.json                   # Root monorepo configuration
 ```
+
+---
 
 ## 🚀 Quick Start
 
+### 1. Backend (FastAPI + PostgreSQL)
 ```bash
-# Install all dependencies
+# Navigate to API directory
+cd apps/api
+
+# Create & activate virtual environment (optional if using global Python 3.12)
+python -m venv .venv
+.venv\Scripts\activate   # Windows (or source .venv/bin/activate on Linux/macOS)
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Start FastAPI development server (port 8000)
+uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+```
+* Interactive API Documentation (Swagger): `http://127.0.0.1:8000/docs`
+* Health Check: `http://127.0.0.1:8000/healthz`
+
+### 2. Frontend (React + Vite)
+```bash
+# Navigate to frontend directory
+cd apps/frontend
+
+# Install dependencies & start dev server
 npm install
+npm run dev
+```
+* Web Application: `http://localhost:5173`
 
-# Run the frontend dev server (port 3000)
-npm run dev:frontend
+### 3. Testing the SDKs
+```bash
+# Python SDK Test Suite (16 unit, fallback & golden vector tests)
+cd apps/python-sdk
+pytest tests -v
 
-# Run the API server
-npm run dev:api
-
-# Typecheck all packages
-npm run typecheck:all
-
-# Build all packages
-npm run build
+# TypeScript SDK Test Suite (11 parity & network fallback tests)
+cd apps/sdk
+npm test
 ```
 
-## 🧩 Module Mapping — SIH 26019
+---
 
-| # | Module | SIH Points | Status |
-|---|--------|------------|--------|
-| 1 | **Auth & RBAC** — Multi-role accounts, JWT, OTP, audit trail | 17 | 🔲 Planned |
-| 2 | **Knowledge Repository** — Document CRUD, OCR, versioning, taxonomy | 7, 13 | ✅ Frontend scaffold |
-| 3 | **AI Search & Recommendations** — Semantic search, RAG, summarization | 8, 14 | ✅ Frontend scaffold |
-| 4 | **Collaborative Workspaces** — Shared projects, discussions, tasks | 9, 15 | 🔲 Planned |
-| 5 | **GIS & Geospatial** — Interactive map, layers, time-slider, heatmaps | 10, 13 | ✅ Frontend scaffold |
-| 6 | **Analytics Dashboards** — 7 dashboard views, exports, anomaly flagging | 11, 16 | 🔲 Planned |
-| 7 | **Policy Simulation** ⭐ — What-if engine, scenarios, sensitivity analysis | 12 | 🔲 Planned |
-| 8 | **Innovation Portal** — Challenges, submissions, leaderboard, grants | 15 | 🔲 Planned |
-| 9 | **API & Integration Layer** — REST APIs, webhooks, OpenAPI docs | 13, 18 | ✅ Express scaffold |
-| 10 | **Admin & Platform Mgmt** — User verification, moderation, audit logs | 17 | 🔲 Planned |
-| 11 | **Notifications & Reporting** — In-app/email alerts, digests | — | 🔲 Planned |
+## 🧩 SIH 26019 Module Implementation Status
 
-## 🛠️ Tech Stack
+| # | Module | Core Implementation | Interface / Route | Status |
+|---|--------|---------------------|-------------------|--------|
+| 1 | **Auth & RBAC** | JWT (HS256), bcrypt password hashing, role permissions (`Researcher`, `Official`, `Admin`, `Public`) | `/api/v1/auth/*` | ✅ Functional (OTP/SSO hooks) |
+| 2 | **Knowledge Repository** | Multi-faceted search, document metadata, OCR text extraction, PostgreSQL storage | `/api/v1/repository/*` | ✅ Functional |
+| 3 | **AI Policy Assistant** | Multilingual Hindi term expansion + BM25 retrieval; Gemini API RAG pipeline with strict ungrounded refusal | `/api/v1/assistant/*` | ✅ Functional |
+| 4 | **Collaborative Workspaces** | Workspace CRUD, role-based member assignment, task tracking, real-time WebSockets | `/api/v1/workspaces/*` | ✅ Functional |
+| 5 | **GIS & Geospatial** | 640 Indian districts with coordinates & Census indicators; 1,313-feature LULC GeoJSON; WMS layers | `/api/v1/geodata/*` | ✅ Functional |
+| 6 | **Analytics Dashboards** | State comparative analysis, 5-axis climate resilience radar, 25-year land-use trends (38 states/UTs) | `/api/v1/analytics/*` | ✅ Functional |
+| 7 | **Policy Simulation** ⭐ | Macroeconomic lever simulation (Ceiling, Conversion Tax, Survey Budget, Fast-Track Court Window); 8-year trajectories | `/api/v1/simulate/*` | ✅ Functional |
+| 8 | **Innovation Portal** | Hackathon/grant challenges, proposal submissions with PDF attachments, public voting | `/api/v1/innovation/*` | ✅ Functional |
+| 9 | **API & Integration Layer** | Public REST API, OpenAPI 3.1 schema specification, Python & TypeScript SDKs | `/api/v1/*`, `/docs` | ✅ Functional |
+| 10 | **Admin & Platform Mgmt** | User approval/verification, content moderation, tamper-evident audit logging | `/api/v1/admin/*` | ✅ Functional |
+| 11 | **Notifications & Alerts** | In-app notification center, real-time WebSocket push broadcasting | `/api/v1/notifications/*` | ✅ Functional |
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | React 19, Vite 7, TailwindCSS 4, Radix UI, Leaflet |
-| Backend | Node.js 24, Express 5, TypeScript 5.9 |
-| Database | PostgreSQL + Drizzle ORM |
-| Validation | Zod 3 |
-| API Codegen | Orval (OpenAPI → React Query hooks + Zod schemas) |
-| Build | esbuild (server), Vite (client) |
+---
 
-## 👥 Target Personas
+## 🔬 Predictive Machine Learning & Simulation Architecture
 
-| Persona | Core Need | Primary Modules |
-|---------|-----------|-----------------|
-| Policy Researcher / Academic | Find, synthesize, and build on existing research fast | Repository, AI Search, Collaboration |
-| Government Official / Policymaker | Test a policy idea before committing; see live indicators | Simulation, Analytics, GIS |
-| Institution / State Government Admin | Upload data, manage org contributions, collaborate | Repository, Collaboration, Admin |
-| Public / Innovation Participant | Explore land data visually, participate in hackathons | GIS, Innovation Portal |
-| Platform Super Admin (DoLR) | Govern access, moderate content, monitor health | Admin & Platform Management |
+The platform's analytical engine pairs empirical statistical calibration with machine learning inference:
 
-## 📁 Key File Paths
+1. **Hybrid Policy Simulation Engine (`v1.2_hybrid_rf_linear`)**:
+   - Computes policy shock projections via econometric domain equations calibrated against Census 2011, VIIRS nightlight radiance, and IMD rainfall statistics.
+   - Outputs dynamic decision-support dispersion ranges derived from the spread of 120 estimator trees in the trained Random Forest model.
+2. **Dispute Vulnerability Model (`MOD-DISPUTE-RF-01`)**:
+   - `RandomForestRegressor` (120 Trees) trained on 640 Indian districts to predict a composite land dispute vulnerability index (0–100) based on agricultural workforce ratios, economic density, and cadastral coverage.
+3. **Urban Sprawl & Conversion Forecaster (`MOD-SPRAWL-HGB-02`)**:
+   - `HistGradientBoostingRegressor` predicting agricultural-to-urban parcel conversion velocity per 100k population.
+4. **Agrarian Climate Vulnerability Model (`MOD-CLIMATE-RF-03`)**:
+   - Estimates agrarian distress vulnerability index where irrigation intensity and canal/well infrastructure serve as primary buffering factors.
 
-| File | Purpose |
-|------|---------|
-| `packages/frontend/src/App.tsx` | Main app shell, routes, and page content |
-| `packages/frontend/src/components/layout/` | Header and role-aware sidebar |
-| `packages/frontend/src/context/RoleContext.tsx` | Demo persona state |
-| `packages/frontend/src/data/mockData.ts` | Typed mock data for all views |
-| `packages/frontend/src/index.css` | Theme tokens and global styles |
-| `packages/api-server/src/` | Express server entry, routes, middleware |
-| `packages/shared/db/src/schema/` | Drizzle ORM database schema |
-| `packages/shared/api-zod/src/` | Shared Zod validation schemas |
+---
 
-## 🏗️ Architecture Decisions
+## 🛠️ Technology Stack
 
-- **Frontend-first build**: Uses typed local mock data so all roles and routes work without a backend dependency.
-- **Demo persona switcher**: Defaults to Researcher, controls sidebar visibility and route access.
-- **NIC/Government aesthetic**: Strict Indian government portal styling — navy, saffron-white-green accent, bordered data surfaces.
-- **npm workspaces**: All packages managed through npm workspaces for simple dependency resolution.
+* **Backend**: FastAPI, SQLModel, Pydantic v2, PostgreSQL (Neon / Supabase), pgvector, Alembic, Uvicorn
+* **Frontend**: React 18, Vite, TailwindCSS, Radix UI primitives, Lucide Icons, Leaflet GIS
+* **AI / ML**: Scikit-Learn (Joblib models), Pandas, NumPy, Google GenAI SDK (Gemini)
+* **SDKs**: Python 3.10+ (httpx, pydantic), TypeScript / JavaScript (ES2022, zero external runtime dependencies)
 
-## 📜 License
+---
 
-MIT
+## 📜 Architectural Disclosures & Operational Notes
+
+- **Simulation Ranges**: The simulation engine outputs decision-support dispersion intervals (derived from ensemble tree spreads or sensitivity elasticities), intended for cabinet and policy deliberations rather than definitive parametric forecasts.
+- **RAG Policy Refusal**: When no verified circular or act in the knowledge repository matches an inquiry, the AI assistant strictly refuses to speculate (`grounded=False`) in accordance with civil-service policy guidelines.
+- **Enterprise Hooks**: Password reset via SMTP and Government SSO (DigiLocker / Jan Parichay) are implemented as architectural endpoints (returning HTTP 501 in demo deployments) designed for seamless enterprise identity hookup.
+
+---
+
+## ⚖️ License
+
+MIT License. Designed and developed for the Ministry of Rural Development / DoLR (SIH PS 26019).

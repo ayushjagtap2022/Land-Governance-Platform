@@ -154,43 +154,40 @@ async def update_me(
 # ---------------------------------------------------------------------------
 @router.post(
     "/forgot-password",
-    status_code=status.HTTP_200_OK,
-    summary="Request a password reset link",
+    status_code=status.HTTP_501_NOT_IMPLEMENTED,
+    summary="Request a password reset link (Enterprise Hook)",
 )
 async def forgot_password(
     payload: ForgotPasswordRequest,
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Sends a password reset token to the user's email.
-    
-    NOTE: Email sending is not yet wired up. In production, this would
-    send a reset link via SMTP or a service like SendGrid.
-    For now, the endpoint always returns success to avoid leaking
-    whether an email exists in the system.
+    Password reset initiation hook.
+    Returns HTTP 501 Not Implemented: SMTP mailer and OTP verification are enterprise architectural hooks.
     """
-    # In production: generate a reset token, save it, and email it.
-    # For now, we return a generic success to avoid email enumeration.
-    return {"message": "If that email exists in our system, a reset link has been sent."}
+    raise HTTPException(
+        status_code=status.HTTP_501_NOT_IMPLEMENTED,
+        detail="Password reset is not enabled in this deployment. SMTP email delivery, OTP/2FA, and Govt SSO (DigiLocker/Jan Parichay) are architectural integration hooks."
+    )
 
 
 @router.post(
     "/reset-password",
-    status_code=status.HTTP_200_OK,
-    summary="Reset password using a reset token",
+    status_code=status.HTTP_501_NOT_IMPLEMENTED,
+    summary="Reset password using a reset token (Enterprise Hook)",
 )
 async def reset_password(
     payload: ResetPasswordRequest,
     db: AsyncSession = Depends(get_db),
 ):
     """
-    Reset a user's password using a valid reset token.
-    
-    NOTE: This is a stub. In production, validate the reset token
-    against a stored token, then update the user's hashed_password.
+    Password reset completion hook.
+    Returns HTTP 501 Not Implemented: Token verification and password updates require production SMTP/OTP service.
     """
-    # TODO: Validate token, find user, update password, log audit event
-    return {"message": "Password reset functionality will be fully wired in production."}
+    raise HTTPException(
+        status_code=status.HTTP_501_NOT_IMPLEMENTED,
+        detail="Password reset is not enabled in this deployment. SMTP email delivery, OTP/2FA, and Govt SSO (DigiLocker/Jan Parichay) are architectural integration hooks."
+    )
 
 
 # ---------------------------------------------------------------------------

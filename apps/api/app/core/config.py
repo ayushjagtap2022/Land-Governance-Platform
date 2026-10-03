@@ -34,8 +34,8 @@ class Settings(BaseSettings):
     # Local storage fallback directory
     UPLOAD_DIR: Path = Path(__file__).resolve().parent.parent.parent / "uploads"
 
-    # Datasets directory
-    DATASETS_DIR: Path = Path(r"C:\Nirmal\Projects\Land-Governance-Platform\Land Governance Platform Datasets")
+    # Datasets directory (defaults to relative repo root for Docker/local portability)
+    DATASETS_DIR: Path = Path(os.getenv("DATASETS_DIR", Path(__file__).resolve().parent.parent.parent.parent / "Land Governance Platform Datasets"))
     
     model_config = SettingsConfigDict(
         env_file=".env",

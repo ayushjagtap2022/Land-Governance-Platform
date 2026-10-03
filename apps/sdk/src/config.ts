@@ -48,6 +48,16 @@ export interface ClientConfig {
   WebSocket?: any;
 
   /**
+   * Force SDK into offline mode skipping network calls.
+   */
+  offline?: boolean;
+
+  /**
+   * Explicitly opt-in to fall back to offline dataset ONLY on network connection errors or 5xx server errors.
+   */
+  fallbackToOffline?: boolean;
+
+  /**
    * Additional custom headers sent with every request.
    */
   headers?: Record<string, string>;
@@ -58,7 +68,7 @@ export interface ClientConfig {
   onTokenExpired?: () => void | Promise<void>;
 }
 
-export const DEFAULT_CONFIG: Required<Omit<ClientConfig, 'token' | 'apiKey' | 'wsUrl' | 'fetch' | 'WebSocket' | 'onTokenExpired'>> = {
+export const DEFAULT_CONFIG: Required<Omit<ClientConfig, 'token' | 'apiKey' | 'wsUrl' | 'fetch' | 'WebSocket' | 'onTokenExpired' | 'offline' | 'fallbackToOffline'>> = {
   baseUrl: 'http://127.0.0.1:8000/api/v1',
   timeoutMs: 30000,
   retries: 1,

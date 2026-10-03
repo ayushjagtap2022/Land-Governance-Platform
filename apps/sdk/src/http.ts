@@ -194,6 +194,10 @@ export class HttpClient {
             continue;
           }
 
+          if (response.status >= 500 && this.config.fallbackToOffline && method === 'GET') {
+            throw new LandGovernanceNetworkError(`Backend HTTP ${response.status} server error: ${JSON.stringify(errorData)}`);
+          }
+
           throw apiError;
         }
 

@@ -1,0 +1,5546 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Land Governance Platform API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "summary": "Read Root",
+        "operationId": "read_root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/healthz": {
+      "get": {
+        "tags": [
+          "health"
+        ],
+        "summary": "Health Check",
+        "description": "Check if the API and the Neon Database are up and running.",
+        "operationId": "health_check_api_v1_healthz_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/register": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Register a new user account",
+        "description": "Create a new user account.\n\nThe system auto-detects the user's role based on their email domain:\n- `.gov.in` / `.nic.in` \u2192 Government Official\n- `.ac.in` / `.edu.in` \u2192 Researcher\n- All others \u2192 Public User\n\nReturns a JWT access token so the user is logged in immediately after registration.",
+        "operationId": "register_api_v1_auth_register_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRegister"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/login": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Login and receive a JWT access token",
+        "description": "Authenticate with email and password.\n\nReturns a JWT access token on success.\nAll login attempts (success and failure) are logged in the audit trail.",
+        "operationId": "login_api_v1_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserLogin"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Get the current logged-in user's profile",
+        "description": "Returns the profile of the currently authenticated user.\n\nRequires a valid JWT Bearer token in the Authorization header.",
+        "operationId": "get_me_api_v1_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRead"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Update the current user's profile",
+        "description": "Update the currently authenticated user's profile.\n\nOnly `full_name` and `institution` can be updated by the user.\nRole changes require Super Admin approval.",
+        "operationId": "update_me_api_v1_auth_me_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/auth/forgot-password": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Request a password reset link",
+        "description": "Sends a password reset token to the user's email.\n\nNOTE: Email sending is not yet wired up. In production, this would\nsend a reset link via SMTP or a service like SendGrid.\nFor now, the endpoint always returns success to avoid leaking\nwhether an email exists in the system.",
+        "operationId": "forgot_password_api_v1_auth_forgot_password_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ForgotPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/reset-password": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Reset password using a reset token",
+        "description": "Reset a user's password using a valid reset token.\n\nNOTE: This is a stub. In production, validate the reset token\nagainst a stored token, then update the user's hashed_password.",
+        "operationId": "reset_password_api_v1_auth_reset_password_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/innovation/challenges": {
+      "post": {
+        "tags": [
+          "innovation"
+        ],
+        "summary": "Create a new challenge (hackathon, grant, research call)",
+        "description": "Post a new challenge on the Innovation Portal.\n\nOnly Government Officials and Super Admins can create challenges.\nThe challenge is immediately set to OPEN status.",
+        "operationId": "create_challenge_api_v1_innovation_challenges_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChallengeCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChallengeRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "innovation"
+        ],
+        "summary": "List all challenges",
+        "description": "List all challenges on the Innovation Portal.\n\nPublicly accessible. Supports filtering by type and status,\nwith pagination via skip/limit.",
+        "operationId": "list_challenges_api_v1_innovation_challenges_get",
+        "parameters": [
+          {
+            "name": "challenge_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by type: hackathon, grant, research_call, pilot_project",
+              "title": "Challenge Type"
+            },
+            "description": "Filter by type: hackathon, grant, research_call, pilot_project"
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by status: draft, open, closed, completed",
+              "title": "Status"
+            },
+            "description": "Filter by status: draft, open, closed, completed"
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ChallengeRead"
+                  },
+                  "title": "Response List Challenges Api V1 Innovation Challenges Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/innovation/challenges/{challenge_id}": {
+      "get": {
+        "tags": [
+          "innovation"
+        ],
+        "summary": "Get a challenge's full details",
+        "description": "Get the full details of a specific challenge by its ID.",
+        "operationId": "get_challenge_api_v1_innovation_challenges__challenge_id__get",
+        "parameters": [
+          {
+            "name": "challenge_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Challenge Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChallengeRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "innovation"
+        ],
+        "summary": "Update a challenge",
+        "description": "Update a challenge's details or status.\n\nOnly the creator (Official) or a Super Admin can update a challenge.",
+        "operationId": "update_challenge_api_v1_innovation_challenges__challenge_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "challenge_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Challenge Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChallengeUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChallengeRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/innovation/challenges/{challenge_id}/proposals": {
+      "post": {
+        "tags": [
+          "innovation"
+        ],
+        "summary": "Submit a proposal for a challenge",
+        "description": "Submit a proposal in response to an open challenge.\n\nAny authenticated user can submit a proposal.\nThe challenge must be in OPEN status.",
+        "operationId": "submit_proposal_api_v1_innovation_challenges__challenge_id__proposals_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "challenge_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Challenge Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposalCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "innovation"
+        ],
+        "summary": "List all proposals for a challenge",
+        "description": "List all proposals submitted for a specific challenge.",
+        "operationId": "list_proposals_api_v1_innovation_challenges__challenge_id__proposals_get",
+        "parameters": [
+          {
+            "name": "challenge_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Challenge Id"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by status",
+              "title": "Status"
+            },
+            "description": "Filter by status"
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProposalRead"
+                  },
+                  "title": "Response List Proposals Api V1 Innovation Challenges  Challenge Id  Proposals Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/innovation/proposals/{proposal_id}/upload-document": {
+      "post": {
+        "tags": [
+          "innovation"
+        ],
+        "summary": "Upload PDF document for a proposal",
+        "description": "Upload the PDF detailed plan to an S3-compatible bucket and attach to the proposal.",
+        "operationId": "upload_proposal_document_api_v1_innovation_proposals__proposal_id__upload_document_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "proposal_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Proposal Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_proposal_document_api_v1_innovation_proposals__proposal_id__upload_document_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/innovation/proposals/{proposal_id}": {
+      "get": {
+        "tags": [
+          "innovation"
+        ],
+        "summary": "Get a proposal's full details",
+        "description": "Get the full details of a specific proposal, including vote count and status.",
+        "operationId": "get_proposal_api_v1_innovation_proposals__proposal_id__get",
+        "parameters": [
+          {
+            "name": "proposal_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Proposal Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/innovation/proposals/{proposal_id}/status": {
+      "patch": {
+        "tags": [
+          "innovation"
+        ],
+        "summary": "Update a proposal's review status",
+        "description": "Update the review status of a proposal.\n\nThis powers the \"Applicant-facing status tracker\":\nsubmitted \u2192 under_review \u2192 shortlisted \u2192 funded \u2192 completed (or rejected)\n\nOnly Officials and Super Admins can update proposal status.",
+        "operationId": "update_proposal_status_api_v1_innovation_proposals__proposal_id__status_patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "proposal_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Proposal Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposalStatusUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/innovation/proposals/{proposal_id}/funding": {
+      "patch": {
+        "tags": [
+          "innovation"
+        ],
+        "summary": "Update a proposal's funding disbursement status",
+        "description": "Update the funding/disbursement status of a proposal.\n\nPDF: \"Admin-facing grant/funding disbursement tracker\"\n\nOnly Super Admins can update funding status.",
+        "operationId": "update_proposal_funding_api_v1_innovation_proposals__proposal_id__funding_patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "proposal_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Proposal Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProposalFundingUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProposalRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/innovation/proposals/{proposal_id}/vote": {
+      "post": {
+        "tags": [
+          "innovation"
+        ],
+        "summary": "Vote for a proposal",
+        "description": "Cast a vote for a proposal. Each user can vote only once per proposal.\n\nPDF: \"Public voting and/or expert panel scoring\"",
+        "operationId": "vote_for_proposal_api_v1_innovation_proposals__proposal_id__vote_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "proposal_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Proposal Id"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "innovation"
+        ],
+        "summary": "Remove your vote from a proposal",
+        "description": "Remove your vote from a proposal.",
+        "operationId": "remove_vote_api_v1_innovation_proposals__proposal_id__vote_delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "proposal_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Proposal Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/innovation/challenges/{challenge_id}/leaderboard": {
+      "get": {
+        "tags": [
+          "innovation"
+        ],
+        "summary": "Get ranked proposals for a challenge",
+        "description": "Get proposals for a challenge, ranked by expert score and public votes.\n\nPDF: \"Leaderboard and public showcase of funded/completed pilots\"",
+        "operationId": "get_leaderboard_api_v1_innovation_challenges__challenge_id__leaderboard_get",
+        "parameters": [
+          {
+            "name": "challenge_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Challenge Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProposalRead"
+                  },
+                  "title": "Response Get Leaderboard Api V1 Innovation Challenges  Challenge Id  Leaderboard Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/innovation/showcase": {
+      "get": {
+        "tags": [
+          "innovation"
+        ],
+        "summary": "Success stories \u2014 funded and completed projects",
+        "description": "Get all success stories \u2014 proposals that have been funded or completed.\n\nPDF: \"Success-story case-study showcase\"",
+        "operationId": "get_showcase_api_v1_innovation_showcase_get",
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProposalRead"
+                  },
+                  "title": "Response Get Showcase Api V1 Innovation Showcase Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/innovation/stats": {
+      "get": {
+        "tags": [
+          "innovation"
+        ],
+        "summary": "Platform-wide innovation statistics",
+        "description": "Get platform-wide innovation stats:\ntotal challenges, open challenges, total proposals, funded projects, total votes.",
+        "operationId": "get_stats_api_v1_innovation_stats_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/": {
+      "get": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "List Workspaces",
+        "operationId": "list_workspaces_api_v1_workspaces__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/WorkspaceRead"
+                  },
+                  "type": "array",
+                  "title": "Response List Workspaces Api V1 Workspaces  Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Create Workspace",
+        "operationId": "create_workspace_api_v1_workspaces__post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkspaceCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/members": {
+      "post": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Add Workspace Member",
+        "operationId": "add_workspace_member_api_v1_workspaces__workspace_id__members_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Workspace Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkspaceMemberCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceMemberRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspace_id}/tasks": {
+      "post": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Create Task",
+        "operationId": "create_task_api_v1_workspaces__workspace_id__tasks_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Workspace Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskCreate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "List Tasks",
+        "operationId": "list_tasks_api_v1_workspaces__workspace_id__tasks_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workspace_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Workspace Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/TaskRead"
+                  },
+                  "title": "Response List Tasks Api V1 Workspaces  Workspace Id  Tasks Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/tasks/{task_id}": {
+      "patch": {
+        "tags": [
+          "workspaces"
+        ],
+        "summary": "Update Task",
+        "operationId": "update_task_api_v1_workspaces_tasks__task_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "task_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Task Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TaskUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TaskRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/": {
+      "get": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "List Notifications",
+        "description": "Fetch past notifications.",
+        "operationId": "list_notifications_api_v1_notifications__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "unread_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Unread Only"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NotificationRead"
+                  },
+                  "title": "Response List Notifications Api V1 Notifications  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/{notification_id}/read": {
+      "patch": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Mark Notification Read",
+        "description": "Mark a notification as read when the user clicks it.",
+        "operationId": "mark_notification_read_api_v1_notifications__notification_id__read_patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "notification_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Notification Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/stats": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Get Platform-Wide Live Telemetry Counts",
+        "description": "Returns real-time database counts for platform telemetry.",
+        "operationId": "get_admin_stats_api_v1_admin_stats_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/health-metrics": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Get Infrastructure Health Telemetry",
+        "description": "Measures live database latency, pgvector connectivity, and ML model runtime status.",
+        "operationId": "get_health_metrics_api_v1_admin_health_metrics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/users": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "List all platform users",
+        "description": "List all registered users. Only accessible to Super Admins.",
+        "operationId": "list_users_api_v1_admin_users_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "role",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/UserRole"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by role",
+              "title": "Role"
+            },
+            "description": "Filter by role"
+          },
+          {
+            "name": "is_active",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter active/suspended",
+              "title": "Is Active"
+            },
+            "description": "Filter active/suspended"
+          },
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserRead"
+                  },
+                  "title": "Response List Users Api V1 Admin Users Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/users/{user_id}/status": {
+      "patch": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Suspend or reactivate a user",
+        "description": "Suspend a user (is_active=False) or reactivate them (is_active=True).\nThis immediately blocks them from logging in.",
+        "operationId": "update_user_status_api_v1_admin_users__user_id__status_patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserStatusUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/users/{user_id}/role": {
+      "patch": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "Change a user's role",
+        "description": "Promote or demote a user's role.",
+        "operationId": "update_user_role_api_v1_admin_users__user_id__role_patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "User Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserRoleUpdate"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserRead"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/audit-logs": {
+      "get": {
+        "tags": [
+          "admin"
+        ],
+        "summary": "View system audit logs",
+        "description": "View a chronological log of sensitive actions taken on the platform.",
+        "operationId": "get_audit_logs_api_v1_admin_audit_logs_get",
+        "parameters": [
+          {
+            "name": "skip",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Skip"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AuditLogRead"
+                  },
+                  "title": "Response Get Audit Logs Api V1 Admin Audit Logs Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/simulate/evaluate": {
+      "post": {
+        "tags": [
+          "simulate"
+        ],
+        "summary": "Evaluate Policy Simulation",
+        "description": "Evaluates policy variable manipulations (ceiling, conversion tax, survey budget, fast-track window)\nand returns projected outcome metrics with 95% confidence intervals, 8-year trajectories,\nsensitivity analysis, and explainability drivers.",
+        "operationId": "evaluate_policy_simulation_api_v1_simulate_evaluate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SimulationInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SimulationOutput"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/simulate/baselines": {
+      "get": {
+        "tags": [
+          "simulate"
+        ],
+        "summary": "Get State Baselines",
+        "description": "Returns historical baseline indicators for all supported states.",
+        "operationId": "get_state_baselines_api_v1_simulate_baselines_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Get State Baselines Api V1 Simulate Baselines Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/simulate/presets": {
+      "get": {
+        "tags": [
+          "simulate"
+        ],
+        "summary": "Get Policy Presets (Model Leasing, SVAMITVA, Land Pooling)",
+        "description": "Returns 3 verified real policy reform templates for instant 1-click simulation.",
+        "operationId": "get_policy_presets_api_v1_simulate_presets_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response Get Policy Presets Api V1 Simulate Presets Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/simulate/infrastructure-delay": {
+      "post": {
+        "tags": [
+          "simulate"
+        ],
+        "summary": "Estimate Infrastructure Land Acquisition Delay & Cost Overrun",
+        "description": "Predicts project clearance delay, litigation probability, and financial cost escalation \nunder RFCTLARR Act 2013 across Highways, Railways, SEZs, and Metros (PS 25017 & PS 26016).",
+        "operationId": "estimate_infrastructure_delay_api_v1_simulate_infrastructure_delay_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InfrastructureDelayInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InfrastructureDelayOutput"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/assistant/chat": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "Ask Assistant",
+        "description": "RAG Assistant endpoint: Answers natural language policy research questions\ngrounded strictly in indexed government circulars and acts, citing exact source IDs and pages.",
+        "operationId": "ask_assistant_api_v1_ai_assistant_chat_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QueryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/synthesis/compare": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "Synthesize Policies",
+        "description": "Comparative policy synthesis engine: Compares 2-3 selected documents and returns\ncore objective, consensus points, statutory conflicts, and DoLR recommendations.",
+        "operationId": "synthesize_policies_api_v1_ai_synthesis_compare_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SynthesisRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SynthesisResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/trends": {
+      "get": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "Get Emerging Trends",
+        "description": "Emerging topic trend detection: Returns surging research keywords and frequency shifts.",
+        "operationId": "get_emerging_trends_api_v1_ai_trends_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/TrendItem"
+                  },
+                  "type": "array",
+                  "title": "Response Get Emerging Trends Api V1 Ai Trends Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/summarize": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "Summarize Document",
+        "description": "Auto-summarization: One-click executive summary and key takeaways (PS point 8).",
+        "operationId": "summarize_document_api_v1_ai_summarize_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SummarizeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SummarizeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/assistant/translate": {
+      "post": {
+        "tags": [
+          "ai"
+        ],
+        "summary": "Translate Text",
+        "description": "Bhashini AI Multi-Lingual Translator: Translates policy briefs and land records\ninto 6 official Indian regional languages.",
+        "operationId": "translate_text_api_v1_ai_assistant_translate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TranslateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TranslateResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/repository/upload": {
+      "post": {
+        "tags": [
+          "repository"
+        ],
+        "summary": "Upload Document",
+        "operationId": "upload_document_api_v1_repository_upload_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_document_api_v1_repository_upload_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/repository/ingest": {
+      "post": {
+        "tags": [
+          "repository"
+        ],
+        "summary": "Ingest Document",
+        "description": "Stage an evidence document with mandatory provenance for administrator review.",
+        "operationId": "ingest_document_api_v1_repository_ingest_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_ingest_document_api_v1_repository_ingest_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/repository/documents/{doc_id}/review": {
+      "post": {
+        "tags": [
+          "repository"
+        ],
+        "summary": "Review Document",
+        "description": "Approve or reject a staged document; only approved documents may be indexed.",
+        "operationId": "review_document_api_v1_repository_documents__doc_id__review_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "doc_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Doc Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewDocumentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/repository/commit": {
+      "post": {
+        "tags": [
+          "repository"
+        ],
+        "summary": "Commit Document",
+        "operationId": "commit_document_api_v1_repository_commit_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommitRecordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/repository/documents": {
+      "get": {
+        "tags": [
+          "repository"
+        ],
+        "summary": "Get Documents",
+        "operationId": "get_documents_api_v1_repository_documents_get",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Query"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "State"
+            }
+          },
+          {
+            "name": "theme",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Theme"
+            }
+          },
+          {
+            "name": "year_from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Year From"
+            }
+          },
+          {
+            "name": "year_to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Year To"
+            }
+          },
+          {
+            "name": "search_mode",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "exact",
+              "title": "Search Mode"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "title": "Response Get Documents Api V1 Repository Documents Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/repository/documents/{doc_id}": {
+      "get": {
+        "tags": [
+          "repository"
+        ],
+        "summary": "Get Document",
+        "operationId": "get_document_api_v1_repository_documents__doc_id__get",
+        "parameters": [
+          {
+            "name": "doc_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Doc Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/repository/documents/{doc_id}/related": {
+      "get": {
+        "tags": [
+          "repository"
+        ],
+        "summary": "Get Related Documents",
+        "description": "Returns related documents based on vector cosine similarity (PS point 14).",
+        "operationId": "get_related_documents_api_v1_repository_documents__doc_id__related_get",
+        "parameters": [
+          {
+            "name": "doc_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Doc Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 3,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "title": "Response Get Related Documents Api V1 Repository Documents  Doc Id  Related Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/repository/recommendations": {
+      "get": {
+        "tags": [
+          "repository"
+        ],
+        "summary": "Get Recommended Documents",
+        "description": "AI-Powered personalized document recommendations (PS point 8).\nTailors discovery feed based on user role and policy priorities.",
+        "operationId": "get_recommended_documents_api_v1_repository_recommendations_get",
+        "parameters": [
+          {
+            "name": "role",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": "Researcher",
+              "title": "Role"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 4,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "title": "Response Get Recommended Documents Api V1 Repository Recommendations Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ml/models": {
+      "get": {
+        "tags": [
+          "ml"
+        ],
+        "summary": "Get Ml Models Catalog",
+        "description": "Returns all trained Scikit-Learn models, performance scores (R^2, RMSE), and feature importances.",
+        "operationId": "get_ml_models_catalog_api_v1_ml_models_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ml/predict-dispute": {
+      "post": {
+        "tags": [
+          "ml"
+        ],
+        "summary": "Predict Dispute Risk",
+        "description": "Executes RandomForestRegressor inference on district features with optional policy counterfactuals.",
+        "operationId": "predict_dispute_risk_api_v1_ml_predict_dispute_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DisputeRiskRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ml/predict-urban-conversion": {
+      "post": {
+        "tags": [
+          "ml"
+        ],
+        "summary": "Predict Urban Conversion",
+        "description": "Executes HistGradientBoostingRegressor inference for urban land conversion velocity.",
+        "operationId": "predict_urban_conversion_api_v1_ml_predict_urban_conversion_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UrbanConversionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ml/predict-climate": {
+      "post": {
+        "tags": [
+          "ml"
+        ],
+        "summary": "Predict Climate Vulnerability",
+        "description": "Executes RandomForestRegressor inference for climate & moisture distress vulnerability.",
+        "operationId": "predict_climate_vulnerability_api_v1_ml_predict_climate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClimatePredictionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ml/simulate": {
+      "post": {
+        "tags": [
+          "ml"
+        ],
+        "summary": "Simulate Policy Scenario",
+        "description": "Executes Module 7 Scenario Modeling with multi-target baseline vs projected deltas.",
+        "operationId": "simulate_policy_scenario_api_v1_ml_simulate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PolicySimulationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/geodata/layers": {
+      "get": {
+        "tags": [
+          "geodata"
+        ],
+        "summary": "Get GIS Layer Catalog & WMS Settings",
+        "description": "Returns toggleable layers: Cadastral, LULC, Dispute Heatmap, Climate Risk, and Bhuvan ISRO imagery.",
+        "operationId": "get_gis_layers_api_v1_geodata_layers_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/geodata/districts": {
+      "get": {
+        "tags": [
+          "geodata"
+        ],
+        "summary": "List Districts with Spatial Coordinates & Demographics",
+        "description": "Returns real Indian districts with lat/lng, Census population, modernization %, and dispute risk.",
+        "operationId": "list_spatial_districts_api_v1_geodata_districts_get",
+        "parameters": [
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional state filter",
+              "title": "State"
+            },
+            "description": "Optional state filter"
+          },
+          {
+            "name": "year",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 2025,
+              "minimum": 1950,
+              "description": "Year for multi-temporal land governance indicators (1950-2025)",
+              "default": 2024,
+              "title": "Year"
+            },
+            "description": "Year for multi-temporal land governance indicators (1950-2025)"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 1000,
+              "minimum": 1,
+              "description": "District limit",
+              "default": 640,
+              "title": "Limit"
+            },
+            "description": "District limit"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/geodata/temporal-stats": {
+      "get": {
+        "tags": [
+          "geodata"
+        ],
+        "summary": "Get National Land Transitions & Digitization Progress for Year",
+        "description": "Returns MoAFW-derived land use percentages, cadastral digitization %, and SVAMITVA cards for the selected year.",
+        "operationId": "get_temporal_statistics_api_v1_geodata_temporal_stats_get",
+        "parameters": [
+          {
+            "name": "year",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 2025,
+              "minimum": 1950,
+              "description": "Year for multi-temporal land use progression (1950-2025)",
+              "default": 2024,
+              "title": "Year"
+            },
+            "description": "Year for multi-temporal land use progression (1950-2025)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/geodata/geojson/{layer_key}": {
+      "get": {
+        "tags": [
+          "geodata"
+        ],
+        "summary": "Get GeoJSON FeatureCollection for Layer",
+        "description": "Returns GeoJSON FeatureCollection for cadastral survey plots, LULC zones, or climate risks.",
+        "operationId": "get_geojson_layer_api_v1_geodata_geojson__layer_key__get",
+        "parameters": [
+          {
+            "name": "layer_key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Layer Key"
+            }
+          },
+          {
+            "name": "year",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 2025,
+              "minimum": 1950,
+              "description": "Year for multi-temporal land use time-slider",
+              "default": 2024,
+              "title": "Year"
+            },
+            "description": "Year for multi-temporal land use time-slider"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/geodata/upload-geojson": {
+      "post": {
+        "tags": [
+          "geodata"
+        ],
+        "summary": "Upload Custom GeoJSON Layer for GIS Map",
+        "description": "Uploads a custom GeoJSON file to be dynamically rendered on the GIS map.",
+        "operationId": "upload_custom_geojson_api_v1_geodata_upload_geojson_post",
+        "parameters": [
+          {
+            "name": "layer_key",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Layer to attach: cadastral, lulc, or climate",
+              "default": "cadastral",
+              "title": "Layer Key"
+            },
+            "description": "Layer to attach: cadastral, lulc, or climate"
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_custom_geojson_api_v1_geodata_upload_geojson_post"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/compare": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Compare 2 Indian States on Real Empirical Indicators",
+        "description": "Calculates empirical comparative metrics between two states from Census 2011, Nightlights, and Rainfall.",
+        "operationId": "compare_states_api_v1_analytics_compare_get",
+        "parameters": [
+          {
+            "name": "state_a",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Primary state name",
+              "default": "Maharashtra",
+              "title": "State A"
+            },
+            "description": "Primary state name"
+          },
+          {
+            "name": "state_b",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Comparison state name",
+              "default": "Madhya Pradesh",
+              "title": "State B"
+            },
+            "description": "Comparison state name"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/radar": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Climate Risk Radar Comparison",
+        "description": "Returns 5-axis climate and agrarian vulnerability radar metrics.",
+        "operationId": "get_climate_radar_api_v1_analytics_radar_get",
+        "parameters": [
+          {
+            "name": "state_a",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Primary state name",
+              "default": "Maharashtra",
+              "title": "State A"
+            },
+            "description": "Primary state name"
+          },
+          {
+            "name": "state_b",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "description": "Comparison state name",
+              "default": "Madhya Pradesh",
+              "title": "State B"
+            },
+            "description": "Comparison state name"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/trends": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Multi-Year Land Governance Trends",
+        "description": "Returns multi-year historical trend series (2000-2024) grounded in MoAFW 181k records.",
+        "operationId": "get_trends_api_v1_analytics_trends_get",
+        "parameters": [
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Optional state name to get specific state historical trends",
+              "title": "State"
+            },
+            "description": "Optional state name to get specific state historical trends"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/dashboards/{category}": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Fetch Data for Specific PS Point 16 Dashboard",
+        "description": "Returns empirical datasets for any of the 7 specific dashboards required by SIH PS 26019:\n- research_output\n- policy_performance\n- land_use_trends\n- climate_resilience\n- dispute_statistics\n- project_outcomes\n- geospatial_insights",
+        "operationId": "get_dashboard_category_api_v1_analytics_dashboards__category__get",
+        "parameters": [
+          {
+            "name": "category",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Category"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "State name for state-specific indicators",
+              "default": "Maharashtra",
+              "title": "State"
+            },
+            "description": "State name for state-specific indicators"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/states": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Get All Available Indian States for Analytics",
+        "description": "Returns sorted list of all 35 Indian States and Union Territories with empirical data.",
+        "operationId": "get_available_states_api_v1_analytics_states_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array",
+                  "title": "Response Get Available States Api V1 Analytics States Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/nlgi": {
+      "get": {
+        "tags": [
+          "analytics"
+        ],
+        "summary": "Get National Land Governance Index (NLGI) Leaderboard",
+        "description": "Returns composite NLGI scores and rankings for all 35 Indian States and Union Territories.",
+        "operationId": "get_nlgi_leaderboard_api_v1_analytics_nlgi_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AssistantResponse": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "title": "Query"
+          },
+          "bullets": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Bullets"
+          },
+          "source_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Source Ids"
+          },
+          "citations": {
+            "items": {
+              "$ref": "#/components/schemas/Citation"
+            },
+            "type": "array",
+            "title": "Citations"
+          },
+          "grounded": {
+            "type": "boolean",
+            "title": "Grounded"
+          }
+        },
+        "type": "object",
+        "required": [
+          "query",
+          "bullets",
+          "source_ids",
+          "citations",
+          "grounded"
+        ],
+        "title": "AssistantResponse"
+      },
+      "AuditLogRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "user_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id"
+          },
+          "user_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Email"
+          },
+          "action": {
+            "type": "string",
+            "title": "Action"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "ip_address": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ip Address"
+          },
+          "user_agent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Agent"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "action",
+          "created_at"
+        ],
+        "title": "AuditLogRead"
+      },
+      "Body_ingest_document_api_v1_repository_ingest_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "authority": {
+            "type": "string",
+            "title": "Authority"
+          },
+          "source_url": {
+            "type": "string",
+            "title": "Source Url"
+          },
+          "source_license": {
+            "type": "string",
+            "title": "Source License"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category",
+            "default": "Policy"
+          },
+          "theme": {
+            "type": "string",
+            "title": "Theme",
+            "default": "Unclassified"
+          },
+          "state_region": {
+            "type": "string",
+            "title": "State Region",
+            "default": "All India"
+          },
+          "administrative_level": {
+            "type": "string",
+            "title": "Administrative Level",
+            "default": "National"
+          },
+          "publication_year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Publication Year"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file",
+          "title",
+          "authority",
+          "source_url",
+          "source_license"
+        ],
+        "title": "Body_ingest_document_api_v1_repository_ingest_post"
+      },
+      "Body_upload_custom_geojson_api_v1_geodata_upload_geojson_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_custom_geojson_api_v1_geodata_upload_geojson_post"
+      },
+      "Body_upload_document_api_v1_repository_upload_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_document_api_v1_repository_upload_post"
+      },
+      "Body_upload_proposal_document_api_v1_innovation_proposals__proposal_id__upload_document_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "format": "binary",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_proposal_document_api_v1_innovation_proposals__proposal_id__upload_document_post"
+      },
+      "ChallengeCreate": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "challenge_type": {
+            "$ref": "#/components/schemas/ChallengeType"
+          },
+          "organization": {
+            "type": "string",
+            "title": "Organization"
+          },
+          "eligibility": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eligibility"
+          },
+          "prize_info": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prize Info"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Start Date"
+          },
+          "deadline": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Deadline"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "description",
+          "challenge_type",
+          "organization",
+          "start_date",
+          "deadline"
+        ],
+        "title": "ChallengeCreate",
+        "description": "Schema for POST /innovation/challenges."
+      },
+      "ChallengeRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "challenge_type": {
+            "$ref": "#/components/schemas/ChallengeType"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ChallengeStatus"
+          },
+          "created_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Created By"
+          },
+          "organization": {
+            "type": "string",
+            "title": "Organization"
+          },
+          "eligibility": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eligibility"
+          },
+          "prize_info": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prize Info"
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Start Date"
+          },
+          "deadline": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Deadline"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags"
+          },
+          "proposal_count": {
+            "type": "integer",
+            "title": "Proposal Count",
+            "default": 0
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "description",
+          "challenge_type",
+          "status",
+          "created_by",
+          "organization",
+          "start_date",
+          "deadline",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ChallengeRead",
+        "description": "Schema for returning challenge data in API responses."
+      },
+      "ChallengeStatus": {
+        "type": "string",
+        "enum": [
+          "draft",
+          "open",
+          "closed",
+          "completed"
+        ],
+        "title": "ChallengeStatus",
+        "description": "Lifecycle status of a challenge."
+      },
+      "ChallengeType": {
+        "type": "string",
+        "enum": [
+          "hackathon",
+          "grant",
+          "research_call",
+          "pilot_project"
+        ],
+        "title": "ChallengeType",
+        "description": "Types of challenges that can be posted on the Innovation Portal."
+      },
+      "ChallengeUpdate": {
+        "properties": {
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ChallengeStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "eligibility": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Eligibility"
+          },
+          "prize_info": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prize Info"
+          },
+          "deadline": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deadline"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags"
+          }
+        },
+        "type": "object",
+        "title": "ChallengeUpdate",
+        "description": "Schema for PATCH /innovation/challenges/{id}."
+      },
+      "Citation": {
+        "properties": {
+          "doc_id": {
+            "type": "string",
+            "title": "Doc Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "department": {
+            "type": "string",
+            "title": "Department"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "excerpt": {
+            "type": "string",
+            "title": "Excerpt"
+          }
+        },
+        "type": "object",
+        "required": [
+          "doc_id",
+          "title",
+          "department",
+          "page",
+          "excerpt"
+        ],
+        "title": "Citation"
+      },
+      "ClimatePredictionRequest": {
+        "properties": {
+          "state_name": {
+            "type": "string",
+            "title": "State Name",
+            "description": "Indian state name",
+            "default": "MAHARASHTRA"
+          },
+          "district_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "District Name",
+            "description": "Optional specific district"
+          }
+        },
+        "type": "object",
+        "title": "ClimatePredictionRequest"
+      },
+      "CommitRecordRequest": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "authority": {
+            "type": "string",
+            "title": "Authority"
+          },
+          "year": {
+            "type": "string",
+            "title": "Year"
+          },
+          "theme": {
+            "type": "string",
+            "title": "Theme"
+          },
+          "administrative_level": {
+            "type": "string",
+            "title": "Administrative Level"
+          },
+          "file_name": {
+            "type": "string",
+            "title": "File Name"
+          },
+          "file_url": {
+            "type": "string",
+            "title": "File Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "authority",
+          "year",
+          "theme",
+          "administrative_level",
+          "file_name",
+          "file_url"
+        ],
+        "title": "CommitRecordRequest"
+      },
+      "DisputeRiskRequest": {
+        "properties": {
+          "state_name": {
+            "type": "string",
+            "title": "State Name",
+            "description": "Indian state name",
+            "default": "MAHARASHTRA"
+          },
+          "district_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "District Name",
+            "description": "Optional specific district"
+          },
+          "policy_adjustments": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "number"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Policy Adjustments",
+            "description": "Counterfactual policy levers e.g. titling_coverage_pct, digital_mutation_speed_pct"
+          }
+        },
+        "type": "object",
+        "title": "DisputeRiskRequest"
+      },
+      "ForgotPasswordRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "title": "ForgotPasswordRequest",
+        "description": "Schema for the /auth/forgot-password request."
+      },
+      "FundingStatus": {
+        "type": "string",
+        "enum": [
+          "not_applicable",
+          "pending",
+          "partially_disbursed",
+          "disbursed"
+        ],
+        "title": "FundingStatus",
+        "description": "Tracks grant/funding disbursement for admin dashboard."
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "InfrastructureDelayInput": {
+        "properties": {
+          "project_name": {
+            "type": "string",
+            "title": "Project Name",
+            "description": "Project designation",
+            "default": "NHAI 6-Lane Expressway Corridor"
+          },
+          "project_type": {
+            "type": "string",
+            "title": "Project Type",
+            "description": "Type of infrastructure project",
+            "default": "Highway / Expressway"
+          },
+          "state": {
+            "type": "string",
+            "title": "State",
+            "description": "Target State / UT",
+            "default": "Maharashtra"
+          },
+          "land_area_hectares": {
+            "type": "number",
+            "maximum": 50000.0,
+            "minimum": 1.0,
+            "title": "Land Area Hectares",
+            "description": "Acquisition land area in Hectares",
+            "default": 350.0
+          },
+          "private_land_pct": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Private Land Pct",
+            "description": "Percentage of private land (vs government/gram sabha)",
+            "default": 80.0
+          },
+          "irrigated_multi_crop_pct": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Irrigated Multi Crop Pct",
+            "description": "Percentage of multi-cropped agricultural land",
+            "default": 25.0
+          }
+        },
+        "type": "object",
+        "title": "InfrastructureDelayInput"
+      },
+      "InfrastructureDelayOutput": {
+        "properties": {
+          "project_name": {
+            "type": "string",
+            "title": "Project Name"
+          },
+          "project_type": {
+            "type": "string",
+            "title": "Project Type"
+          },
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "land_area_hectares": {
+            "type": "number",
+            "title": "Land Area Hectares"
+          },
+          "baseline_clearance_months": {
+            "type": "number",
+            "title": "Baseline Clearance Months"
+          },
+          "litigation_delay_months": {
+            "type": "number",
+            "title": "Litigation Delay Months"
+          },
+          "total_projected_clearance_months": {
+            "type": "number",
+            "title": "Total Projected Clearance Months"
+          },
+          "risk_score": {
+            "type": "number",
+            "title": "Risk Score"
+          },
+          "risk_level": {
+            "type": "string",
+            "title": "Risk Level"
+          },
+          "estimated_base_compensation_cr": {
+            "type": "number",
+            "title": "Estimated Base Compensation Cr"
+          },
+          "delay_cost_escalation_cr": {
+            "type": "number",
+            "title": "Delay Cost Escalation Cr"
+          },
+          "total_estimated_land_cost_cr": {
+            "type": "number",
+            "title": "Total Estimated Land Cost Cr"
+          },
+          "bottlenecks": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Bottlenecks"
+          },
+          "mitigations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Mitigations"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_name",
+          "project_type",
+          "state",
+          "land_area_hectares",
+          "baseline_clearance_months",
+          "litigation_delay_months",
+          "total_projected_clearance_months",
+          "risk_score",
+          "risk_level",
+          "estimated_base_compensation_cr",
+          "delay_cost_escalation_cr",
+          "total_estimated_land_cost_cr",
+          "bottlenecks",
+          "mitigations"
+        ],
+        "title": "InfrastructureDelayOutput"
+      },
+      "MetricProjection": {
+        "properties": {
+          "current": {
+            "type": "number",
+            "title": "Current"
+          },
+          "projected": {
+            "type": "number",
+            "title": "Projected"
+          },
+          "delta": {
+            "type": "number",
+            "title": "Delta"
+          },
+          "confidence_interval": {
+            "type": "string",
+            "title": "Confidence Interval"
+          },
+          "direction": {
+            "type": "string",
+            "title": "Direction"
+          }
+        },
+        "type": "object",
+        "required": [
+          "current",
+          "projected",
+          "delta",
+          "confidence_interval",
+          "direction"
+        ],
+        "title": "MetricProjection"
+      },
+      "NotificationRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          },
+          "type": {
+            "$ref": "#/components/schemas/NotificationType"
+          },
+          "is_read": {
+            "type": "boolean",
+            "title": "Is Read"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "title",
+          "content",
+          "type",
+          "is_read",
+          "created_at"
+        ],
+        "title": "NotificationRead"
+      },
+      "NotificationType": {
+        "type": "string",
+        "enum": [
+          "info",
+          "success",
+          "warning",
+          "error"
+        ],
+        "title": "NotificationType"
+      },
+      "PolicySimulationRequest": {
+        "properties": {
+          "policy_lever": {
+            "type": "string",
+            "title": "Policy Lever",
+            "description": "Policy intervention type",
+            "default": "DIGITAL_TITLING_EXPANSION"
+          },
+          "state_name": {
+            "type": "string",
+            "title": "State Name",
+            "description": "State name for scenario evaluation",
+            "default": "MAHARASHTRA"
+          },
+          "delta_pct": {
+            "type": "number",
+            "title": "Delta Pct",
+            "description": "Percentage shift in policy lever",
+            "default": 15.0
+          }
+        },
+        "type": "object",
+        "title": "PolicySimulationRequest"
+      },
+      "ProposalCreate": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "abstract": {
+            "type": "string",
+            "title": "Abstract"
+          },
+          "document_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Url"
+          },
+          "requested_funding": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requested Funding"
+          },
+          "team_members": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Team Members"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "abstract"
+        ],
+        "title": "ProposalCreate",
+        "description": "Schema for POST /innovation/challenges/{id}/proposals."
+      },
+      "ProposalFundingUpdate": {
+        "properties": {
+          "funding_amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Funding Amount"
+          },
+          "funding_status": {
+            "$ref": "#/components/schemas/FundingStatus"
+          }
+        },
+        "type": "object",
+        "required": [
+          "funding_status"
+        ],
+        "title": "ProposalFundingUpdate",
+        "description": "Schema for PATCH /innovation/proposals/{id}/funding."
+      },
+      "ProposalRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "challenge_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Challenge Id"
+          },
+          "submitted_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Submitted By"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "abstract": {
+            "type": "string",
+            "title": "Abstract"
+          },
+          "document_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Url"
+          },
+          "team_members": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Team Members"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ProposalStatus"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "admin_notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Admin Notes"
+          },
+          "funding_amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Funding Amount"
+          },
+          "funding_status": {
+            "$ref": "#/components/schemas/FundingStatus"
+          },
+          "vote_count": {
+            "type": "integer",
+            "title": "Vote Count",
+            "default": 0
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "challenge_id",
+          "submitted_by",
+          "title",
+          "abstract",
+          "status",
+          "funding_status",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ProposalRead",
+        "description": "Schema for returning proposal data in API responses."
+      },
+      "ProposalStatus": {
+        "type": "string",
+        "enum": [
+          "submitted",
+          "under_review",
+          "shortlisted",
+          "funded",
+          "completed",
+          "rejected"
+        ],
+        "title": "ProposalStatus",
+        "description": "Full lifecycle of a proposal.\nPDF: \"under review \u2192 shortlisted \u2192 funded\""
+      },
+      "ProposalStatusUpdate": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/ProposalStatus"
+          },
+          "admin_notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Admin Notes"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "ProposalStatusUpdate",
+        "description": "Schema for PATCH /innovation/proposals/{id}/status."
+      },
+      "QueryRequest": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "title": "Query"
+          }
+        },
+        "type": "object",
+        "required": [
+          "query"
+        ],
+        "title": "QueryRequest"
+      },
+      "ResetPasswordRequest": {
+        "properties": {
+          "token": {
+            "type": "string",
+            "title": "Token"
+          },
+          "new_password": {
+            "type": "string",
+            "title": "New Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "token",
+          "new_password"
+        ],
+        "title": "ResetPasswordRequest",
+        "description": "Schema for the /auth/reset-password request."
+      },
+      "ReviewDocumentRequest": {
+        "properties": {
+          "decision": {
+            "type": "string",
+            "title": "Decision"
+          },
+          "review_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "decision"
+        ],
+        "title": "ReviewDocumentRequest"
+      },
+      "SensitivityMetric": {
+        "properties": {
+          "parameter": {
+            "type": "string",
+            "title": "Parameter"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "impact_level": {
+            "type": "string",
+            "title": "Impact Level"
+          },
+          "impact_score": {
+            "type": "integer",
+            "title": "Impact Score"
+          }
+        },
+        "type": "object",
+        "required": [
+          "parameter",
+          "label",
+          "impact_level",
+          "impact_score"
+        ],
+        "title": "SensitivityMetric"
+      },
+      "SimulationInput": {
+        "properties": {
+          "state": {
+            "type": "string",
+            "title": "State",
+            "description": "Target state for simulation",
+            "default": "Maharashtra"
+          },
+          "ceiling": {
+            "type": "number",
+            "maximum": 100.0,
+            "minimum": 10.0,
+            "title": "Ceiling",
+            "description": "Land ceiling limit (acres)",
+            "default": 54.0
+          },
+          "tax": {
+            "type": "number",
+            "maximum": 25.0,
+            "minimum": 1.0,
+            "title": "Tax",
+            "description": "Agri to Non-Agri conversion tax (%)",
+            "default": 8.0
+          },
+          "budget": {
+            "type": "number",
+            "maximum": 500.0,
+            "minimum": 10.0,
+            "title": "Budget",
+            "description": "Modernization & survey budget (\u20b9 Cr)",
+            "default": 120.0
+          },
+          "window": {
+            "type": "number",
+            "maximum": 365.0,
+            "minimum": 30.0,
+            "title": "Window",
+            "description": "Fast-track court window (days)",
+            "default": 180.0
+          }
+        },
+        "type": "object",
+        "title": "SimulationInput"
+      },
+      "SimulationOutput": {
+        "properties": {
+          "state": {
+            "type": "string",
+            "title": "State"
+          },
+          "baseline_params": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "type": "object",
+            "title": "Baseline Params"
+          },
+          "input_params": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Input Params"
+          },
+          "metrics": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/MetricProjection"
+            },
+            "type": "object",
+            "title": "Metrics"
+          },
+          "trajectory": {
+            "items": {
+              "$ref": "#/components/schemas/TrajectoryPoint"
+            },
+            "type": "array",
+            "title": "Trajectory"
+          },
+          "sensitivity": {
+            "items": {
+              "$ref": "#/components/schemas/SensitivityMetric"
+            },
+            "type": "array",
+            "title": "Sensitivity"
+          },
+          "explainability": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Explainability"
+          },
+          "methodology": {
+            "type": "string",
+            "title": "Methodology"
+          },
+          "ml_model_insights": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ml Model Insights"
+          }
+        },
+        "type": "object",
+        "required": [
+          "state",
+          "baseline_params",
+          "input_params",
+          "metrics",
+          "trajectory",
+          "sensitivity",
+          "explainability",
+          "methodology"
+        ],
+        "title": "SimulationOutput"
+      },
+      "SummarizeRequest": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content"
+          },
+          "department": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Department",
+            "default": "Department of Land Resources"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title"
+        ],
+        "title": "SummarizeRequest"
+      },
+      "SummarizeResponse": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "executive_summary": {
+            "type": "string",
+            "title": "Executive Summary"
+          },
+          "key_takeaways": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Key Takeaways"
+          },
+          "statutory_implications": {
+            "type": "string",
+            "title": "Statutory Implications"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "executive_summary",
+          "key_takeaways",
+          "statutory_implications"
+        ],
+        "title": "SummarizeResponse"
+      },
+      "SynthesisRequest": {
+        "properties": {
+          "document_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Document Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "document_ids"
+        ],
+        "title": "SynthesisRequest"
+      },
+      "SynthesisResponse": {
+        "properties": {
+          "document_ids": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Document Ids"
+          },
+          "document_titles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Document Titles"
+          },
+          "core_objective": {
+            "type": "string",
+            "title": "Core Objective"
+          },
+          "consensus_points": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Consensus Points"
+          },
+          "conflicting_guidelines": {
+            "type": "string",
+            "title": "Conflicting Guidelines"
+          },
+          "recommendations_for_dolr": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Recommendations For Dolr"
+          }
+        },
+        "type": "object",
+        "required": [
+          "document_ids",
+          "document_titles",
+          "core_objective",
+          "consensus_points",
+          "conflicting_guidelines",
+          "recommendations_for_dolr"
+        ],
+        "title": "SynthesisResponse"
+      },
+      "TaskCreate": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "assigned_to": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned To"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "title",
+          "description"
+        ],
+        "title": "TaskCreate"
+      },
+      "TaskRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "workspace_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Workspace Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "assigned_to": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned To"
+          },
+          "status": {
+            "$ref": "#/components/schemas/TaskStatus"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "workspace_id",
+          "title",
+          "description",
+          "status",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "TaskRead"
+      },
+      "TaskStatus": {
+        "type": "string",
+        "enum": [
+          "todo",
+          "in_progress",
+          "review",
+          "done"
+        ],
+        "title": "TaskStatus",
+        "description": "Lifecycle status of a task."
+      },
+      "TaskUpdate": {
+        "properties": {
+          "status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TaskStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "assigned_to": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "uuid"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned To"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          }
+        },
+        "type": "object",
+        "title": "TaskUpdate"
+      },
+      "TokenResponse": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "bearer"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserRead"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "user"
+        ],
+        "title": "TokenResponse",
+        "description": "Schema for the JWT token response after login."
+      },
+      "TrajectoryPoint": {
+        "properties": {
+          "year": {
+            "type": "string",
+            "title": "Year"
+          },
+          "baseline": {
+            "type": "number",
+            "title": "Baseline"
+          },
+          "projected": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Projected"
+          }
+        },
+        "type": "object",
+        "required": [
+          "year",
+          "baseline"
+        ],
+        "title": "TrajectoryPoint"
+      },
+      "TranslateRequest": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "target_language": {
+            "type": "string",
+            "title": "Target Language"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text",
+          "target_language"
+        ],
+        "title": "TranslateRequest"
+      },
+      "TranslateResponse": {
+        "properties": {
+          "original_text": {
+            "type": "string",
+            "title": "Original Text"
+          },
+          "target_language": {
+            "type": "string",
+            "title": "Target Language"
+          },
+          "translated_text": {
+            "type": "string",
+            "title": "Translated Text"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider"
+          }
+        },
+        "type": "object",
+        "required": [
+          "original_text",
+          "target_language",
+          "translated_text",
+          "provider"
+        ],
+        "title": "TranslateResponse"
+      },
+      "TrendItem": {
+        "properties": {
+          "keyword": {
+            "type": "string",
+            "title": "Keyword"
+          },
+          "change": {
+            "type": "string",
+            "title": "Change"
+          },
+          "direction": {
+            "type": "string",
+            "title": "Direction"
+          },
+          "search": {
+            "type": "string",
+            "title": "Search"
+          }
+        },
+        "type": "object",
+        "required": [
+          "keyword",
+          "change",
+          "direction",
+          "search"
+        ],
+        "title": "TrendItem"
+      },
+      "UrbanConversionRequest": {
+        "properties": {
+          "state_name": {
+            "type": "string",
+            "title": "State Name",
+            "description": "Indian state name",
+            "default": "MAHARASHTRA"
+          },
+          "district_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "District Name",
+            "description": "Optional specific district"
+          }
+        },
+        "type": "object",
+        "title": "UrbanConversionRequest"
+      },
+      "UserLogin": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "UserLogin",
+        "description": "Schema for the /auth/login endpoint request body."
+      },
+      "UserRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "role": {
+            "$ref": "#/components/schemas/UserRole"
+          },
+          "institution": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Institution"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "is_verified": {
+            "type": "boolean",
+            "title": "Is Verified"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "full_name",
+          "role",
+          "is_active",
+          "is_verified",
+          "created_at"
+        ],
+        "title": "UserRead",
+        "description": "Schema for returning user data in API responses (no password)."
+      },
+      "UserRegister": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "institution": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Institution"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password",
+          "full_name"
+        ],
+        "title": "UserRegister",
+        "description": "Schema for the /auth/register endpoint request body."
+      },
+      "UserRole": {
+        "type": "string",
+        "enum": [
+          "public",
+          "researcher",
+          "official",
+          "institution",
+          "super_admin"
+        ],
+        "title": "UserRole",
+        "description": "Platform roles as defined in the project requirements."
+      },
+      "UserRoleUpdate": {
+        "properties": {
+          "role": {
+            "$ref": "#/components/schemas/UserRole"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role"
+        ],
+        "title": "UserRoleUpdate",
+        "description": "Schema for admins to change user roles."
+      },
+      "UserStatusUpdate": {
+        "properties": {
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          }
+        },
+        "type": "object",
+        "required": [
+          "is_active"
+        ],
+        "title": "UserStatusUpdate",
+        "description": "Schema for admins to suspend or activate users."
+      },
+      "UserUpdate": {
+        "properties": {
+          "full_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Full Name"
+          },
+          "institution": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Institution"
+          }
+        },
+        "type": "object",
+        "title": "UserUpdate",
+        "description": "Schema for PATCH /auth/me \u2014 all fields optional."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "WorkspaceCreate": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "description"
+        ],
+        "title": "WorkspaceCreate"
+      },
+      "WorkspaceMemberCreate": {
+        "properties": {
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "role": {
+            "$ref": "#/components/schemas/WorkspaceRole",
+            "default": "member"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user_id"
+        ],
+        "title": "WorkspaceMemberCreate"
+      },
+      "WorkspaceMemberRead": {
+        "properties": {
+          "workspace_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Workspace Id"
+          },
+          "user_id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "User Id"
+          },
+          "role": {
+            "$ref": "#/components/schemas/WorkspaceRole"
+          },
+          "joined_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Joined At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "workspace_id",
+          "user_id",
+          "role",
+          "joined_at"
+        ],
+        "title": "WorkspaceMemberRead"
+      },
+      "WorkspaceRead": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          },
+          "created_by": {
+            "type": "string",
+            "format": "uuid",
+            "title": "Created By"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "description",
+          "created_by",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "WorkspaceRead"
+      },
+      "WorkspaceRole": {
+        "type": "string",
+        "enum": [
+          "admin",
+          "member",
+          "viewer"
+        ],
+        "title": "WorkspaceRole",
+        "description": "Roles within a specific workspace."
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

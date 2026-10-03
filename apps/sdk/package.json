@@ -1,5 +1,5 @@
 {
-  "name": "land-governance-platform",
+  "name": "land-governance-sdk",
   "version": "1.0.1",
   "description": "Official TypeScript & JavaScript SDK for the National Land Governance Platform (SIH PS 26019)",
   "keywords": [
