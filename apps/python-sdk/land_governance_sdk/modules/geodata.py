@@ -50,3 +50,17 @@ class GeodataModule:
                 climate={"label": "Climate Risk & Inundation Zones", "type": "vector", "opacity": 0.50},
                 source="offline",
             )
+
+    def upload_geojson(
+        self,
+        layer_name: str,
+        geojson_data: Dict[str, Any],
+        **kwargs
+    ) -> Dict[str, Any]:
+        """Uploads custom GeoJSON layer (Disabled in offline mode)."""
+        return self.http.request(
+            method="POST",
+            endpoint="/geodata/upload-geojson",
+            json_data={"layer_name": layer_name, "geojson": geojson_data, **kwargs},
+            is_write_op=True,
+        )

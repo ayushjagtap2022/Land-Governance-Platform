@@ -57,29 +57,35 @@ class SimulateModule:
         b_val = budget if budget is not None else investment_cr
         b_val = max(10.0, min(500.0, float(b_val)))
 
+        ftc_val = None
         if window is not None:
             w_val = max(30.0, min(365.0, float(window)))
         elif policy_variable == "fast_track_courts":
-            # If target_value is in days (>= 30) clamp to [30, 365], else each court reduces window from 180 days
+            # Pass court count directly to backend econometrics; also compute fallback window
             if target_value >= 30.0:
                 w_val = min(365.0, float(target_value))
             else:
+                ftc_val = max(1.0, min(50.0, float(target_value)))
                 w_val = max(30.0, 180.0 - float(target_value) * 10.0)
         else:
             w_val = 180.0
 
         try:
+            payload = {
+                "state": state,
+                "ceiling": c_val,
+                "tax": t_val,
+                "budget": b_val,
+                "window": w_val,
+            }
+            if ftc_val is not None:
+                payload["fast_track_courts"] = ftc_val
+
             try:
                 res_dict = self.http.request(
                     method="POST",
                     endpoint="/simulate/evaluate",
-                    json_data={
-                        "state": state,
-                        "ceiling": c_val,
-                        "tax": t_val,
-                        "budget": b_val,
-                        "window": w_val,
-                    },
+                    json_data=payload,
                 )
             except LandGovernanceApiError as err:
                 if err.status_code == 404:
@@ -112,18 +118,18 @@ class SimulateModule:
                 lit_savings = round(abs(float(sav.get("projected", sav.get("delta", 457.5)))), 1)
 
                 ml_insights = res_dict.get("ml_model_insights") or {}
-                live_conf_range = ml_insights.get("confidence_range")
-                if isinstance(live_conf_range, (list, tuple)) and len(live_conf_range) == 2:
-                    conf_range = [round(float(live_conf_range[0]), 1), round(float(live_conf_range[1]), 1)]
+                ci_str = str(disp.get("confidence_interval", ""))
+                match = re.search(r"±\s*([0-9.]+)", ci_str)
+                tree_margin = ml_insights.get("tree_ci_margin")
+                if tree_margin is not None:
+                    margin = float(tree_margin)
+                elif match:
+                    margin = float(match.group(1))
                 else:
-                    ci_str = str(disp.get("confidence_interval", ""))
-                    match = re.search(r"±\s*([0-9.]+)", ci_str)
-                    if match:
-                        margin = float(match.group(1))
-                        proj = float(disp.get("projected", 33.3))
-                        conf_range = [round(max(0.0, proj - margin), 1), round(proj + margin, 1)]
-                    else:
-                        conf_range = [88.2, 94.6]
+                    margin = 3.2
+
+                # Directly bracket the summary dispute_reduction_pct metric
+                conf_range = [round(max(0.0, dispute_red - margin), 1), round(dispute_red + margin, 1)]
 
                 return SimulationResult(
                     source=res_dict.get("source", "live"),
@@ -137,6 +143,7 @@ class SimulateModule:
                         climate_resilience_score=clim_score,
                         projected_litigation_savings_cr=lit_savings,
                         confidence_score_pct=92.4,
+                        confidence_metric="dispute_reduction_pct",
                         confidence_range=conf_range,
                     ),
                     explainability={"drivers": res_dict.get("sensitivity", [])},

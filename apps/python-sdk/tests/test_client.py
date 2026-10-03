@@ -82,7 +82,8 @@ def test_explicit_offline_fallback_simulation():
     assert res.source == "offline"
     assert res.is_offline is True
     assert res.model_version == "offline_approx_v1"
-    assert res.summary.confidence_range == [88.2, 94.6]
+    assert res.summary.confidence_metric == "dispute_reduction_pct"
+    assert res.summary.confidence_range == [19.7, 26.1]
     assert "top_feature_impacts" in res.explainability
     assert len(res.trajectory) == 7
 

@@ -12,7 +12,8 @@ from app.api.routes import (
     repository,
     ml,
     geodata,
-    analytics
+    analytics,
+    webhooks
 )
 
 api_router = APIRouter()
@@ -53,6 +54,9 @@ api_router.include_router(geodata.router, prefix="/geodata", tags=["geodata"])
 
 # Module 6: Analytics & Decision-Support Dashboards
 api_router.include_router(analytics.router, prefix="/analytics", tags=["analytics"])
+
+# Module 9: Webhooks & API Integration Layer
+api_router.include_router(webhooks.router, prefix="/webhooks", tags=["webhooks"])
 
 
 

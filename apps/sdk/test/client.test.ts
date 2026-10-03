@@ -208,7 +208,7 @@ describe('LandGovernanceClient', () => {
 
     const defaultVec = goldenAll['digital_cadastre_default'];
     expect(defaultVec.expected_model_version).toBe('offline_approx_v1');
-    expect(defaultVec.expected_summary.confidence_range).toEqual([88.2, 94.6]);
+    expect(defaultVec.expected_summary.confidence_range).toEqual([19.7, 26.1]);
     expect(defaultVec.expected_trajectory_years).toBe(7);
   });
 

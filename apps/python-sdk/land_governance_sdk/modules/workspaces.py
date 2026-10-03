@@ -24,3 +24,12 @@ class WorkspacesModule:
                     "is_offline": True,
                 }
             ]
+
+    def create(self, name: str, description: Optional[str] = None, **kwargs) -> Dict[str, Any]:
+        """Creates a new collaborative research workspace (Disabled in offline mode)."""
+        return self.http.request(
+            method="POST",
+            endpoint="/workspaces/create",
+            json_data={"name": name, "description": description, **kwargs},
+            is_write_op=True,
+        )

@@ -3358,10 +3358,242 @@
           }
         }
       }
+    },
+    "/api/v1/webhooks/subscribe": {
+      "post": {
+        "tags": [
+          "webhooks"
+        ],
+        "summary": "Register a Webhook Subscription",
+        "description": "Registers a new webhook endpoint for platform event notifications.",
+        "operationId": "subscribe_webhook_api_v1_webhooks_subscribe_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookSubscriptionInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Subscribe Webhook Api V1 Webhooks Subscribe Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/webhooks/subscriptions": {
+      "get": {
+        "tags": [
+          "webhooks"
+        ],
+        "summary": "List Active Webhook Subscriptions",
+        "description": "Returns registered webhook endpoints and their event subscriptions.",
+        "operationId": "list_subscriptions_api_v1_webhooks_subscriptions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "additionalProperties": true,
+                    "type": "object"
+                  },
+                  "type": "array",
+                  "title": "Response List Subscriptions Api V1 Webhooks Subscriptions Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/webhooks/test-dispatch": {
+      "post": {
+        "tags": [
+          "webhooks"
+        ],
+        "summary": "Simulate Webhook Event Dispatch",
+        "description": "Fires a simulated webhook event dispatch.\nComputes an HMAC-SHA256 signature for verification by receiver systems.",
+        "operationId": "test_dispatch_api_v1_webhooks_test_dispatch_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookDispatchInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Test Dispatch Api V1 Webhooks Test Dispatch Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/webhooks/events": {
+      "get": {
+        "tags": [
+          "webhooks"
+        ],
+        "summary": "Get Webhook Delivery Event Log",
+        "description": "Returns historical event delivery audit log.",
+        "operationId": "get_events_api_v1_webhooks_events_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "additionalProperties": true
+                  },
+                  "title": "Response Get Events Api V1 Webhooks Events Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/webhooks/api-keys/generate": {
+      "post": {
+        "tags": [
+          "webhooks"
+        ],
+        "summary": "Generate Developer API Key",
+        "description": "Generates a developer API key for programmatic integration (Module 9).",
+        "operationId": "generate_api_key_api_v1_webhooks_api_keys_generate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiKeyGenerateInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Generate Api Key Api V1 Webhooks Api Keys Generate Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "ApiKeyGenerateInput": {
+        "properties": {
+          "developer_name": {
+            "type": "string",
+            "title": "Developer Name",
+            "description": "Application or researcher name",
+            "default": "DoLR Research Fellow"
+          },
+          "organization": {
+            "type": "string",
+            "title": "Organization",
+            "description": "Department / Academic institution",
+            "default": "Department of Land Resources"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role",
+            "description": "Access role tier ('Researcher', 'Official', 'Admin')",
+            "default": "Researcher"
+          }
+        },
+        "type": "object",
+        "title": "ApiKeyGenerateInput"
+      },
       "AssistantResponse": {
         "properties": {
           "query": {
@@ -4679,6 +4911,20 @@
             "title": "Window",
             "description": "Fast-track court window (days)",
             "default": 180.0
+          },
+          "fast_track_courts": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 50.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fast Track Courts",
+            "description": "Number of designated fast-track revenue courts / Lok Adalats (Assumption: each bench accelerates disposal by ~8-10 days, Law Commission Report 245)"
           }
         },
         "type": "object",
@@ -5421,6 +5667,69 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "WebhookDispatchInput": {
+        "properties": {
+          "event_type": {
+            "type": "string",
+            "title": "Event Type",
+            "description": "Event name (e.g. simulation.completed, document.indexed)",
+            "default": "simulation.completed"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Payload",
+            "description": "Event payload payload data",
+            "default": {
+              "simulation_id": "sim_8392",
+              "state": "Maharashtra",
+              "dispute_reduction_pct": 10.4,
+              "digitization_gain_pct": 15.2,
+              "timestamp": "2024-10-04T03:00:00Z"
+            }
+          }
+        },
+        "type": "object",
+        "title": "WebhookDispatchInput"
+      },
+      "WebhookSubscriptionInput": {
+        "properties": {
+          "url": {
+            "type": "string",
+            "title": "Url",
+            "description": "Target HTTPS callback URL"
+          },
+          "events": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Events",
+            "description": "Subscribed event types",
+            "default": [
+              "simulation.completed",
+              "document.approved"
+            ]
+          },
+          "secret": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Secret",
+            "description": "Secret token for HMAC-SHA256 payload signing"
+          }
+        },
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "title": "WebhookSubscriptionInput"
       },
       "WorkspaceCreate": {
         "properties": {

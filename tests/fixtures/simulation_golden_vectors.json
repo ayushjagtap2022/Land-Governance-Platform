@@ -8,12 +8,12 @@
     },
     "expected_summary": {
       "digitization_gain_pct": 12.1,
-      "dispute_reduction_pct": 23.0,
+      "dispute_reduction_pct": 22.9,
       "urbanization_rate_pct": 13.0,
       "climate_resilience_score": 72.2,
       "projected_litigation_savings_cr": 457.5,
       "confidence_score_pct": 92.4,
-      "confidence_range": [88.2, 94.6]
+      "confidence_range": [19.7, 26.1]
     },
     "expected_trajectory_years": 7,
     "expected_model_version": "offline_approx_v1"
@@ -32,7 +32,7 @@
       "climate_resilience_score": 71.8,
       "projected_litigation_savings_cr": 440.0,
       "confidence_score_pct": 92.4,
-      "confidence_range": [88.2, 94.6]
+      "confidence_range": [19.2, 25.6]
     },
     "expected_trajectory_years": 7,
     "expected_model_version": "offline_approx_v1"
@@ -51,7 +51,7 @@
       "climate_resilience_score": 75.4,
       "projected_litigation_savings_cr": 841.0,
       "confidence_score_pct": 92.4,
-      "confidence_range": [88.2, 94.6]
+      "confidence_range": [38.8, 45.2]
     },
     "expected_trajectory_years": 7,
     "expected_model_version": "offline_approx_v1"

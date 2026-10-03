@@ -36,3 +36,39 @@ class MlModule:
                 "source": "offline",
                 "is_offline": True,
             }
+
+    def predict_dispute(self, **kwargs) -> Dict[str, Any]:
+        """Convenience alias for predict_dispute_risk."""
+        return self.predict_dispute_risk(
+            population=kwargs.get("population", 500000),
+            electric_lighting_ratio=kwargs.get("electric_lighting_ratio", 0.85),
+            agricultural_worker_ratio=kwargs.get("agricultural_worker_ratio", 0.45),
+        )
+
+    def get_models(self) -> Dict[str, Any]:
+        """Retrieves Scikit-Learn predictive model registry catalog."""
+        try:
+            return self.http.request(method="GET", endpoint="/ml/models")
+        except LandGovernanceNetworkError:
+            return {
+                "models": [
+                    {
+                        "model_id": "MOD-DISPUTE-RF-01",
+                        "algorithm": "RandomForestRegressor (120 Trees)",
+                        "target": "composite_dispute_risk_index",
+                        "r2_score": 0.9171,
+                        "rmse": 1.8454,
+                        "features_count": 8,
+                    },
+                    {
+                        "model_id": "MOD-SPRAWL-HGB-02",
+                        "algorithm": "HistGradientBoostingRegressor",
+                        "target": "annual_urban_conversion_hectares",
+                        "r2_score": 0.8842,
+                        "rmse": 2.1105,
+                        "features_count": 6,
+                    },
+                ],
+                "source": "offline",
+                "is_offline": True,
+            }

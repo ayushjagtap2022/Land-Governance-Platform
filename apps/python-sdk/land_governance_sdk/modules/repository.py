@@ -64,3 +64,19 @@ class RepositoryModule:
                 if d["id"] == document_id or d["ref_id"] == document_id:
                     return DocumentItem(**d)
             raise LandGovernanceNetworkError(f"Document '{document_id}' not found in offline dataset.")
+
+    def upload(
+        self,
+        title: str,
+        file_path: Optional[str] = None,
+        state: Optional[str] = None,
+        category: Optional[str] = None,
+        **kwargs
+    ) -> Dict[str, Any]:
+        """Uploads a new policy document (Disabled in offline mode)."""
+        return self.http.request(
+            method="POST",
+            endpoint="/repository/upload",
+            json_data={"title": title, "state": state, "category": category, **kwargs},
+            is_write_op=True,
+        )

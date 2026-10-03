@@ -18,8 +18,9 @@ class SimulationSummary(BaseModel):
     urbanization_rate_pct: float = Field(description="Projected annual urban land conversion rate")
     climate_resilience_score: float = Field(description="Index score for drought & flood exposure mitigation")
     projected_litigation_savings_cr: float = Field(description="Estimated fiscal savings in litigation costs (Cr INR)")
-    confidence_score_pct: float = Field(default=92.4, description="Overall model prediction accuracy")
-    confidence_range: List[float] = Field(default_factory=lambda: [88.2, 94.6], description="95% confidence interval [lower_ci, upper_ci] for digitization projection")
+    confidence_score_pct: float = Field(default=92.4, description="Overall model goodness-of-fit score (%)")
+    confidence_metric: str = Field(default="dispute_reduction_pct", description="Target metric bracketed by confidence_range ('dispute_reduction_pct')")
+    confidence_range: List[float] = Field(default_factory=lambda: [19.8, 26.2], description="Ensemble dispersion interval [lower, upper] directly bracketing dispute_reduction_pct")
 
 class SimulationResult(BaseModel):
     source: str = Field(default="live", description="Data origin ('live' or 'offline')")

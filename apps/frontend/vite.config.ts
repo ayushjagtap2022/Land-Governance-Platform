@@ -29,12 +29,12 @@ export default defineConfig({
     port: 3000,
     strictPort: false,
     host: 'localhost',
-    open: true,
+    open: false,
     proxy: {
       '/api': {
-        target: 'https://land-governance-platform-production.up.railway.app',
+        target: process.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000',
         changeOrigin: true,
-        secure: true,
+        secure: false,
       },
     },
   },

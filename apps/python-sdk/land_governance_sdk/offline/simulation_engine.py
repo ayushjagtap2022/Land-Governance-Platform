@@ -51,7 +51,8 @@ def run_offline_simulation(
             "climate_resilience_score": round(min(95.0, 68.0 + (digitization_gain * 0.35)), 1),
             "projected_litigation_savings_cr": litigation_cost_saved_cr,
             "confidence_score_pct": 92.4,
-            "confidence_range": [88.2, 94.6]
+            "confidence_metric": "dispute_reduction_pct",
+            "confidence_range": [round(max(0.0, dispute_reduction - 3.2), 1), round(dispute_reduction + 3.2, 1)]
         },
         "explainability": {
             "top_feature_impacts": [

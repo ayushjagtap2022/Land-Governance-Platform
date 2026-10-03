@@ -22,3 +22,18 @@ class AdminModule:
                 "source": "offline",
                 "is_offline": True,
             }
+
+    def get_audit_logs(self, limit: int = 50) -> Dict[str, Any]:
+        """Retrieves tamper-evident administrative audit log trails."""
+        try:
+            return self.http.request(method="GET", endpoint="/admin/audit-logs", params={"limit": limit})
+        except LandGovernanceNetworkError:
+            return {
+                "logs": [
+                    {"id": "LOG-01", "action": "LOGIN_SUCCESS", "user": "officer@dolr.gov.in", "timestamp": "2024-10-01T10:00:00Z"},
+                    {"id": "LOG-02", "action": "SIMULATION_RUN", "user": "researcher@iitb.ac.in", "timestamp": "2024-10-01T11:15:00Z"},
+                ],
+                "count": 2,
+                "source": "offline",
+                "is_offline": True,
+            }
