@@ -29,10 +29,13 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         if path in ("/healthz", "/docs", "/redoc", "/favicon.ico") or path.endswith("/openapi.json"):
             return await call_next(request)
 
-        # Extract client IP securely (accounting for reverse proxy)
+        # Extract client IP securely (prioritize X-Real-IP set by nginx, then rightmost X-Forwarded-For)
+        x_real_ip = request.headers.get("X-Real-IP")
         x_forwarded_for = request.headers.get("X-Forwarded-For")
-        if x_forwarded_for:
-            client_ip = x_forwarded_for.split(",")[0].strip()
+        if x_real_ip:
+            client_ip = x_real_ip.strip()
+        elif x_forwarded_for:
+            client_ip = x_forwarded_for.split(",")[-1].strip()
         elif request.client:
             client_ip = request.client.host
         else:

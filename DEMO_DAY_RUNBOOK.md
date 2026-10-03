@@ -64,16 +64,16 @@ curl http://localhost:3001
 - **What to Say**:
   > *"Before enacting a notification, state revenue secretaries need to stress-test policy shocks. Our simulation pairs calibrated multivariable domain equations with an active 120-tree Random Forest Regressor trained across all 640 districts."*
 - **Click Path**:
-  1. Click the preset **"Model Land Leasing Act, 2016"**.
-  2. Adjust the sliders:
-     - Modernization Budget: `₹160 Cr`
-     - Fast-Track Court Window: `100 days` (or Fast-Track Benches: `10`)
-  3. Click **"Evaluate Policy Shock & Trajectories"**.
-  4. Walk through the results:
-     - **Dispute Rate**: `38.2%` $\to$ `35.7%` (Delta `-2.5%`).
-     - **Ensemble Spread**: Point to `± 4.81% (RF 120-Tree Spread)`.
+  1. Click the preset **"Model Land Leasing Act, 2016"** (sets Ceiling: 65 acres, Tax: 4.5%, Budget: ₹180 Cr, Window: 90 days).
+  2. Click **"Evaluate Policy Shock & Trajectories"**.
+  3. Walk through the results shown on screen:
+     - **Dispute Rate**: `38.2%` $\to$ `34.7%` (Net Reduction Delta: `-3.5%`).
+     - **Ensemble Spread**: Point to `± 3.99% (RF 120-Tree Spread)`.
+     - **Confidence Range**: Point to `[0.0, 7.5]`.
+     - **Spoken Disclosure (Say this out loud)**:
+       > *"Notice the lower bound clips at 0.0%. Our explainability panel explicitly informs the cabinet that under this specific policy intensity, the 120-tree ensemble cannot rule out a null net reduction. We provide honest decision-support variance rather than fabricated precision."*
      - **Trajectory Chart**: Point to the 8-year temporal projection curves (2020–2027).
-     - **Explainability**: Point to the feature attribution tags derived from Census indicators.
+     - **Explainability**: Point to the dynamic Census indicators and diminishing-returns capacity attribution.
 
 ---
 

@@ -30,8 +30,10 @@ MODULE_NAMES = [
     "innovation",
     "admin",
     "notifications",
+    "webhooks",
     "health",
 ]
+
 
 def run_offline_sweep():
     warnings.simplefilter("ignore", UserWarning)
@@ -238,12 +240,44 @@ def run_offline_sweep():
     except Exception as e:
         record("Notifications", "list()", "READ", "FAILED", str(e))
 
-    # 12. Health Module (1 method)
+    # 12. Webhooks Module (5 methods)
+    try:
+        wh_subs = client.webhooks.list_subscriptions()
+        record("Webhooks", "list_subscriptions()", "READ", "PASSED", f"returned {len(wh_subs)} subscriptions")
+    except Exception as e:
+        record("Webhooks", "list_subscriptions()", "READ", "FAILED", str(e))
+
+    try:
+        wh_evs = client.webhooks.get_events()
+        record("Webhooks", "get_events()", "READ", "PASSED", f"returned {len(wh_evs)} events")
+    except Exception as e:
+        record("Webhooks", "get_events()", "READ", "FAILED", str(e))
+
+    try:
+        wh_disp = client.webhooks.test_dispatch()
+        record("Webhooks", "test_dispatch()", "READ", "PASSED", f"status='{wh_disp.get('status')}'")
+    except Exception as e:
+        record("Webhooks", "test_dispatch()", "READ", "FAILED", str(e))
+
+    try:
+        client.webhooks.subscribe("https://example.com/webhook")
+        record("Webhooks", "subscribe()", "WRITE", "FAILED", "Did not raise LandGovernanceOfflineError")
+    except LandGovernanceOfflineError:
+        record("Webhooks", "subscribe()", "WRITE", "PASSED", "Raised LandGovernanceOfflineError")
+
+    try:
+        client.webhooks.generate_api_key()
+        record("Webhooks", "generate_api_key()", "WRITE", "FAILED", "Did not raise LandGovernanceOfflineError")
+    except LandGovernanceOfflineError:
+        record("Webhooks", "generate_api_key()", "WRITE", "PASSED", "Raised LandGovernanceOfflineError")
+
+    # 13. Health Module (1 method)
     try:
         hlth = client.health.check()
         record("Health", "check()", "READ", "PASSED", f"status='{hlth.get('status')}'")
     except Exception as e:
         record("Health", "check()", "READ", "FAILED", str(e))
+
 
     # Print Table
     print("\n" + "="*80)

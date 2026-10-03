@@ -17,6 +17,7 @@ from .modules.innovation import InnovationModule
 from .modules.admin import AdminModule
 from .modules.notifications import NotificationsModule
 from .modules.health import HealthModule
+from .modules.webhooks import WebhooksModule
 
 class LandGovernanceClient:
     def __init__(
@@ -41,7 +42,7 @@ class LandGovernanceClient:
 
         self.http = HttpClient(config)
 
-        # 11 Service Modules
+        # 12 Service Modules + Memorable Aliases
         self.auth = AuthModule(self.http)
         self.repository = RepositoryModule(self.http)
         self.documents = self.repository  # Memorable Alias
@@ -63,6 +64,8 @@ class LandGovernanceClient:
         self.innovation = InnovationModule(self.http)
         self.admin = AdminModule(self.http)
         self.notifications = NotificationsModule(self.http)
+        self.webhooks = WebhooksModule(self.http)
+        self.api_keys = self.webhooks  # Memorable Alias
         self.health = HealthModule(self.http)
 
     def set_token(self, token: Optional[str]) -> None:

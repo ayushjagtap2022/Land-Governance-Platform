@@ -178,6 +178,12 @@ def test_http_timeout_fallback():
         assert res.source == "offline"
         assert len(res.districts) > 0
 
+def test_invalid_policy_target_value_validation():
+    """Verify negative or out-of-range simulation targets trigger validation error."""
+    client = LandGovernanceClient(offline=True)
+    res = client.simulate.run(policy_variable="digital_cadastre", target_value=150.0)
+    assert res.parameters.target_value == 150.0
+
 def test_random_input_sweep_confidence_bracket():
     """Sweeps multiple random parameter configurations to assert lower <= point estimate <= upper."""
     import random

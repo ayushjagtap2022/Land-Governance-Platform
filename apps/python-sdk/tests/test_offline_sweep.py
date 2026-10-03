@@ -21,6 +21,7 @@ MODULE_NAMES = [
     "innovation",
     "admin",
     "notifications",
+    "webhooks",
     "health",
 ]
 
@@ -38,7 +39,8 @@ def test_dynamic_module_coverage_against_dir():
         assert len(public_methods) > 0, f"Module {mod_name} has no public methods!"
 
     total_public_methods = sum(len(m) for m in all_methods.values())
-    assert total_public_methods == 29, f"Expected exactly 29 public methods across 12 modules, found {total_public_methods}: {all_methods}"
+    assert total_public_methods == 34, f"Expected exactly 34 public methods across 13 modules, found {total_public_methods}: {all_methods}"
+
 
 @pytest.fixture
 def offline_client():
@@ -142,6 +144,23 @@ def test_offline_sweep_all_public_methods(offline_client):
     notifs = offline_client.notifications.list()
     assert isinstance(notifs, list) and len(notifs) > 0 and notifs[0].get("source") == "offline"
 
-    # 12. Health Module (1 method)
+    # 12. Webhooks Module (5 methods)
+    wh_subs = offline_client.webhooks.list_subscriptions()
+    assert isinstance(wh_subs, list) and len(wh_subs) > 0 and wh_subs[0].get("source") == "offline"
+
+    wh_events = offline_client.webhooks.get_events()
+    assert isinstance(wh_events, list) and len(wh_events) > 0 and wh_events[0].get("source") == "offline"
+
+    wh_disp = offline_client.webhooks.test_dispatch()
+    assert wh_disp.get("source") == "offline" and wh_disp.get("status") == "dispatched"
+
+    with pytest.raises(LandGovernanceOfflineError):
+        offline_client.webhooks.subscribe("https://example.com/webhook")
+
+    with pytest.raises(LandGovernanceOfflineError):
+        offline_client.webhooks.generate_api_key()
+
+    # 13. Health Module (1 method)
     h_res = offline_client.health.check()
     assert h_res.get("source") == "offline" and h_res.get("status") in ("ok", "healthy")
+
