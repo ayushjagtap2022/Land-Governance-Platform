@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo, useEffect } from 'react';
-import { Bell, ChevronDown, Search, ShieldCheck, UserRound, LogIn, LogOut, Languages, Play, Pause, X, Sparkles, Globe, Volume2 } from 'lucide-react';
+import { Bell, ChevronDown, Search, ShieldCheck, UserRound, LogIn, LogOut, Languages, Play, Pause, X, Globe, Volume2 } from 'lucide-react';
 import { useRole, type Role } from '@/context/RoleContext';
 import { useLanguage, SUPPORTED_LANGUAGES, type Language } from '@/context/LanguageContext';
 import { useAuthStore } from '@/stores/authStore';
@@ -7,7 +7,6 @@ import { Link, useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { toast } from 'sonner';
-import { BhashiniTranslatorModal } from '@/components/common/BhashiniTranslatorModal';
 import { PLATFORM_NAV_ITEMS, type NavItemConfig } from '@/config/navigation';
 import { StateEmblem } from '@/components/common/StateEmblem';
 import { DigitalIndiaLogo, AzadiMahotsavLogo } from '@/components/common/GovLogos';
@@ -74,7 +73,6 @@ export function Header() {
   const [notifsTab, setNotifsTab] = useState('Ministry');
   const [profileOpen, setProfileOpen] = useState(false);
   const [roleOpen, setRoleOpen] = useState(false);
-  const [showBhashini, setShowBhashini] = useState(false);
   const [highContrast, setHighContrast] = useState(false);
   const [tickerPaused, setTickerPaused] = useState(false);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
@@ -145,7 +143,6 @@ export function Header() {
 
   return (
     <header className="relative z-20">
-      {showBhashini && <BhashiniTranslatorModal onClose={() => setShowBhashini(false)} />}
       {/* 1. Official Government of India GIGW Accessibility & Utility Bar */}
       <div className="flex h-8 items-center justify-between gap-3 border-b border-slate-300 bg-slate-100 px-4 text-xs text-slate-700 md:px-8 select-none overflow-visible">
         {/* Far Left: Skip to Main Content + Official Identification */}
@@ -322,17 +319,6 @@ export function Header() {
               </div>
             )}
           </div>
-
-          {/* Snippet Tool Button */}
-          <button
-            onClick={() => setShowBhashini(true)}
-            className="focus-ring hidden md:flex items-center gap-1 h-6 px-2 font-semibold border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors text-[11px] shadow-2xs rounded-xs cursor-pointer"
-            type="button"
-            title="Translate legal deeds, policy extracts, or custom text snippets into 6 Indian languages"
-          >
-            <Sparkles className="h-3 w-3 text-amber-600" />
-            <span>{isHindi ? 'दस्तावेज़ अनुवादक' : 'Snippet Tool'}</span>
-          </button>
 
           {/* Statutory 3:2 Indian Flag */}
           <span className="flag-mark shrink-0" aria-label="National Flag of India" role="img" title="Official Flag of India">
