@@ -68,6 +68,15 @@ apps/api/app/data/webhook_subscriptions.json
 **/api_keys.json
 **/webhook_subscriptions.json
 
+# Build artifacts
+*.tgz
+
+# ML model binaries (keep only in apps/api/app/ml_models/)
+apps/ai-ml/models/*.joblib
+
+# Scratch/working files
+scratch_*
+
 # OS Files
 .DS_Store
 Thumbs.db
