@@ -7,11 +7,13 @@ import {
   CheckCircle2,
   ChevronRight,
   Database,
+  ExternalLink,
   FileCheck2,
   Globe2,
   Layers,
   Lightbulb,
   MapPin,
+  Play,
   Scale,
   Search,
   ShieldCheck,
@@ -421,6 +423,13 @@ export default function LandingPage() {
                 <Sparkles className="h-4 w-4 text-[#f2b134]" />
                 <span>{t('ask_ai')}</span>
               </Link>
+              <a
+                href="#demo-video"
+                className="focus-ring flex items-center gap-2 border border-[#f2b134]/40 bg-[#f2b134]/15 px-5 py-3 text-xs md:text-sm font-bold text-[#f2b134] hover:bg-[#f2b134]/25 hover:border-[#f2b134] transition-all shadow-md backdrop-blur-xs"
+              >
+                <Play className="h-4 w-4 fill-[#f2b134]" />
+                <span>{t('Watch Platform Demo')}</span>
+              </a>
             </div>
           </div>
 
@@ -577,6 +586,76 @@ export default function LandingPage() {
                 </div>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* Official Platform Demonstration · SIH PS 26019 Video Showcase Section */}
+      <section
+        id="demo-video"
+        className="relative overflow-hidden bg-gradient-to-b from-[#0a1e32] via-[#132f4c] to-[#0b2545] py-14 md:py-20 text-white border-b border-[#0a1e32]"
+      >
+        {/* Subtle Ambient Radial Glow */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_20%,rgba(242,177,52,0.08),transparent_70%)] pointer-events-none" />
+
+        <div className="relative mx-auto max-w-7xl px-4 md:px-8">
+          <div className="text-center max-w-3xl mx-auto mb-10">
+            <div className="inline-flex items-center gap-2 border border-white/20 bg-white/10 px-3.5 py-1 text-xs font-semibold text-[#f2b134] rounded-full mb-3 shadow-sm backdrop-blur-xs">
+              <Play className="h-3.5 w-3.5 fill-[#f2b134]" />
+              <span>{t('Official Platform Demonstration · SIH PS 26019')}</span>
+            </div>
+            <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-white">
+              {t('Experience STRATA in Action')}
+            </h2>
+            <p className="mt-3 text-xs sm:text-sm md:text-base leading-relaxed text-slate-300">
+              {t(
+                'Watch the comprehensive system walkthrough demonstrating real-time geospatial cadastral mapping, OCR statutory gazette retrieval, bilingual AI policy assistant, and predictive land ceiling simulations.'
+              )}
+            </p>
+          </div>
+
+          {/* Video Player Container */}
+          <div className="mx-auto max-w-5xl">
+            <div className="relative rounded-lg overflow-hidden border-2 border-white/20 bg-black/60 shadow-2xl backdrop-blur-md p-1.5 sm:p-3">
+              {/* Responsive 16:9 Aspect Ratio Frame */}
+              <div className="relative w-full aspect-video rounded overflow-hidden bg-slate-950 shadow-inner">
+                <iframe
+                  className="w-full h-full border-0"
+                  src="https://www.youtube-nocookie.com/embed/wa0qeyrvMbM?rel=0&modestbranding=1"
+                  title="STRATA Platform Demonstration - SIH PS 26019"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                />
+              </div>
+
+              {/* Bottom Quick Feature Strips & YouTube Direct Link */}
+              <div className="mt-3 flex flex-wrap items-center justify-between gap-3 px-2 py-1.5 text-[11px] text-slate-300 border-t border-white/10">
+                <div className="flex items-center gap-4 flex-wrap">
+                  <span className="inline-flex items-center gap-1.5 font-medium text-slate-200">
+                    <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                    {t('Pan-India 640 District GIS')}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 font-medium text-slate-200">
+                    <span className="h-2 w-2 rounded-full bg-[#f2b134]" />
+                    {t('Grounded Statutory AI')}
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 font-medium text-slate-200">
+                    <span className="h-2 w-2 rounded-full bg-sky-400" />
+                    {t('Macroeconomic Policy Simulator')}
+                  </span>
+                </div>
+
+                <a
+                  href="https://youtu.be/wa0qeyrvMbM"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#f2b134] hover:text-[#ffd276] hover:underline transition-colors shrink-0"
+                >
+                  <span>{t('Open in YouTube')}</span>
+                  <ExternalLink className="h-3.5 w-3.5" />
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       </section>

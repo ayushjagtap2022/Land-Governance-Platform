@@ -4,7 +4,9 @@
 **Ministry of Rural Development | Department of Land Resources (DoLR)**
 
 <p align="center">
-  <img src="docs/youtube_thumbnail.jpg" alt="STRATA — From Land Data to Policy Intelligence" width="850" style="border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);" />
+  <a href="https://youtu.be/wa0qeyrvMbM" target="_blank" rel="noopener noreferrer">
+    <img src="docs/youtube_thumbnail.jpg" alt="STRATA — From Land Data to Policy Intelligence (Watch Demo)" width="850" style="border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);" />
+  </a>
 </p>
 
 <p align="center">
