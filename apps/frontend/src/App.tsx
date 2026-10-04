@@ -7,6 +7,7 @@ import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Header } from '@/components/layout/Header';
+import { Sidebar } from '@/components/layout/Sidebar';
 import { RoleProvider, useRole, type Role } from '@/context/RoleContext';
 import { useAuthStore } from '@/stores/authStore';
 import { useNotifications } from '@/hooks/use-notifications';
@@ -131,14 +132,18 @@ function Shell() {
   const [location] = useLocation();
   const isLandingPage = location === '/';
 
+  const isAuthPage = location === '/login' || location === '/register';
+  const showSidebar = !isLandingPage && !isAuthPage;
+
   // Connect global notifications when logged in
   useNotifications();
 
   return (
-    <div className="min-h-[100dvh] bg-[#f4f6f8] overflow-x-hidden">
+    <div className="min-h-[100dvh] bg-[#f4f6f8] overflow-x-hidden flex flex-col">
       <Header />
-      <div className="w-full">
-        <main id="main-content" className="w-full min-w-0">
+      <div className="flex w-full flex-1 flex-col md:flex-row">
+        {showSidebar && <Sidebar />}
+        <main id="main-content" className={`min-w-0 flex-1 ${showSidebar ? '' : 'w-full'}`}>
           <RoutedErrorBoundary>
             <Switch>
               <Route path="/" component={LandingPage} />
