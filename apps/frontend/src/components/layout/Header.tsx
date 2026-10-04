@@ -414,18 +414,14 @@ export function Header() {
 
             <div className="flex flex-col justify-center border-l border-white/20 pl-3 sm:pl-4">
               <p className="text-[11px] sm:text-xs font-bold tracking-wide text-[#f2b134] uppercase font-serif">
-                {isHindi
-                  ? 'भारत सरकार • ग्रामीण विकास मंत्रालय • भू-संसाधन विभाग (भू-सं.वि.)'
-                  : 'Government of India • Ministry of Rural Development'}
+                {t('gov_mord_hierarchy', language !== 'en' ? 'भारत सरकार • ग्रामीण विकास मंत्रालय • भू-संसाधन विभाग (भू-सं.वि.)' : 'Government of India • Ministry of Rural Development')}
               </p>
               <p className="text-[10px] sm:text-[11px] font-medium text-slate-300 leading-tight">
-                {isHindi
-                  ? 'Department of Land Resources (DoLR), MoRD • Government of India'
-                  : 'Department of Land Resources (DoLR)'}
+                {t('dolr_full', language !== 'en' ? 'Department of Land Resources (DoLR), MoRD • Government of India' : 'Department of Land Resources (DoLR)')}
               </p>
               <div className="mt-1 flex items-center gap-2.5 flex-wrap">
                 <h1 className="text-base sm:text-lg md:text-xl font-extrabold tracking-tight text-white font-serif leading-none">
-                  {isHindi ? 'राष्ट्रीय भूमि शासन मंच' : 'National Land Governance Platform'}
+                  {t('app_name', 'National Land Governance Platform')}
                 </h1>
                 <span className="inline-flex items-center rounded-[3px] border border-[#f2b134]/40 bg-[#f2b134]/15 px-2 py-0.5 text-[9.5px] font-mono font-bold text-[#f2b134] tracking-wider shadow-2xs">
                   SIH PS 26019

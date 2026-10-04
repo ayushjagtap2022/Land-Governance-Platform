@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState, useMemo, type ReactNode } from 'react';
+import { translateString, translateSubtree, translateNode, restoreDOM, IGNORED_TAGS } from './translations-dict';
 
 export type Language = 'en' | 'hi' | 'mr' | 'ta' | 'te' | 'bn' | 'gu';
 
@@ -706,6 +707,77 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     } catch {
       // ignore
     }
+
+    if (typeof document === 'undefined') return;
+
+    if (language === 'en') {
+      restoreDOM(document.body);
+      return;
+    }
+
+    let isTranslating = false;
+
+    // Run initial full translation pass on the document body
+    isTranslating = true;
+    try {
+      translateSubtree(document.body, language);
+    } finally {
+      isTranslating = false;
+    }
+
+    // Set up MutationObserver to react to React page navigation, state updates, modal openings
+    const observer = new MutationObserver((mutations) => {
+      if (isTranslating) return;
+      isTranslating = true;
+      try {
+        for (const mutation of mutations) {
+          if (mutation.type === 'childList') {
+            mutation.addedNodes.forEach((node) => {
+              if (node.nodeType === Node.TEXT_NODE) {
+                const parent = node.parentElement;
+                if (
+                  parent &&
+                  !IGNORED_TAGS.has(parent.tagName) &&
+                  !parent.closest('.notranslate, [data-no-translate]')
+                ) {
+                  translateNode(node, language);
+                }
+              } else if (node.nodeType === Node.ELEMENT_NODE) {
+                const el = node as Element;
+                if (
+                  !IGNORED_TAGS.has(el.tagName) &&
+                  !el.closest('.notranslate, [data-no-translate]')
+                ) {
+                  translateSubtree(el, language);
+                }
+              }
+            });
+          } else if (mutation.type === 'characterData') {
+            const node = mutation.target;
+            const parent = node.parentElement;
+            if (
+              parent &&
+              !IGNORED_TAGS.has(parent.tagName) &&
+              !parent.closest('.notranslate, [data-no-translate]')
+            ) {
+              translateNode(node, language);
+            }
+          }
+        }
+      } finally {
+        isTranslating = false;
+      }
+    });
+
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
+
+    return () => {
+      observer.disconnect();
+    };
   }, [language]);
 
   const isHindi = language === 'hi';
@@ -722,6 +794,13 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       }
       if (item['en']) {
         return item['en'];
+      }
+    }
+    // Check comprehensive dictionary
+    if (language !== 'en') {
+      const translated = translateString(key, language);
+      if (translated && translated !== key) {
+        return translated;
       }
     }
     return fallback ?? key;
