@@ -1,7 +1,7 @@
 import { useState, useRef, useMemo, useEffect } from 'react';
-import { Bell, ChevronDown, Search, ShieldCheck, UserRound, LogIn, LogOut, Languages, Play, Pause, X } from 'lucide-react';
+import { Bell, ChevronDown, Search, ShieldCheck, UserRound, LogIn, LogOut, Languages, Play, Pause, X, Sparkles, Globe } from 'lucide-react';
 import { useRole, type Role } from '@/context/RoleContext';
-import { useLanguage } from '@/context/LanguageContext';
+import { useLanguage, SUPPORTED_LANGUAGES, type Language } from '@/context/LanguageContext';
 import { useAuthStore } from '@/stores/authStore';
 import { Link, useLocation } from 'wouter';
 import { useQuery } from '@tanstack/react-query';
@@ -28,15 +28,20 @@ const POPULAR_SEARCH_TARGETS = [
 export function Header() {
   const [location, setLocation] = useLocation();
   const { activeRole, setActiveRole, evaluatorMode, toggleEvaluatorMode } = useRole();
-  const { language, setLanguage, isHindi, t } = useLanguage();
+  const { language, setLanguage, toggleLanguage, isHindi, t } = useLanguage();
   const [search, setSearch] = useState('');
   const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
+  const langContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
         setShowSearchSuggestions(false);
+      }
+      if (langContainerRef.current && !langContainerRef.current.contains(e.target as Node)) {
+        setLangOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -175,15 +180,94 @@ export function Header() {
             </button>
           </div>
           <button className="focus-ring underline underline-offset-2" data-testid="link-screen-reader" type="button">Screen Reader</button>
-          <button
-            onClick={() => setShowBhashini(true)}
-            className="focus-ring flex items-center gap-1 font-bold border border-orange-300 bg-orange-50 px-2 py-0.5 text-orange-950 hover:bg-orange-100 transition-colors"
-            data-testid="button-language"
-            type="button"
-          >
-            <Languages className="h-3 w-3 text-orange-600" />
-            <span>English <span className="mx-0.5 text-orange-400">|</span> हिन्दी <span className="text-[10px] text-orange-600 font-mono">(Bhashini AI)</span></span>
-          </button>
+          {/* Official Website Language Switcher (Translates Entire Portal) */}
+          <div ref={langContainerRef} className="relative flex items-center gap-1.5">
+            <div className="flex items-center border border-orange-300 bg-orange-50/90 rounded-xs overflow-hidden shadow-2xs">
+              <button
+                type="button"
+                onClick={() => {
+                  setLanguage('en');
+                  toast.success('Website language set to English');
+                }}
+                className={`px-2 py-0.5 text-[11px] font-bold transition-colors cursor-pointer ${
+                  language === 'en'
+                    ? 'bg-orange-600 text-white shadow-xs'
+                    : 'text-orange-950 hover:bg-orange-100'
+                }`}
+                title="Switch entire website to English"
+              >
+                English
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setLanguage('hi');
+                  toast.success('वेबसाइट भाषा: हिन्दी (Website translated to Hindi)');
+                }}
+                className={`px-2 py-0.5 text-[11px] font-bold transition-colors cursor-pointer ${
+                  language === 'hi'
+                    ? 'bg-orange-600 text-white shadow-xs'
+                    : 'text-orange-950 hover:bg-orange-100'
+                }`}
+                title="Switch entire website to Hindi (हिन्दी)"
+              >
+                हिन्दी
+              </button>
+              <button
+                type="button"
+                onClick={() => setLangOpen(!langOpen)}
+                className={`px-1.5 py-0.5 text-[10px] font-bold border-l border-orange-200 flex items-center gap-0.5 transition-colors cursor-pointer ${
+                  langOpen || (language !== 'en' && language !== 'hi')
+                    ? 'bg-orange-200 text-orange-950'
+                    : 'text-orange-800 hover:bg-orange-100'
+                }`}
+                title="Select Indian Regional Language (Bhashini AI)"
+              >
+                <Languages className="h-3 w-3 text-orange-600" />
+                <span className="font-mono text-[9px] uppercase font-bold text-orange-700">{language}</span>
+                <ChevronDown className="h-3 w-3 text-orange-700" />
+              </button>
+            </div>
+
+            {/* Regional Languages Dropdown Menu */}
+            {langOpen && (
+              <div className="absolute right-0 top-7 z-50 w-52 border border-slate-300 bg-white text-slate-800 shadow-xl rounded-xs py-1 animate-in fade-in slide-in-from-top-1 duration-150">
+                <div className="bg-orange-50/70 px-3 py-1.5 border-b border-orange-100 flex items-center justify-between text-[10px] font-bold text-orange-950">
+                  <span>BHASHINI AI PORTAL TRANSLATION</span>
+                </div>
+                <div className="py-1 text-xs">
+                  {SUPPORTED_LANGUAGES.map((l) => (
+                    <button
+                      key={l.code}
+                      type="button"
+                      onClick={() => {
+                        setLanguage(l.code);
+                        setLangOpen(false);
+                        toast.success(`वेबसाइट भाषा: ${l.native} (Website translated via Bhashini AI)`);
+                      }}
+                      className={`w-full px-3 py-1.5 text-left flex items-center justify-between hover:bg-orange-50 transition-colors cursor-pointer ${
+                        language === l.code ? 'bg-orange-100/70 font-bold text-orange-950' : 'text-slate-700'
+                      }`}
+                    >
+                      <span className="font-medium">{l.native}</span>
+                      <span className="text-[10px] font-mono text-slate-500">{l.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Separate Bhashini Text Snippet Tool */}
+            <button
+              onClick={() => setShowBhashini(true)}
+              className="focus-ring hidden sm:flex items-center gap-1 font-semibold border border-slate-300 bg-white px-2 py-0.5 text-slate-700 hover:bg-slate-100 transition-colors text-[11px] shadow-2xs cursor-pointer"
+              type="button"
+              title="Translate legal deeds, policy extracts, or custom text snippets into 6 Indian languages"
+            >
+              <Sparkles className="h-3 w-3 text-orange-600" />
+              <span>{isHindi ? 'दस्तावेज़ अनुवादक' : 'Snippet Tool'}</span>
+            </button>
+          </div>
           <span className="flag-mark" aria-label="Indian flag" role="img"><span /></span>        </div>
       </div>
 
@@ -600,7 +684,7 @@ export function Header() {
                     }`}
                   >
                     <Icon className={`h-3.5 w-3.5 ${isActive ? 'text-[#f2b134]' : 'text-slate-400'}`} />
-                    <span>{isHindi ? hiLabel : label}</span>
+                    <span>{t(label, isHindi ? hiLabel : label)}</span>
                   </Link>
                 );
               })}

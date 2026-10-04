@@ -94,7 +94,7 @@ export function Sidebar() {
       <nav aria-label="Primary navigation" className="flex gap-1 overflow-x-auto p-2 md:block md:space-y-0.5">
         {visible.map(({ label, hiLabel, href, icon: Icon }) => {
           const isActive = isRouteActive(href, location);
-          const displayLabel = isHindi ? hiLabel : label;
+          const displayLabel = t(label, isHindi ? hiLabel : label);
 
           return (
             <Link

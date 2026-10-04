@@ -1,28 +1,54 @@
 import { createContext, useContext, useEffect, useState, useMemo, type ReactNode } from 'react';
 
-export type Language = 'en' | 'hi';
+export type Language = 'en' | 'hi' | 'mr' | 'ta' | 'te' | 'bn' | 'gu';
+
+export const SUPPORTED_LANGUAGES = [
+  { code: 'en' as const, label: 'English', native: 'English' },
+  { code: 'hi' as const, label: 'Hindi', native: 'हिन्दी' },
+  { code: 'mr' as const, label: 'Marathi', native: 'मराठी' },
+  { code: 'ta' as const, label: 'Tamil', native: 'தமிழ்' },
+  { code: 'te' as const, label: 'Telugu', native: 'తెలుగు' },
+  { code: 'bn' as const, label: 'Bengali', native: 'বাংলা' },
+  { code: 'gu' as const, label: 'Gujarati', native: 'ગુજરાતી' },
+];
 
 export interface LanguageContextValue {
   language: Language;
   setLanguage: (lang: Language) => void;
   toggleLanguage: () => void;
   isHindi: boolean;
+  isIndic: boolean;
   t: (key: string, fallback?: string) => string;
 }
 
-const translations: Record<string, { en: string; hi: string }> = {
+const translations: Record<string, Record<string, string>> = {
   // Application & Ministry
   'app_name': {
     en: 'National Land Governance Platform',
     hi: 'राष्ट्रीय भूमि शासन मंच',
+    mr: 'राष्ट्रीय जमीन महसूल व शासन मंच',
+    ta: 'தேசிய நில நிர்வாக தளம்',
+    te: 'జాతీయ భూ పరిపాలన వేదిక',
+    bn: 'জাতীয় ভূমি শাসন প্ল্যাটফর্ম',
+    gu: 'રાષ્ટ્રીય જમીન વહીવટ મંચ',
   },
   'app_tagline': {
     en: 'SIH PS 26019 · Centralized Land Records & Policy Intelligence',
     hi: 'एसआईएच पीएस 26019 · केंद्रीकृत भूमि अभिलेख एवं नीतिगत विश्लेषण',
+    mr: 'एसआयएच पीएस 26019 · केंद्रीकृत भू-अभिलेख व धोरणात्मक विश्लेषण',
+    ta: 'SIH PS 26019 · மையப்படுத்தப்பட்ட நில பதிவுகள் மற்றும் கொள்கை நுண்ணறிவு',
+    te: 'SIH PS 26019 · కేంద్రీకృత భూ రికార్డులు & విధాన సమాచారం',
+    bn: 'SIH PS 26019 · কেন্দ্রীভূত ভূমি রেকর্ড এবং নীতি গোয়েন্দা',
+    gu: 'SIH PS 26019 · કેન્દ્રીયકૃત જમીન દસ્તાવેજો અને નીતિ વિશ્લેષણ',
   },
   'gov_india': {
     en: 'Government of India',
     hi: 'भारत सरकार',
+    mr: 'भारत सरकार',
+    ta: 'இந்திய அரசு',
+    te: 'భారత ప్రభుత్వం',
+    bn: 'ভারত সরকার',
+    gu: 'ભારત સરકાર',
   },
   'gov_india_banner': {
     en: 'भारत सरकार | Government of India',
@@ -117,46 +143,101 @@ const translations: Record<string, { en: string; hi: string }> = {
   'Overview': {
     en: 'Overview',
     hi: 'अवलोकन',
+    mr: 'अवलोकन',
+    ta: 'கண்ணோட்டம்',
+    te: 'సమీక్ష',
+    bn: 'একনজরে',
+    gu: 'સમીક્ષા',
   },
   'Repository': {
     en: 'Repository',
     hi: 'दस्तावेज़ भंडार',
+    mr: 'अभिलेख व दस्तऐवज भंडार',
+    ta: 'ஆவணக் களஞ்சியம்',
+    te: 'రికార్డుల నిల్వ',
+    bn: 'নথিপত্র ভান্ডার',
+    gu: 'દસ્તાવેજ સંગ્રહ',
   },
   'GIS Map': {
     en: 'GIS Map',
     hi: 'भू-मानचित्र (GIS)',
+    mr: 'जीआयएस भू-नकाशा',
+    ta: 'புவிசார் வரைபடம்',
+    te: 'జీఐఎస్ భూ పటం',
+    bn: 'জিআইএস মানচিত্র',
+    gu: 'જીઆઈએસ નકશો',
   },
   'Innovation Portal': {
     en: 'Innovation Portal',
     hi: 'नवाचार पोर्टल',
+    mr: 'नाविन्यता मंच',
+    ta: 'கண்டுபிடிப்பு போர்டல்',
+    te: 'ఆవిష్కరణ పోర్టల్',
+    bn: 'উদ্ভাবন পোর্টাল',
+    gu: 'નવીનતા પોર્ટલ',
   },
   'Workspaces': {
     en: 'Workspaces',
     hi: 'कार्यक्षेत्र',
+    mr: 'कार्यक्षेत्र',
+    ta: 'பணியிடங்கள்',
+    te: 'పని ప్రదేశాలు',
+    bn: 'কর্মক্ষেত্র',
+    gu: 'કાર્યક્ષેત્ર',
   },
   'AI Assistant': {
     en: 'AI Assistant',
     hi: 'एआई सहायक',
+    mr: 'एआय सहाय्यक',
+    ta: 'ஏஐ உதவியாளர்',
+    te: 'ఏఐ సహాయకుడు',
+    bn: 'এআই সহকারী',
+    gu: 'એઆઈ સહાયક',
   },
   'Synthesis': {
     en: 'Synthesis',
     hi: 'नीति संश्लेषण',
+    mr: 'संश्लेषण व विश्लेषण',
+    ta: 'தொகுப்பு ஆய்வு',
+    te: 'విశ్లేషణ',
+    bn: 'সংশ্লেষণ',
+    gu: 'વિશ્લેષણ',
   },
   'Policy Simulator': {
     en: 'Policy Simulator',
     hi: 'नीति सिम्युलेटर',
+    mr: 'धोरण सिम्युलेटर',
+    ta: 'கொள்கை மாதிரி',
+    te: 'విధాన అనుకరణ',
+    bn: 'নীতি সিমুলেটর',
+    gu: 'નીતિ સિમ્યુલેટર',
   },
   'Analytics Hub': {
     en: 'Analytics Hub',
     hi: 'विश्लेषण केंद्र',
+    mr: 'राष्ट्रीय विश्लेषण केंद्र',
+    ta: 'பகுப்பாய்வு மையம்',
+    te: 'విశ్లేషణ కేంద్రం',
+    bn: 'বিশ্লেষণ কেন্দ্র',
+    gu: 'વિશ્લેષણ કેન્દ્ર',
   },
   'Admin Console': {
     en: 'Admin Console',
     hi: 'व्यवस्थापक कंसोल',
+    mr: 'प्रशासक नियंत्रण कक्ष',
+    ta: 'நிர்வாக கன்சோல்',
+    te: 'నిర్వాహక కన్సోల్',
+    bn: 'প্রশাসক কনসোল',
+    gu: 'વહીવટી કન્સોલ',
   },
   'Developer API': {
     en: 'Developer API',
     hi: 'डेवलपर एपीआई',
+    mr: 'डेव्हलपर एपीआय',
+    ta: 'டெவலப்பர் ஏபிஐ',
+    te: 'డెవలపర్ ఏపీఐ',
+    bn: 'ডেভেলপার এপিআই',
+    gu: 'ડેવલપર એપીઆઈ',
   },
   'platform_workspace': {
     en: 'Platform workspace',
@@ -627,15 +708,24 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     }
   }, [language]);
 
+  const isHindi = language === 'hi';
+  const isIndic = language !== 'en';
+
   const t = (key: string, fallback?: string): string => {
     const item = translations[key];
-    if (item && item[language]) {
-      return item[language];
+    if (item) {
+      if (item[language]) {
+        return item[language];
+      }
+      if (language !== 'en' && item['hi']) {
+        return item['hi'];
+      }
+      if (item['en']) {
+        return item['en'];
+      }
     }
     return fallback ?? key;
   };
-
-  const isHindi = language === 'hi';
 
   const value = useMemo(
     () => ({
@@ -643,9 +733,10 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       setLanguage,
       toggleLanguage,
       isHindi,
+      isIndic,
       t,
     }),
-    [language]
+    [language, isHindi, isIndic]
   );
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;
