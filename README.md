@@ -101,7 +101,6 @@ Land-Governance-Platform/
 │   │   │   ├── components/        # Radix UI primitives, GIS controls, Header, Sidebar
 │   │   │   ├── context/           # RoleContext (RBAC + Evaluator Pass), LanguageContext (EN/HI)
 │   │   │   └── pages/             # 12 interactive application views
-│   ├── ai-ml/                     # Offline model training artifacts & metadata
 │   ├── python-sdk/                # Official Python SDK (`land_governance_sdk`) with offline engine
 │   └── sdk/                       # Official TypeScript SDK (`@land-governance/sdk`)
 ├── Land Governance Platform Datasets/ # Real Census 2011 (640 districts), VIIRS nightlights & IMD panels

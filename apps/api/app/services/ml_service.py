@@ -16,12 +16,9 @@ import joblib
 
 logger = logging.getLogger(__name__)
 
-# Search paths for model artifacts
+# Search paths for model artifacts (relative and portable)
 POSSIBLE_DIRS = [
     Path(__file__).resolve().parent.parent / "ml_models",
-    Path(__file__).resolve().parent.parent.parent.parent / "ai-ml" / "models",
-    Path("c:/Nirmal/Projects/Land-Governance-Platform/apps/ai-ml/models"),
-    Path("c:/Nirmal/Projects/Land-Governance-Platform/apps/api/app/ml_models"),
 ]
 
 class MLService:
