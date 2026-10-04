@@ -1,10 +1,10 @@
 import { useState, useRef, useMemo, useEffect } from 'react';
-import { Bell, ChevronDown, Search, ShieldCheck, UserRound, LogIn, LogOut, Languages, Play, Pause, X, Globe, Volume2 } from 'lucide-react';
+import { Bell, ChevronDown, Search, ShieldCheck, UserRound, LogIn, LogOut, Languages, Play, Pause, X, Globe, Volume2, CheckCheck, Check, BellRing } from 'lucide-react';
 import { useRole, type Role } from '@/context/RoleContext';
 import { useLanguage, SUPPORTED_LANGUAGES, type Language } from '@/context/LanguageContext';
 import { useAuthStore } from '@/stores/authStore';
 import { Link, useLocation } from 'wouter';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 import { PLATFORM_NAV_ITEMS, type NavItemConfig } from '@/config/navigation';
@@ -33,6 +33,7 @@ export function Header() {
   const [langOpen, setLangOpen] = useState(false);
   const searchContainerRef = useRef<HTMLDivElement>(null);
   const langContainerRef = useRef<HTMLDivElement>(null);
+  const notifsContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -41,6 +42,9 @@ export function Header() {
       }
       if (langContainerRef.current && !langContainerRef.current.contains(e.target as Node)) {
         setLangOpen(false);
+      }
+      if (notifsContainerRef.current && !notifsContainerRef.current.contains(e.target as Node)) {
+        setNotifsOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -68,6 +72,7 @@ export function Header() {
         item.ref.toLowerCase().includes(q)
     );
   }, [search]);
+  const queryClient = useQueryClient();
   const [notifsOpen, setNotifsOpen] = useState(false);
   const [showNotifSettings, setShowNotifSettings] = useState(false);
   const [notifsTab, setNotifsTab] = useState('Ministry');
@@ -82,11 +87,80 @@ export function Header() {
   const isRouteActive = (href: string, currentLoc: string) =>
     currentLoc === href || (href !== '/' && currentLoc.startsWith(href));
 
-  const { data: notifications } = useQuery({
+  const { data: notifications = [] } = useQuery<any[]>({
     queryKey: ['notifications'],
     queryFn: () => api.get('/notifications/').then((res) => res.data),
     enabled: isAuthenticated,
   });
+
+  const unreadCount = useMemo(() => {
+    if (!isAuthenticated || !Array.isArray(notifications)) return 0;
+    return notifications.filter((n: any) => !n.is_read).length;
+  }, [notifications, isAuthenticated]);
+
+  const markReadMutation = useMutation({
+    mutationFn: (id: string) => api.patch(`/notifications/${id}/read`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
+
+  const markAllReadMutation = useMutation({
+    mutationFn: () => api.post('/notifications/read-all'),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      toast.success(isHindi ? 'सभी सूचनाएं पढ़ी हुई चिह्नित' : 'All notifications marked as read');
+    },
+  });
+
+  const testNotifMutation = useMutation({
+    mutationFn: () => api.post('/notifications/test'),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+    onError: () => {
+      toast.error('Failed to trigger test notification');
+    },
+  });
+
+  const filteredNotifications = useMemo(() => {
+    if (!Array.isArray(notifications)) return [];
+    if (notifsTab === 'Ministry') {
+      return notifications.filter((n: any) => {
+        const title = (n.title || '').toLowerCase();
+        const content = (n.content || '').toLowerCase();
+        return !title.includes('workspace') && !title.includes('proposal') && !title.includes('simulation');
+      });
+    }
+    if (notifsTab === 'Workspace') {
+      return notifications.filter((n: any) => {
+        const title = (n.title || '').toLowerCase();
+        const content = (n.content || '').toLowerCase();
+        return (
+          title.includes('proposal') ||
+          title.includes('workspace') ||
+          title.includes('task') ||
+          title.includes('challenge') ||
+          content.includes('proposal') ||
+          content.includes('team')
+        );
+      });
+    }
+    if (notifsTab === 'Simulation') {
+      return notifications.filter((n: any) => {
+        const title = (n.title || '').toLowerCase();
+        const content = (n.content || '').toLowerCase();
+        return (
+          title.includes('simulat') ||
+          title.includes('dispute') ||
+          title.includes('projection') ||
+          content.includes('simulat') ||
+          content.includes('dispute')
+        );
+      });
+    }
+    return notifications;
+  }, [notifications, notifsTab]);
 
   const handleFontDecrease = () => {
     const current = parseFloat(getComputedStyle(document.documentElement).fontSize || '16');
@@ -472,119 +546,230 @@ export function Header() {
               )}
             </div>
 
-            
-            <div className="relative border-l border-white/30 pl-3">
+            {/* Notification Bell & Dropdown */}
+            <div ref={notifsContainerRef} className="relative border-l border-white/30 pl-3">
               <button 
                 onClick={() => setNotifsOpen(!notifsOpen)}
-                className={`focus-ring flex h-9 items-center justify-center gap-2 border border-white/30 bg-[#244562] px-2.5 sm:px-0 sm:w-9 transition-colors hover:bg-[#1a354d] ${notifsOpen ? 'bg-[#1e3a53] ring-1 ring-[#f2b134]' : ''}`}
+                className={`focus-ring flex h-9 items-center justify-center gap-2 border border-white/30 bg-[#244562] px-2.5 sm:px-0 sm:w-9 transition-colors hover:bg-[#1a354d] cursor-pointer ${notifsOpen ? 'bg-[#1e3a53] ring-1 ring-[#f2b134]' : ''}`}
                 title={t('notification_center')}
                 aria-label="Notifications"
                 data-testid="button-notifications"
+                type="button"
               >
                 <div className="relative">
-                  <Bell className="h-4 w-4" />
-                  <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-[#f2b134]"></span>
+                  <Bell className="h-4 w-4 text-white" />
+                  {unreadCount > 0 && (
+                    <span 
+                      className="absolute -top-2 -right-2 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#f2b134] px-1 text-[9px] font-black text-[#0b2545] shadow-xs animate-pulse"
+                      title={`${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}`}
+                    >
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
                 </div>
               </button>
 
               {notifsOpen && (
-                <div className="absolute right-0 top-11 z-50 w-80 border border-slate-300 bg-white text-slate-800 shadow-xl">
-                  <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 bg-slate-50">
-                    <h3 className="text-xs font-bold text-[#1E293B]">{t('notification_center')}</h3>
-                    <button
-                      onClick={() => setShowNotifSettings(!showNotifSettings)}
-                      className="text-[10px] text-[#1D4ED8] hover:underline font-bold"
-                    >
-                      {t('settings')}
-                    </button>
+                <div className="absolute right-0 top-11 z-50 w-80 sm:w-96 border border-slate-300 bg-white text-slate-800 shadow-2xl rounded-xs">
+                  {/* Popover Header */}
+                  <div className="flex items-center justify-between border-b border-slate-200 px-4 py-2.5 bg-slate-50">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-xs font-bold text-[#1E293B]">{t('notification_center')}</h3>
+                      {unreadCount > 0 && (
+                        <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-800">
+                          {unreadCount} {isHindi ? 'नई' : 'new'}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {isAuthenticated && unreadCount > 0 && !showNotifSettings && (
+                        <button
+                          type="button"
+                          onClick={() => markAllReadMutation.mutate()}
+                          disabled={markAllReadMutation.isPending}
+                          className="flex items-center gap-1 text-[11px] text-blue-600 hover:text-blue-800 font-semibold cursor-pointer transition-colors"
+                          title="Mark all notifications as read"
+                        >
+                          <CheckCheck className="h-3 w-3" />
+                          <span>{isHindi ? 'सभी पढ़े' : 'Mark all read'}</span>
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setShowNotifSettings(!showNotifSettings)}
+                        className="text-[11px] text-slate-600 hover:text-slate-900 font-medium hover:underline cursor-pointer"
+                      >
+                        {showNotifSettings ? (isHindi ? 'वापस' : 'Back') : t('settings')}
+                      </button>
+                    </div>
                   </div>
+
                   {showNotifSettings ? (
-                    <div className="p-4 space-y-4">
-                      <p className="text-[11px] font-bold text-slate-500 uppercase">
+                    <div className="p-4 space-y-3.5">
+                      <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
                         {t('alert_preferences')}
                       </p>
-                      <label className="flex items-start gap-2 text-xs text-slate-700">
-                        <input type="checkbox" defaultChecked className="mt-0.5 accent-[#1E293B]" />
-                        Email me when new Cabinet Drafts are published
+                      <label className="flex items-start gap-2.5 text-xs text-slate-700 cursor-pointer">
+                        <input type="checkbox" defaultChecked className="mt-0.5 accent-[#132f4c]" />
+                        <span>Email me when new Cabinet Drafts are published</span>
                       </label>
-                      <label className="flex items-start gap-2 text-xs text-slate-700">
-                        <input type="checkbox" defaultChecked className="mt-0.5 accent-[#1E293B]" />
-                        Alert me of Land Dispute Surge warnings in my state
+                      <label className="flex items-start gap-2.5 text-xs text-slate-700 cursor-pointer">
+                        <input type="checkbox" defaultChecked className="mt-0.5 accent-[#132f4c]" />
+                        <span>Alert me of Land Dispute Surge warnings in my state</span>
                       </label>
-                      <label className="flex items-start gap-2 text-xs text-slate-700">
-                        <input type="checkbox" className="mt-0.5 accent-[#1E293B]" />
-                        Weekly digest of Pilot progress
+                      <label className="flex items-start gap-2.5 text-xs text-slate-700 cursor-pointer">
+                        <input type="checkbox" className="mt-0.5 accent-[#132f4c]" />
+                        <span>Weekly digest of Pilot & SVAMITVA survey progress</span>
                       </label>
+
+                      {isAuthenticated && (
+                        <div className="pt-2 border-t border-slate-100">
+                          <button
+                            type="button"
+                            onClick={() => testNotifMutation.mutate()}
+                            disabled={testNotifMutation.isPending}
+                            className="w-full flex items-center justify-center gap-1.5 border border-slate-300 bg-slate-50 hover:bg-slate-100 py-1.5 px-3 text-xs font-bold text-slate-800 transition-colors rounded-xs cursor-pointer shadow-2xs"
+                          >
+                            <BellRing className="h-3.5 w-3.5 text-amber-600" />
+                            <span>{testNotifMutation.isPending ? 'Broadcasting...' : '⚡ Send Test Notification (WebSocket)'}</span>
+                          </button>
+                        </div>
+                      )}
+
                       <button
+                        type="button"
                         onClick={() => setShowNotifSettings(false)}
-                        className="w-full bg-slate-100 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200 mt-2"
+                        className="w-full bg-[#132f4c] py-2 text-xs font-bold text-white hover:bg-[#0b2545] transition-colors rounded-xs cursor-pointer mt-1"
                       >
                         {t('back_to_notifications')}
                       </button>
                     </div>
+                  ) : !isAuthenticated ? (
+                    <div className="p-6 text-center space-y-3">
+                      <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-500">
+                        <Bell className="h-5 w-5" />
+                      </div>
+                      <p className="text-xs text-slate-600 leading-relaxed">
+                        {isHindi
+                          ? 'वैधानिक सूचनाएं, विवाद चेतावनियां और कार्यक्षेत्र अद्यतन देखने के लिए अपने सरकारी क्रेडेंशियल से साइन इन करें।'
+                          : 'Sign in to access personalized statutory alerts, dispute surge advisories, and workspace updates.'}
+                      </p>
+                      <Link
+                        href="/login"
+                        onClick={() => setNotifsOpen(false)}
+                        className="inline-flex items-center justify-center gap-1.5 w-full bg-[#132f4c] text-white py-2 text-xs font-bold hover:bg-[#0b2545] transition-colors rounded-xs shadow-xs"
+                      >
+                        <LogIn className="h-3.5 w-3.5" />
+                        <span>{t('sign_in')}</span>
+                      </Link>
+                    </div>
                   ) : (
                     <>
-                      <div className="flex border-b border-slate-200">
+                      {/* Tabs */}
+                      <div className="flex border-b border-slate-200 bg-slate-50/50">
                         <button
+                          type="button"
                           onClick={() => setNotifsTab('Ministry')}
-                          className={`flex-1 py-2 text-[10px] font-bold uppercase ${
+                          className={`flex-1 py-2 text-[10px] font-bold uppercase transition-colors cursor-pointer ${
                             notifsTab === 'Ministry'
-                              ? 'border-b-2 border-[#1E293B] text-[#1E293B]'
-                              : 'text-slate-500 hover:bg-slate-50'
+                              ? 'border-b-2 border-[#132f4c] text-[#132f4c] bg-white font-extrabold'
+                              : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
                           }`}
                         >
                           {t('ministry')}
                         </button>
                         <button
+                          type="button"
                           onClick={() => setNotifsTab('Workspace')}
-                          className={`flex-1 py-2 text-[10px] font-bold uppercase ${
+                          className={`flex-1 py-2 text-[10px] font-bold uppercase transition-colors cursor-pointer ${
                             notifsTab === 'Workspace'
-                              ? 'border-b-2 border-[#1E293B] text-[#1E293B]'
-                              : 'text-slate-500 hover:bg-slate-50'
+                              ? 'border-b-2 border-[#132f4c] text-[#132f4c] bg-white font-extrabold'
+                              : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
                           }`}
                         >
                           {t('workspaces')}
                         </button>
                         <button
+                          type="button"
                           onClick={() => setNotifsTab('Simulation')}
-                          className={`flex-1 py-2 text-[10px] font-bold uppercase ${
+                          className={`flex-1 py-2 text-[10px] font-bold uppercase transition-colors cursor-pointer ${
                             notifsTab === 'Simulation'
-                              ? 'border-b-2 border-[#1E293B] text-[#1E293B]'
-                              : 'text-slate-500 hover:bg-slate-50'
+                              ? 'border-b-2 border-[#132f4c] text-[#132f4c] bg-white font-extrabold'
+                              : 'text-slate-500 hover:bg-slate-100 hover:text-slate-800'
                           }`}
                         >
                           {t('simulations')}
                         </button>
                       </div>
-                      <div className="max-h-64 overflow-y-auto p-0">
-                        {notifsTab === 'Ministry' && (
-                          <div className="divide-y divide-slate-100">
-                            {notifications && notifications.length > 0 ? (
-                              notifications.map((n: any) => (
-                                <div key={n.id} className="p-3 hover:bg-slate-50 cursor-pointer">
-                                  <p
-                                    className={`text-xs font-bold ${
-                                      n.type === 'SUCCESS' ? 'text-[#15803D]' : 'text-[#1E293B]'
-                                    }`}
-                                  >
-                                    {n.title}
+
+                      {/* Notification Items List */}
+                      <div className="max-h-72 overflow-y-auto divide-y divide-slate-100">
+                        {filteredNotifications.length > 0 ? (
+                          filteredNotifications.map((n: any) => {
+                            const isUnread = !n.is_read;
+                            const type = (n.type || 'info').toLowerCase();
+                            const typeColor =
+                              type === 'success'
+                                ? 'text-emerald-700 bg-emerald-50 border-emerald-200'
+                                : type === 'warning'
+                                ? 'text-amber-800 bg-amber-50 border-amber-200'
+                                : type === 'error'
+                                ? 'text-rose-700 bg-rose-50 border-rose-200'
+                                : 'text-blue-700 bg-blue-50 border-blue-200';
+
+                            return (
+                              <div
+                                key={n.id}
+                                onClick={() => {
+                                  if (isUnread) {
+                                    markReadMutation.mutate(n.id);
+                                  }
+                                }}
+                                className={`p-3 transition-colors cursor-pointer flex items-start gap-2.5 ${
+                                  isUnread
+                                    ? 'bg-blue-50/40 hover:bg-blue-50/70 border-l-3 border-l-blue-600'
+                                    : 'bg-white hover:bg-slate-50 border-l-3 border-l-transparent text-slate-600'
+                                }`}
+                              >
+                                <span className={`shrink-0 mt-0.5 text-[9px] font-bold px-1.5 py-0.5 rounded-2xs border uppercase ${typeColor}`}>
+                                  {type}
+                                </span>
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <p className={`text-xs ${isUnread ? 'font-bold text-slate-900' : 'font-medium text-slate-700'}`}>
+                                      {n.title}
+                                    </p>
+                                    {isUnread && (
+                                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-blue-600" title="Unread" />
+                                    )}
+                                  </div>
+                                  <p className="text-[11px] text-slate-600 mt-0.5 leading-relaxed">
+                                    {n.content}
                                   </p>
-                                  <p className="text-[11px] text-slate-600 mt-1">{n.content}</p>
-                                  <p className="text-[10px] text-slate-400 mt-2">
-                                    {new Date(n.created_at).toLocaleDateString()}
+                                  <p className="text-[10px] text-slate-400 mt-1 font-mono">
+                                    {new Date(n.created_at).toLocaleDateString(undefined, {
+                                      month: 'short',
+                                      day: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    })}
                                   </p>
                                 </div>
-                              ))
-                            ) : (
-                              <div className="p-6 text-center text-slate-500 text-xs">
-                                {t('no_new_notifications')}
                               </div>
+                            );
+                          })
+                        ) : (
+                          <div className="p-8 text-center text-slate-500 text-xs space-y-2">
+                            <p>{t('no_new_notifications')}</p>
+                            {notifications && notifications.length > 0 && notifsTab !== 'Ministry' && (
+                              <button
+                                type="button"
+                                onClick={() => setNotifsTab('Ministry')}
+                                className="text-[11px] text-blue-600 hover:underline font-semibold cursor-pointer"
+                              >
+                                {isHindi ? 'सभी मंत्रालय सूचनाएं देखें' : 'View Ministry Notifications'} ({notifications.length})
+                              </button>
                             )}
-                          </div>
-                        )}
-                        {notifsTab !== 'Ministry' && (
-                          <div className="p-6 text-center text-slate-500 text-xs">
-                            {t('no_new_notifications')}
                           </div>
                         )}
                       </div>

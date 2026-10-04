@@ -2,42 +2,113 @@
  * useNotifications — Global WebSocket hook for real-time push notifications.
  *
  * Connects to the FastAPI notification WebSocket endpoint.
- * Triggers sonner toasts whenever a notification arrives.
- * Call this once in the Shell component so it runs globally.
+ * Triggers sonner toasts whenever a notification arrives and invalidates React Query cache.
  */
 import { useEffect, useRef } from 'react';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
+import { useAuthStore } from '@/stores/authStore';
 
-const WS_BASE = (import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api/v1')
-  .replace('http://', 'ws://')
-  .replace('https://', 'wss://');
+function getWebSocketUrl(token: string): string {
+  const apiUrl = import.meta.env.VITE_API_URL || '/api/v1';
+
+  if (apiUrl.startsWith('http://') || apiUrl.startsWith('https://')) {
+    const url = new URL(apiUrl);
+    const wsProto = url.protocol === 'https:' ? 'wss:' : 'ws:';
+    return `${wsProto}//${url.host}${url.pathname.replace(/\/$/, '')}/notifications/ws/notifications?token=${encodeURIComponent(token)}`;
+  }
+
+  // Relative path (like /api/v1) -> connect through Vite proxy or current host
+  const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const cleanPath = apiUrl.startsWith('/') ? apiUrl : `/${apiUrl}`;
+  return `${proto}//${window.location.host}${cleanPath.replace(/\/$/, '')}/notifications/ws/notifications?token=${encodeURIComponent(token)}`;
+}
 
 export function useNotifications() {
   const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<number | null>(null);
+  const queryClient = useQueryClient();
+  const token = useAuthStore((s) => s.token);
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    if (!token) return;
-
-    const ws = new WebSocket(`${WS_BASE}/notifications/ws/notifications?token=${token}`);
-
-    ws.onmessage = (event) => {
-      try {
-        const notification = JSON.parse(event.data);
-        toast(notification.title || 'New Notification', {
-          description: notification.content || notification.message,
-        });
-      } catch {
-        // Ignore malformed messages
+    if (!isAuthenticated || !token) {
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
       }
-    };
+      return;
+    }
 
-    ws.onerror = () => ws.close();
+    let isMounted = true;
 
-    wsRef.current = ws;
+    function connect() {
+      if (!isMounted || !token) return;
+
+      try {
+        const wsUrl = getWebSocketUrl(token);
+        const ws = new WebSocket(wsUrl);
+
+        ws.onopen = () => {
+          // Connection established
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const raw = JSON.parse(event.data);
+            const notif = raw.data || raw;
+            const title = notif.title || raw.title || 'Notification';
+            const description = notif.content || notif.message || raw.content;
+            const type = (notif.type || 'info').toLowerCase();
+
+            if (type === 'success') {
+              toast.success(title, { description });
+            } else if (type === 'warning') {
+              toast.warning(title, { description });
+            } else if (type === 'error') {
+              toast.error(title, { description });
+            } else {
+              toast.info(title, { description });
+            }
+
+            // Immediately refresh notification count and list in Header
+            queryClient.invalidateQueries({ queryKey: ['notifications'] });
+          } catch {
+            // Ignore malformed payloads
+          }
+        };
+
+        ws.onclose = (event) => {
+          // Normal closures or unmounts shouldn't trigger auto-reconnect
+          if (isMounted && isAuthenticated && event.code !== 1000) {
+            reconnectTimeoutRef.current = window.setTimeout(() => {
+              connect();
+            }, 4000);
+          }
+        };
+
+        ws.onerror = () => {
+          ws.close();
+        };
+
+        wsRef.current = ws;
+      } catch {
+        // Suppress websocket initialization errors in environments without active backend
+      }
+    }
+
+    connect();
 
     return () => {
-      ws.close();
+      isMounted = false;
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
+      if (wsRef.current) {
+        wsRef.current.close(1000, 'Component unmounted');
+        wsRef.current = null;
+      }
     };
-  }, []);
+  }, [token, isAuthenticated, queryClient]);
 }
+

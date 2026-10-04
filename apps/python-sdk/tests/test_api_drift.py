@@ -158,6 +158,9 @@ INTENTIONALLY_SKIPPED_ROUTES = {
     ("POST", "/api/v1/ml/predict-urban-conversion"): "Standalone urban sprawl inference sub-routine",
     ("POST", "/api/v1/ml/simulate"): "Direct vector simulation hook (wrapped by simulate.run())",
     ("PATCH", "/api/v1/notifications/{notification_id}/read"): "Interactive UI notification dismiss action",
+    ("POST", "/api/v1/notifications/read-all"): "Mark all notifications read action",
+    ("PATCH", "/api/v1/notifications/read-all"): "Mark all notifications read action",
+    ("POST", "/api/v1/notifications/test"): "Interactive UI test notification dispatcher",
 }
 
 def test_openapi_route_coverage_and_uncovered_allowlist():
