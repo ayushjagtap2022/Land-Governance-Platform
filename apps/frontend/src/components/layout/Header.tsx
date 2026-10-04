@@ -206,80 +206,6 @@ export function Header() {
                 onChange={(event) => setSearch(event.target.value)}
               />
             </div>
-              <div className="relative">
-                <button 
-                  className={`focus-ring hidden border border-white/30 p-2 sm:block ${notifsOpen ? 'bg-white text-[#132f4c]' : ''}`} 
-                  data-testid="button-notifications" 
-                  type="button" 
-                  aria-label="Notifications"
-                  onClick={() => setNotifsOpen(!notifsOpen)}
-                >
-                  <div className="relative">
-                    <Bell className="h-4 w-4" />
-                    <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-[#f2b134]"></span>
-                  </div>
-                </button>
-                {notifsOpen && (
-                  <div className="absolute right-0 top-11 z-50 w-80 border border-slate-300 bg-white text-slate-800 shadow-xl">
-                    <div className="flex items-center justify-between border-b border-slate-200 px-4 py-3 bg-slate-50">
-                      <h3 className="text-xs font-bold text-[#1E293B]">Notification Center</h3>
-                      <button onClick={() => setShowNotifSettings(!showNotifSettings)} className="text-[10px] text-[#1D4ED8] hover:underline font-bold">Settings</button>
-                    </div>
-                    {showNotifSettings ? (
-                      <div className="p-4 space-y-4">
-                        <p className="text-[11px] font-bold text-slate-500 uppercase">Alert Preferences</p>
-                        <label className="flex items-start gap-2 text-xs text-slate-700">
-                          <input type="checkbox" defaultChecked className="mt-0.5 accent-[#1E293B]" />
-                          Email me when new Cabinet Drafts are published
-                        </label>
-                        <label className="flex items-start gap-2 text-xs text-slate-700">
-                          <input type="checkbox" defaultChecked className="mt-0.5 accent-[#1E293B]" />
-                          Alert me of Land Dispute Surge warnings in my state
-                        </label>
-                        <label className="flex items-start gap-2 text-xs text-slate-700">
-                          <input type="checkbox" className="mt-0.5 accent-[#1E293B]" />
-                          Weekly digest of Pilot progress
-                        </label>
-                        <button onClick={() => setShowNotifSettings(false)} className="w-full bg-slate-100 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200 mt-2">Back to Notifications</button>
-                      </div>
-                    ) : (
-                      <>
-                        <div className="flex border-b border-slate-200">
-                          <button onClick={() => setNotifsTab('Ministry')} className={`flex-1 py-2 text-[10px] font-bold uppercase ${notifsTab === 'Ministry' ? 'border-b-2 border-[#1E293B] text-[#1E293B]' : 'text-slate-500 hover:bg-slate-50'}`}>Ministry</button>
-                          <button onClick={() => setNotifsTab('Workspace')} className={`flex-1 py-2 text-[10px] font-bold uppercase ${notifsTab === 'Workspace' ? 'border-b-2 border-[#1E293B] text-[#1E293B]' : 'text-slate-500 hover:bg-slate-50'}`}>Workspaces</button>
-                          <button onClick={() => setNotifsTab('Simulation')} className={`flex-1 py-2 text-[10px] font-bold uppercase ${notifsTab === 'Simulation' ? 'border-b-2 border-[#1E293B] text-[#1E293B]' : 'text-slate-500 hover:bg-slate-50'}`}>Simulations</button>
-                        </div>
-                        <div className="max-h-64 overflow-y-auto p-0">
-                          {notifsTab === 'Ministry' && (
-                            <div className="divide-y divide-slate-100">
-                              {notifications && notifications.length > 0 ? (
-                                notifications.map((n: any) => (
-                                  <div key={n.id} className="p-3 hover:bg-slate-50 cursor-pointer">
-                                    <p className={`text-xs font-bold ${n.type === 'SUCCESS' ? 'text-[#15803D]' : 'text-[#1E293B]'}`}>{n.title}</p>
-                                    <p className="text-[11px] text-slate-600 mt-1">{n.content}</p>
-                                    <p className="text-[10px] text-slate-400 mt-2">
-                                      {new Date(n.created_at).toLocaleDateString()}
-                                    </p>
-                                  </div>
-                                ))
-                              ) : (
-                                <div className="p-6 text-center text-slate-500 text-xs">
-                                  No new notifications
-                                </div>
-                              )}
-                            </div>
-                          )}
-                          {notifsTab !== 'Ministry' && (
-                            <div className="p-6 text-center text-slate-500 text-xs">
-                              No new notifications
-                            </div>
-                          )}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                )}
-              </div>
               <div className="relative flex items-center gap-2">
                 <button
                   onClick={toggleEvaluatorMode}
@@ -337,9 +263,12 @@ export function Header() {
             
             <div className="relative border-l border-white/30 pl-3">
               <button 
-                onClick={() => setProfileOpen(!profileOpen)}
-                className={`focus-ring flex h-9 items-center justify-center gap-2 border border-white/30 bg-[#244562] px-2.5 sm:px-0 sm:w-9 ${profileOpen ? 'bg-[#1e3a53]' : ''}`}
-                title="User Profile"              >
+                onClick={() => setNotifsOpen(!notifsOpen)}
+                className={`focus-ring flex h-9 items-center justify-center gap-2 border border-white/30 bg-[#244562] px-2.5 sm:px-0 sm:w-9 transition-colors hover:bg-[#1a354d] ${notifsOpen ? 'bg-[#1e3a53] ring-1 ring-[#f2b134]' : ''}`}
+                title={t('notification_center')}
+                aria-label="Notifications"
+                data-testid="button-notifications"
+              >
                 <div className="relative">
                   <Bell className="h-4 w-4" />
                   <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-[#f2b134]"></span>
