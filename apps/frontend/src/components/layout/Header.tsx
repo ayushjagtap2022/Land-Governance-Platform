@@ -220,45 +220,6 @@ export function Header() {
                   <span className={`h-2 w-2 rounded-full ${evaluatorMode ? 'bg-emerald-400 animate-pulse' : 'bg-slate-400'}`} />
                   <span>Evaluator Pass: {evaluatorMode ? 'ON' : 'OFF'}</span>
                 </button>
-
-                {isAuthenticated ? (
-                  <div className="flex h-9 items-center gap-2 border border-[#e7a62b] bg-[#f2b134] px-2.5 text-left text-xs font-bold text-[#132f4c]" title="Your verified account role">
-                    <ShieldCheck className="h-4 w-4" />
-                    <span className="hidden sm:inline">Role: {activeRole}</span>
-                    <span className="sm:hidden">{activeRole}</span>
-                  </div>
-                ) : (
-                  <>
-                    <button
-                      className="focus-ring flex h-9 items-center gap-2 border border-[#e7a62b] bg-[#f2b134] px-2.5 text-left text-xs font-bold text-[#132f4c]"
-                      data-testid="button-role-switcher"
-                      type="button"
-                      aria-expanded={roleOpen}
-                      onClick={() => setRoleOpen((open) => !open)}
-                    >
-                      <ShieldCheck className="h-4 w-4" />
-                      <span className="hidden sm:inline">Demo Persona: {activeRole}</span>
-                      <span className="sm:hidden">{activeRole}</span>
-                      <ChevronDown className="h-3.5 w-3.5" />
-                    </button>
-                    {roleOpen && (
-                      <div className="absolute right-0 top-11 z-50 w-56 border border-slate-400 bg-white py-1 text-slate-800 shadow-lg">
-                        <p className="border-b border-slate-200 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">Switch demo persona</p>
-                        {roles.map((role) => (
-                          <button
-                            className={`focus-ring block w-full px-3 py-2 text-left text-xs hover:bg-slate-100 ${role === activeRole ? 'bg-slate-100 font-bold text-[#132f4c]' : ''}`}
-                            data-testid={`button-role-${role.toLowerCase().replaceAll(' ', '-')}`}
-                            key={role}
-                            type="button"
-                            onClick={() => { setActiveRole(role); setRoleOpen(false); }}
-                          >
-                            {role}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </>
-                )}
               </div>
             
             <div className="relative border-l border-white/30 pl-3">
@@ -385,16 +346,44 @@ export function Header() {
             {/* Authenticated Role or Official Sign-In Link */}
             <div className="relative flex items-center gap-2">
               {isAuthenticated ? (
-                <div
-                  className="flex h-9 items-center gap-2 border border-[#e7a62b] bg-[#f2b134] px-2.5 text-left text-xs font-bold text-[#132f4c]"
-                  title="Your verified Government clearance role"
-                >
-                  <ShieldCheck className="h-4 w-4" />
-                  <span className="hidden sm:inline">
-                    {t('role_label')}: {t(activeRole)}
-                  </span>
-                  <span className="sm:hidden">{t(activeRole)}</span>
-                </div>
+                <>
+                  <button
+                    className="focus-ring flex h-9 items-center gap-2 border border-[#e7a62b] bg-[#f2b134] px-2.5 text-left text-xs font-bold text-[#132f4c] cursor-pointer"
+                    title="Your verified Government clearance role (Click to switch persona)"
+                    type="button"
+                    aria-expanded={roleOpen}
+                    onClick={() => setRoleOpen((open) => !open)}
+                  >
+                    <ShieldCheck className="h-4 w-4" />
+                    <span className="hidden sm:inline">
+                      {t('role_label')}: {t(activeRole)}
+                    </span>
+                    <span className="sm:hidden">{t(activeRole)}</span>
+                    <ChevronDown className="h-3.5 w-3.5" />
+                  </button>
+                  {roleOpen && (
+                    <div className="absolute right-0 top-11 z-50 w-56 border border-slate-400 bg-white py-1 text-slate-800 shadow-lg">
+                      <p className="border-b border-slate-200 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                        Switch demo persona
+                      </p>
+                      {roles.map((role) => (
+                        <button
+                          className={`focus-ring block w-full px-3 py-2 text-left text-xs hover:bg-slate-100 ${
+                            role === activeRole ? 'bg-slate-100 font-bold text-[#132f4c]' : ''
+                          }`}
+                          key={role}
+                          type="button"
+                          onClick={() => {
+                            setActiveRole(role);
+                            setRoleOpen(false);
+                          }}
+                        >
+                          {role}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </>
               ) : (
                 <Link
                   href="/login"
