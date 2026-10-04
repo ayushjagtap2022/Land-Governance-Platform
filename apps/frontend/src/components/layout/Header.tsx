@@ -1,5 +1,5 @@
 import { useState, useRef, useMemo, useEffect } from 'react';
-import { Bell, ChevronDown, Search, ShieldCheck, UserRound, LogIn, LogOut, Languages, Play, Pause, X, Sparkles, Globe } from 'lucide-react';
+import { Bell, ChevronDown, Search, ShieldCheck, UserRound, LogIn, LogOut, Languages, Play, Pause, X, Sparkles, Globe, Volume2 } from 'lucide-react';
 import { useRole, type Role } from '@/context/RoleContext';
 import { useLanguage, SUPPORTED_LANGUAGES, type Language } from '@/context/LanguageContext';
 import { useAuthStore } from '@/stores/authStore';
@@ -142,57 +142,116 @@ export function Header() {
   return (
     <header className="relative z-20">
       {showBhashini && <BhashiniTranslatorModal onClose={() => setShowBhashini(false)} />}
-      <div className="flex min-h-8 flex-wrap items-center justify-between gap-2 border-b border-slate-300 bg-slate-100 px-4 py-1.5 text-[11px] text-slate-700 md:px-8">
-        <div className="flex items-center gap-3">
-          <span className="font-semibold tracking-wide">भारत सरकार | Government of India</span>
-          <span className="hidden text-slate-400 md:inline">|</span>
-          <span className="hidden md:inline">Accessibility tools</span>        </div>
+      {/* 1. Official Government of India GIGW Accessibility & Utility Bar */}
+      <div className="flex h-8 items-center justify-between gap-3 border-b border-slate-300 bg-slate-100 px-4 text-xs text-slate-700 md:px-8 select-none overflow-visible">
+        {/* Far Left: Skip to Main Content + Official Identification */}
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <a
+            href="#main-content"
+            className="focus-ring text-[11px] font-medium text-slate-600 hover:text-slate-900 underline underline-offset-2 transition-colors"
+            title="Skip to main content"
+          >
+            Skip to main content
+          </a>
+          <span className="text-slate-300" aria-hidden="true">|</span>
+          <span className="font-semibold tracking-wide text-slate-800 text-[11px] hidden sm:inline">
+            भारत सरकार | Government of India
+          </span>
+          <span className="font-semibold tracking-wide text-slate-800 text-[11px] sm:hidden">
+            भारत सरकार
+          </span>
+        </div>
 
-        <div className="flex items-center gap-2.5 sm:gap-3 ml-auto">
-          {/* Text Size Controls */}
-          <div className="flex items-center gap-0.5" aria-label="Text size controls">
+        {/* Right Utility Group */}
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0 ml-auto">
+          {/* Font Resizers: -A, A, +A (Subtle neutral outline buttons) */}
+          <div className="flex items-center gap-0.5 rounded-xs border border-slate-300 bg-white p-0.5 shadow-2xs" aria-label="Text size adjustments">
             <button
               onClick={handleFontDecrease}
-              className="focus-ring border border-slate-400 bg-white px-1.5 py-0.5 font-bold hover:bg-slate-100 transition-colors text-slate-700 text-[10px]"
+              className="h-5 min-w-[20px] px-1 flex items-center justify-center text-[10px] font-bold text-slate-700 hover:bg-slate-100 hover:text-slate-900 rounded-2xs transition-colors cursor-pointer"
               data-testid="button-font-decrease"
               type="button"
-              title="Decrease text size"
+              title="Decrease text size (-A)"
             >
               -A
             </button>
+            <span className="w-px h-3 bg-slate-200" aria-hidden="true" />
             <button
               onClick={handleFontNormal}
-              className="focus-ring border border-slate-400 bg-white px-1.5 py-0.5 font-bold hover:bg-slate-100 transition-colors text-slate-700 text-[10px]"
+              className="h-5 min-w-[20px] px-1 flex items-center justify-center text-[10px] font-bold text-slate-700 hover:bg-slate-100 hover:text-slate-900 rounded-2xs transition-colors cursor-pointer"
               data-testid="button-font-normal"
               type="button"
-              title="Standard text size"
+              title="Standard text size (A)"
             >
               A
             </button>
+            <span className="w-px h-3 bg-slate-200" aria-hidden="true" />
             <button
               onClick={handleFontIncrease}
-              className="focus-ring border border-slate-400 bg-white px-1.5 py-0.5 font-bold hover:bg-slate-100 transition-colors text-slate-700 text-[10px]"
+              className="h-5 min-w-[20px] px-1 flex items-center justify-center text-[10px] font-bold text-slate-700 hover:bg-slate-100 hover:text-slate-900 rounded-2xs transition-colors cursor-pointer"
               data-testid="button-font-increase"
               type="button"
-              title="Increase text size"
+              title="Increase text size (+A)"
             >
               +A
             </button>
           </div>
-          <button className="focus-ring underline underline-offset-2" data-testid="link-screen-reader" type="button">Screen Reader</button>
-          {/* Official Website Language Switcher (Translates Entire Portal) */}
-          <div ref={langContainerRef} className="relative flex items-center gap-1.5">
-            <div className="flex items-center border border-orange-300 bg-orange-50/90 rounded-xs overflow-hidden shadow-2xs">
+
+          {/* High Contrast Mode Toggles: Standard dark/light contrast boxes ("A" on white, "A" on black) */}
+          <div className="flex items-center gap-1" aria-label="Contrast controls" role="group">
+            <button
+              type="button"
+              onClick={() => toggleHighContrast(false)}
+              className={`h-5 w-5 flex items-center justify-center border text-[10px] font-black rounded-2xs transition-colors cursor-pointer ${
+                !highContrast
+                  ? 'bg-white text-slate-900 border-slate-500 ring-1 ring-slate-400 font-extrabold shadow-2xs'
+                  : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
+              }`}
+              title="Standard Contrast (A on white)"
+              aria-pressed={!highContrast}
+            >
+              A
+            </button>
+            <button
+              type="button"
+              onClick={() => toggleHighContrast(true)}
+              className={`h-5 w-5 flex items-center justify-center border text-[10px] font-black rounded-2xs transition-colors cursor-pointer ${
+                highContrast
+                  ? 'bg-black text-white border-black ring-1 ring-black shadow-2xs'
+                  : 'bg-slate-900 text-white border-slate-800 hover:bg-black'
+              }`}
+              title="High Contrast (A on black)"
+              aria-pressed={highContrast}
+            >
+              A
+            </button>
+          </div>
+
+          {/* Screen Reader Link / Icon */}
+          <button
+            onClick={() => toast.info(isHindi ? 'स्क्रीन रीडर अभिगम्यता: पोर्टल GIGW 3.0 और WCAG 2.1 AA अनुरूप है।' : 'Screen Reader Access: This portal adheres to GIGW 3.0 & WCAG 2.1 AA standards for NVDA, JAWS, and assistive tech.')}
+            className="hidden lg:flex items-center gap-1 h-6 px-2 border border-slate-300 bg-white text-[11px] font-medium text-slate-700 hover:bg-slate-50 hover:text-slate-900 rounded-xs transition-colors shadow-2xs cursor-pointer focus-ring"
+            data-testid="link-screen-reader"
+            type="button"
+            title="Screen Reader Access information"
+          >
+            <Volume2 className="h-3 w-3 text-slate-500" />
+            <span>Screen Reader</span>
+          </button>
+
+          {/* Official Website Language Switcher: English | हिन्दी (Bhashini AI) with clean neutral borders */}
+          <div ref={langContainerRef} className="relative flex items-center shrink-0">
+            <div className="flex h-6 items-center border border-slate-300 bg-white rounded-xs overflow-hidden shadow-2xs">
               <button
                 type="button"
                 onClick={() => {
                   setLanguage('en');
                   toast.success('Website language set to English');
                 }}
-                className={`px-2 py-0.5 text-[11px] font-bold transition-colors cursor-pointer ${
+                className={`h-full px-2 text-[11px] font-bold transition-colors cursor-pointer flex items-center ${
                   language === 'en'
-                    ? 'bg-orange-600 text-white shadow-xs'
-                    : 'text-orange-950 hover:bg-orange-100'
+                    ? 'bg-[#132f4c] text-white'
+                    : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
                 }`}
                 title="Switch entire website to English"
               >
@@ -204,10 +263,10 @@ export function Header() {
                   setLanguage('hi');
                   toast.success('वेबसाइट भाषा: हिन्दी (Website translated to Hindi)');
                 }}
-                className={`px-2 py-0.5 text-[11px] font-bold transition-colors cursor-pointer ${
+                className={`h-full px-2 text-[11px] font-bold transition-colors cursor-pointer flex items-center border-l border-slate-200 ${
                   language === 'hi'
-                    ? 'bg-orange-600 text-white shadow-xs'
-                    : 'text-orange-950 hover:bg-orange-100'
+                    ? 'bg-[#132f4c] text-white'
+                    : 'text-slate-700 hover:bg-slate-100 hover:text-slate-900'
                 }`}
                 title="Switch entire website to Hindi (हिन्दी)"
               >
@@ -216,23 +275,25 @@ export function Header() {
               <button
                 type="button"
                 onClick={() => setLangOpen(!langOpen)}
-                className={`px-1.5 py-0.5 text-[10px] font-bold border-l border-orange-200 flex items-center gap-0.5 transition-colors cursor-pointer ${
+                className={`h-full px-1.5 text-[10px] font-bold border-l border-slate-200 flex items-center gap-1 transition-colors cursor-pointer ${
                   langOpen || (language !== 'en' && language !== 'hi')
-                    ? 'bg-orange-200 text-orange-950'
-                    : 'text-orange-800 hover:bg-orange-100'
+                    ? 'bg-slate-100 text-[#132f4c]'
+                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
                 }`}
                 title="Select Indian Regional Language (Bhashini AI)"
               >
-                <Languages className="h-3 w-3 text-orange-600" />
-                <span className="font-mono text-[9px] uppercase font-bold text-orange-700">{language}</span>
-                <ChevronDown className="h-3 w-3 text-orange-700" />
+                <Languages className="h-3 w-3 text-[#132f4c]" />
+                <span className="font-mono text-[9px] uppercase font-bold text-slate-700">
+                  {language !== 'en' && language !== 'hi' ? language : 'Bhashini AI'}
+                </span>
+                <ChevronDown className="h-3 w-3 text-slate-500" />
               </button>
             </div>
 
             {/* Regional Languages Dropdown Menu */}
             {langOpen && (
-              <div className="absolute right-0 top-7 z-50 w-52 border border-slate-300 bg-white text-slate-800 shadow-xl rounded-xs py-1 animate-in fade-in slide-in-from-top-1 duration-150">
-                <div className="bg-orange-50/70 px-3 py-1.5 border-b border-orange-100 flex items-center justify-between text-[10px] font-bold text-orange-950">
+              <div className="absolute right-0 top-full mt-1 z-50 w-52 border border-slate-300 bg-white text-slate-800 shadow-xl rounded-xs py-1 animate-in fade-in slide-in-from-top-1 duration-150">
+                <div className="bg-slate-50 px-3 py-1.5 border-b border-slate-200 flex items-center justify-between text-[10px] font-bold text-slate-700">
                   <span>BHASHINI AI PORTAL TRANSLATION</span>
                 </div>
                 <div className="py-1 text-xs">
@@ -245,8 +306,8 @@ export function Header() {
                         setLangOpen(false);
                         toast.success(`वेबसाइट भाषा: ${l.native} (Website translated via Bhashini AI)`);
                       }}
-                      className={`w-full px-3 py-1.5 text-left flex items-center justify-between hover:bg-orange-50 transition-colors cursor-pointer ${
-                        language === l.code ? 'bg-orange-100/70 font-bold text-orange-950' : 'text-slate-700'
+                      className={`w-full px-3 py-1.5 text-left flex items-center justify-between hover:bg-slate-100 transition-colors cursor-pointer ${
+                        language === l.code ? 'bg-slate-100 font-bold text-[#132f4c]' : 'text-slate-700'
                       }`}
                     >
                       <span className="font-medium">{l.native}</span>
@@ -256,19 +317,24 @@ export function Header() {
                 </div>
               </div>
             )}
-
-            {/* Separate Bhashini Text Snippet Tool */}
-            <button
-              onClick={() => setShowBhashini(true)}
-              className="focus-ring hidden sm:flex items-center gap-1 font-semibold border border-slate-300 bg-white px-2 py-0.5 text-slate-700 hover:bg-slate-100 transition-colors text-[11px] shadow-2xs cursor-pointer"
-              type="button"
-              title="Translate legal deeds, policy extracts, or custom text snippets into 6 Indian languages"
-            >
-              <Sparkles className="h-3 w-3 text-orange-600" />
-              <span>{isHindi ? 'दस्तावेज़ अनुवादक' : 'Snippet Tool'}</span>
-            </button>
           </div>
-          <span className="flag-mark" aria-label="Indian flag" role="img"><span /></span>        </div>
+
+          {/* Snippet Tool Button */}
+          <button
+            onClick={() => setShowBhashini(true)}
+            className="focus-ring hidden md:flex items-center gap-1 h-6 px-2 font-semibold border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors text-[11px] shadow-2xs rounded-xs cursor-pointer"
+            type="button"
+            title="Translate legal deeds, policy extracts, or custom text snippets into 6 Indian languages"
+          >
+            <Sparkles className="h-3 w-3 text-amber-600" />
+            <span>{isHindi ? 'दस्तावेज़ अनुवादक' : 'Snippet Tool'}</span>
+          </button>
+
+          {/* Statutory 3:2 Indian Flag */}
+          <span className="flag-mark shrink-0" aria-label="National Flag of India" role="img" title="Official Flag of India">
+            <span />
+          </span>
+        </div>
       </div>
 
       {/* 2. Official Ministry & National Platform Main Header */}
