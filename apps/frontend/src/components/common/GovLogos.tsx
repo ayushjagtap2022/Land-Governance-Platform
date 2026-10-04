@@ -78,10 +78,10 @@ export function NICLogo({
  */
 export function GIGWBadge({ className = '' }: { className?: string }) {
   return (
-    <div className={`inline-flex items-center gap-1.5 border border-slate-300 bg-white px-2.5 py-1 text-[10px] text-slate-700 shadow-2xs font-semibold rounded-[2px] ${className}`}>
-      <span className="h-2 w-2 rounded-full bg-emerald-600 shrink-0"></span>
+    <div className={`h-10 border border-slate-200 bg-white px-3 py-1.5 rounded-md shadow-2xs flex items-center justify-center gap-1.5 shrink-0 hover:border-slate-300 transition-colors text-[11px] text-slate-700 font-semibold ${className}`}>
+      <span className="h-2 w-2 rounded-full bg-emerald-600 shrink-0" aria-hidden="true" />
       <span className="font-bold text-[#132F4C]">GIGW 3.0</span>
-      <span className="text-slate-400">|</span>
+      <span className="text-slate-300" aria-hidden="true">|</span>
       <span>STQC Certified</span>
     </div>
   );
@@ -96,11 +96,11 @@ export function IndiaGovBadge({ className = '' }: { className?: string }) {
       href="https://www.india.gov.in"
       target="_blank"
       rel="noopener noreferrer"
-      className={`border border-slate-200 bg-white px-2.5 py-1.5 rounded-[2px] shadow-2xs flex items-center gap-1.5 shrink-0 hover:border-slate-300 transition-colors ${className}`}
+      className={`h-10 border border-slate-200 bg-white px-3 py-1.5 rounded-md shadow-2xs flex items-center justify-center gap-1.5 shrink-0 hover:border-slate-300 transition-colors cursor-pointer ${className}`}
       title="National Portal of India (india.gov.in)"
     >
       <span className="font-bold text-xs tracking-tight text-[#132F4C]">india<span className="text-[#f2b134]">.gov</span>.in</span>
-      <span className="text-[9px] text-slate-500 font-medium hidden sm:inline">National Portal</span>
+      <span className="text-[10px] text-slate-500 font-medium hidden sm:inline">National Portal</span>
     </a>
   );
 }

@@ -770,11 +770,11 @@ export default function LandingPage() {
 
             {/* Top-Right Partner Badges (National initiative logos & compliance) */}
             <div className="flex items-center gap-3 sm:gap-4 flex-wrap">
-              <div className="border border-slate-200 bg-white px-3 py-1.5 rounded-[2px] shadow-2xs flex items-center shrink-0 hover:border-slate-300 transition-colors">
-                <DigitalIndiaLogo variant="dark" className="h-7 w-auto object-contain" />
+              <div className="h-10 border border-slate-200 bg-white px-3 py-1.5 rounded-md shadow-2xs flex items-center justify-center shrink-0 hover:border-slate-300 transition-colors">
+                <DigitalIndiaLogo variant="dark" className="max-h-6 w-auto object-contain" />
               </div>
-              <div className="border border-slate-200 bg-white px-3 py-1.5 rounded-[2px] shadow-2xs flex items-center shrink-0 hover:border-slate-300 transition-colors">
-                <AzadiMahotsavLogo className="h-7 w-auto object-contain" />
+              <div className="h-10 border border-slate-200 bg-white px-3 py-1.5 rounded-md shadow-2xs flex items-center justify-center shrink-0 hover:border-slate-300 transition-colors">
+                <AzadiMahotsavLogo className="max-h-6 w-auto object-contain" />
               </div>
               <IndiaGovBadge />
               <GIGWBadge />
