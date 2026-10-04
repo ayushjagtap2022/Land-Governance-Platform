@@ -19,6 +19,7 @@ import {
 import { Link, useLocation } from 'wouter';
 import { useRole, type Role } from '@/context/RoleContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { useAuthStore } from '@/stores/authStore';
 
 type NavItem = { label: string; hiLabel: string; href: string; icon: typeof Home; roles: Role[] };
 const baseRoles: Role[] = ['Public', 'Researcher', 'Official', 'Institution Admin', 'Super Admin'];
@@ -32,12 +33,13 @@ const navItems: NavItem[] = [
   { label: 'Synthesis', hiLabel: 'संश्लेषण', href: '/synthesis', icon: Sparkles, roles: ['Researcher', 'Super Admin'] },
   { label: 'Policy Simulator', hiLabel: 'नीति सिमुलेटर', href: '/simulate', icon: SlidersHorizontal, roles: ['Official', 'Institution Admin', 'Super Admin'] },
   { label: 'Analytics Hub', hiLabel: 'विश्लेषण केंद्र', href: '/analytics', icon: BarChart3, roles: ['Official', 'Institution Admin', 'Super Admin'] },
-  { label: 'Admin Console', hiLabel: 'प्रशासन कंसोल', href: '/admin', icon: Settings2, roles: ['Official', 'Institution Admin', 'Super Admin'] },
+  { label: 'Admin Console', hiLabel: 'प्रशासन कंसोल', href: '/admin', icon: Settings2, roles: ['Institution Admin', 'Super Admin'] },
   { label: 'Developer API', hiLabel: 'डेवलपर एपीआई', href: '/developers', icon: Code2, roles: ['Official', 'Institution Admin', 'Super Admin'] },
 ];
 
 export function Sidebar() {
-  const { activeRole, evaluatorMode } = useRole();
+  const { activeRole } = useRole();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const { isHindi, t } = useLanguage();
   const [location] = useLocation();
 
@@ -61,7 +63,11 @@ export function Sidebar() {
     });
   };
 
-  const visible = navItems.filter((item) => evaluatorMode || activeRole === 'Super Admin' || item.roles.includes(activeRole));
+  const visible = navItems.filter((item) => {
+    if (activeRole === 'Super Admin') return true;
+    if (!isAuthenticated && !item.roles.includes('Public')) return false;
+    return item.roles.includes(activeRole);
+  });
   return (
     <aside
       className={`flex shrink-0 flex-col border-b border-slate-300 bg-[#1b3a57] text-slate-100 transition-all duration-300 ease-in-out md:min-h-[calc(100dvh-124px)] md:border-b-0 md:border-r md:border-[#34516a] ${

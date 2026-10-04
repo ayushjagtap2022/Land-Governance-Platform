@@ -27,7 +27,7 @@ const POPULAR_SEARCH_TARGETS = [
 
 export function Header() {
   const [location, setLocation] = useLocation();
-  const { activeRole, setActiveRole, evaluatorMode, toggleEvaluatorMode } = useRole();
+  const { activeRole, setActiveRole, canSwitchRole, userRole } = useRole();
   const { language, setLanguage, toggleLanguage, isHindi, t } = useLanguage();
   const [search, setSearch] = useState('');
   const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
@@ -119,9 +119,11 @@ export function Header() {
     }
   };
 
-  const visibleNavLinks = PLATFORM_NAV_ITEMS.filter(
-    (item) => activeRole === 'Super Admin' || item.roles.includes(activeRole)
-  );
+  const visibleNavLinks = PLATFORM_NAV_ITEMS.filter((item) => {
+    if (activeRole === 'Super Admin') return true;
+    if (!isAuthenticated && !item.roles.includes('Public')) return false;
+    return item.roles.includes(activeRole);
+  });
 
   const tickerItemsHindi = [
     { id: '1', title: 'भू-आधार (ULPIN):', text: '14-अंकीय विशिष्ट भू-खंड पहचान संख्या 28 राज्यों और केंद्र शासित प्रदेशों में क्रियान्वित।' },
@@ -481,21 +483,7 @@ export function Header() {
                 </div>
               )}
             </div>
-              <div className="relative flex items-center gap-2">
-                <button
-                  onClick={toggleEvaluatorMode}
-                  className={`focus-ring hidden lg:flex h-9 items-center gap-1.5 px-2.5 text-xs font-bold border transition-colors cursor-pointer ${
-                    evaluatorMode
-                      ? 'border-emerald-400 bg-emerald-500/20 text-emerald-200 hover:bg-emerald-500/30'
-                      : 'border-slate-500 bg-slate-800 text-slate-400 hover:bg-slate-700'
-                  }`}
-                  title="Toggle open evaluator mode to unlock all routes during SIH evaluation"
-                  type="button"
-                >
-                  <span className={`h-2 w-2 rounded-full ${evaluatorMode ? 'bg-emerald-400 animate-pulse' : 'bg-slate-400'}`} />
-                  <span>Evaluator Pass: {evaluatorMode ? 'ON' : 'OFF'}</span>
-                </button>
-              </div>
+
             
             <div className="relative border-l border-white/30 pl-3">
               <button 
@@ -623,23 +611,33 @@ export function Header() {
               {isAuthenticated ? (
                 <>
                   <button
-                    className="focus-ring flex h-9 items-center gap-2 border border-[#e7a62b] bg-[#f2b134] px-2.5 text-left text-xs font-bold text-[#132f4c] cursor-pointer"
-                    title="Your verified Government clearance role (Click to switch persona)"
+                    className={`focus-ring flex h-9 items-center gap-2 border px-2.5 text-left text-xs font-bold cursor-pointer transition-colors ${
+                      canSwitchRole
+                        ? 'border-[#e7a62b] bg-[#f2b134] text-[#132f4c]'
+                        : 'border-slate-400/40 bg-white/10 text-white hover:bg-white/15'
+                    }`}
+                    title={canSwitchRole ? "Super Admin Account (Click to switch preview persona)" : `Verified Account Role: ${activeRole} (${user?.institution || 'Government of India'})`}
                     type="button"
-                    aria-expanded={roleOpen}
-                    onClick={() => setRoleOpen((open) => !open)}
+                    aria-expanded={canSwitchRole ? roleOpen : undefined}
+                    onClick={() => {
+                      if (canSwitchRole) {
+                        setRoleOpen((open) => !open);
+                      } else {
+                        toast.info(`Verified Credential: ${user?.full_name || 'Authorized User'} (${activeRole}) · ${user?.institution || 'Government of India'}`);
+                      }
+                    }}
                   >
-                    <ShieldCheck className="h-4 w-4" />
+                    <ShieldCheck className={`h-4 w-4 ${canSwitchRole ? 'text-[#132f4c]' : 'text-emerald-400'}`} />
                     <span className="hidden sm:inline">
                       {t('role_label')}: {t(activeRole)}
                     </span>
                     <span className="sm:hidden">{t(activeRole)}</span>
-                    <ChevronDown className="h-3.5 w-3.5" />
+                    {canSwitchRole && <ChevronDown className="h-3.5 w-3.5" />}
                   </button>
-                  {roleOpen && (
+                  {canSwitchRole && roleOpen && (
                     <div className="absolute right-0 top-11 z-50 w-56 border border-slate-400 bg-white py-1 text-slate-800 shadow-lg">
                       <p className="border-b border-slate-200 px-3 py-2 text-[10px] font-bold uppercase tracking-widest text-slate-500">
-                        Switch demo persona
+                        Auditor Persona Preview
                       </p>
                       {roles.map((role) => (
                         <button
@@ -653,7 +651,7 @@ export function Header() {
                             setRoleOpen(false);
                           }}
                         >
-                          {role}
+                          {role} {role === userRole ? '(Your Account)' : ''}
                         </button>
                       ))}
                     </div>
@@ -729,7 +727,7 @@ export function Header() {
       </div>
 
       {/* 4. Official Central Government Horizontal Navigation Bar */}
-      {(isAuthenticated || evaluatorMode) && (
+      {isAuthenticated && (
         <nav
           aria-label="National Portal Navigation"
           className="block bg-[#132f4c] border-b border-[#244562] text-white overflow-x-auto scrollbar-none"

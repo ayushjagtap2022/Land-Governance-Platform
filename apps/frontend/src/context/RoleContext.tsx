@@ -1,10 +1,11 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useAuthStore, type BackendRole } from '@/stores/authStore';
+import { toast } from 'sonner';
 
 export type Role = 'Researcher' | 'Official' | 'Institution Admin' | 'Public' | 'Super Admin';
 
 /** Maps backend role strings to frontend display names */
-const ROLE_MAP: Record<BackendRole, Role> = {
+export const ROLE_MAP: Record<BackendRole, Role> = {
   researcher: 'Researcher',
   official: 'Official',
   institution: 'Institution Admin',
@@ -15,6 +16,8 @@ const ROLE_MAP: Record<BackendRole, Role> = {
 type RoleContextValue = {
   activeRole: Role;
   setActiveRole: (role: Role) => void;
+  canSwitchRole: boolean;
+  userRole: Role;
   evaluatorMode: boolean;
   toggleEvaluatorMode: () => void;
 };
@@ -25,30 +28,71 @@ export function RoleProvider({ children }: { children: ReactNode }) {
   const user = useAuthStore((s) => s.user);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
-  const [activeRole, setActiveRole] = useState<Role>('Researcher');
+  // Derive verified role strictly from the authenticated session
+  const userRole: Role = useMemo(() => {
+    if (!isAuthenticated || !user) return 'Public';
+    return ROLE_MAP[user.role] || 'Public';
+  }, [isAuthenticated, user]);
+
+  const [activeRole, setActiveRoleState] = useState<Role>(userRole);
+
+  // Keep activeRole strictly in sync with authenticated user
+  useEffect(() => {
+    setActiveRoleState(userRole);
+  }, [userRole]);
+
+  // Only verified Super Administrators are allowed to test other personas
+  const canSwitchRole = Boolean(isAuthenticated && user?.role === 'super_admin');
+
+  const setActiveRole = (newRole: Role) => {
+    if (!canSwitchRole && newRole !== userRole) {
+      toast.error(`Access Denied: Your account role is verified as "${userRole}". Role escalation is restricted under Government RBAC policy.`);
+      return;
+    }
+    setActiveRoleState(newRole);
+    if (newRole !== userRole) {
+      toast.info(`Auditor Mode: Previewing platform experience as "${newRole}"`);
+    } else {
+      toast.success(`Active persona set to verified account role: ${newRole}`);
+    }
+  };
+
+  // Evaluator mode is disabled by default to enforce authentic RBAC
   const [evaluatorMode, setEvaluatorMode] = useState<boolean>(() => {
-    const saved = localStorage.getItem('evaluator_mode');
-    return saved !== null ? saved === 'true' : true;
+    try {
+      return localStorage.getItem('evaluator_mode') === 'true';
+    } catch {
+      return false;
+    }
   });
 
   const toggleEvaluatorMode = () => {
+    if (!canSwitchRole) {
+      toast.error('Access Denied: Open Evaluator Pass can only be toggled by Super Administrators.');
+      return;
+    }
     setEvaluatorMode((prev) => {
       const next = !prev;
-      localStorage.setItem('evaluator_mode', String(next));
+      try {
+        localStorage.setItem('evaluator_mode', String(next));
+      } catch {}
+      toast.info(`Evaluator Mode: ${next ? 'Enabled' : 'Disabled'}`);
       return next;
     });
   };
 
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      setActiveRole(ROLE_MAP[user.role] || 'Public');
-    }
-  }, [isAuthenticated, user]);
-
   const value = useMemo(
-    () => ({ activeRole, setActiveRole, evaluatorMode, toggleEvaluatorMode }),
-    [activeRole, evaluatorMode]
+    () => ({
+      activeRole,
+      setActiveRole,
+      canSwitchRole,
+      userRole,
+      evaluatorMode,
+      toggleEvaluatorMode,
+    }),
+    [activeRole, canSwitchRole, userRole, evaluatorMode]
   );
+
   return <RoleContext.Provider value={value}>{children}</RoleContext.Provider>;
 }
 

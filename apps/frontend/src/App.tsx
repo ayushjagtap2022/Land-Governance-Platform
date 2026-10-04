@@ -57,48 +57,60 @@ function PageFrame({ title, kicker, description, children, actions }: { title: s
   );
 }
 
-function AccessDenied({ requested }: { requested: string }) {
-  const { activeRole, setActiveRole, evaluatorMode, toggleEvaluatorMode } = useRole();
+function AccessDenied({ requested, reason }: { requested: string; reason?: 'unauthenticated' | 'unauthorized_role' }) {
+  const { activeRole, canSwitchRole, setActiveRole } = useRole();
   const { t } = useLanguage();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const [location] = useLocation();
 
+  const isUnauthenticated = reason === 'unauthenticated' || !isAuthenticated;
+
   return (
-    <PageFrame kicker="Access control" title="Access Restricted" description={`The ${requested} workspace requires verified credentials or open evaluator access.`}>
-      <div className="border border-slate-300 bg-white p-6 md:p-10">
+    <PageFrame
+      kicker="Access Control & Security"
+      title={isUnauthenticated ? "Authentication Required" : "Security Clearance Insufficient"}
+      description={`Access to the ${requested} module is protected under Government of India RBAC standards.`}
+    >
+      <div className="border border-slate-300 bg-white p-6 md:p-10 shadow-xs">
         <div className="flex max-w-xl items-start gap-4">
-          <div className="border border-[#f2b134] bg-[#fff8e8] p-3"><CircleHelp className="h-6 w-6 text-[#9b6300]" /></div>
+          <div className="border border-[#b91c1c] bg-[#fef2f2] p-3 rounded-xs shrink-0">
+            <CircleHelp className="h-6 w-6 text-[#b91c1c]" />
+          </div>
           <div>
             <h2 className="text-lg font-bold text-[#132f4c]">
-              {isAuthenticated ? t('Evaluation Access & Persona Switcher') : t('Sign In Required')}
+              {isUnauthenticated ? t('Sign In Required') : t('Access Restricted')}
             </h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">
-              {isAuthenticated
-                ? `${t('Your account')} (${t(activeRole)}) ${t('does not have clearance to access the')} ${t(requested)} ${t('module under standard RBAC. Switch role or enable Open Evaluator Pass below:')}`
-                : t('The requested module is restricted. Sign in or enable open evaluator pass below for judging.')}
+              {isUnauthenticated
+                ? `The "${requested}" module requires verified user credentials. Please sign in with an authorized institutional or government account.`
+                : `Your verified account role (${activeRole}) does not have clearance to access the "${requested}" module under standard Government of India access control rules.`}
             </p>
-            <div className="mt-4 flex flex-wrap items-center gap-3">
-              <button
-                onClick={() => setActiveRole('Official')}
-                className="bg-[#132f4c] text-white px-3.5 py-2 text-xs font-bold hover:bg-slate-800 transition-colors cursor-pointer"
-                type="button"
-              >
-                Switch to Official Role
-              </button>
-              <button
-                onClick={() => toggleEvaluatorMode()}
-                className="border border-[#f2b134] bg-[#fff8e8] text-[#9b6300] px-3.5 py-2 text-xs font-bold hover:bg-amber-100 transition-colors cursor-pointer"
-                type="button"
-              >
-                ⚡ Enable Open Evaluator Pass
-              </button>
-              {!isAuthenticated && (
+            <div className="mt-5 flex flex-wrap items-center gap-3">
+              {isUnauthenticated ? (
                 <Link
                   href={`/login?redirect=${encodeURIComponent(location)}`}
-                  className="bg-[#132f4c] text-white px-4 py-2 text-xs font-bold hover:bg-slate-800 transition-colors"
+                  className="bg-[#132f4c] text-white px-4 py-2 text-xs font-bold hover:bg-slate-800 transition-colors shadow-2xs rounded-xs"
                 >
                   {t('Sign In to Continue')}
                 </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/"
+                    className="border border-slate-300 bg-white text-slate-700 px-4 py-2 text-xs font-bold hover:bg-slate-50 transition-colors shadow-2xs rounded-xs"
+                  >
+                    Return to Overview
+                  </Link>
+                  {canSwitchRole && (
+                    <button
+                      onClick={() => setActiveRole('Super Admin')}
+                      className="bg-[#132f4c] text-white px-3.5 py-2 text-xs font-bold hover:bg-slate-800 transition-colors shadow-2xs rounded-xs cursor-pointer"
+                      type="button"
+                    >
+                      👑 Restore Super Admin Clearance
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </div>
@@ -109,18 +121,29 @@ function AccessDenied({ requested }: { requested: string }) {
 }
 
 function Guard({ allowed, name, children }: { allowed: Role[]; name: string; children: ReactNode }) {
-  const { activeRole, evaluatorMode } = useRole();
+  const { activeRole } = useRole();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
-  if (evaluatorMode || allowed.includes(activeRole) || activeRole === 'Super Admin') {
+  const isPublicAllowed = allowed.includes('Public');
+
+  // 1. If route is restricted (not public), user MUST be authenticated
+  if (!isPublicAllowed && !isAuthenticated) {
+    return <AccessDenied requested={name} reason="unauthenticated" />;
+  }
+
+  // 2. If authenticated (or public), check if activeRole has permission
+  if (activeRole === 'Super Admin' || allowed.includes(activeRole)) {
     return <>{children}</>;
   }
-  return <AccessDenied requested={name} />;
+
+  // 3. Authenticated, but role does not have clearance
+  return <AccessDenied requested={name} reason="unauthorized_role" />;
 }
 
 const allRoles: Role[] = ['Public', 'Researcher', 'Official', 'Institution Admin', 'Super Admin'];
 const researchRoles: Role[] = ['Researcher', 'Super Admin'];
 const governanceRoles: Role[] = ['Official', 'Institution Admin', 'Super Admin'];
+const adminRoles: Role[] = ['Institution Admin', 'Super Admin'];
 
 function RoutedErrorBoundary({ children }: { children: ReactNode }) {
   const [location] = useLocation();
@@ -157,7 +180,7 @@ function Shell() {
               <Route path="/workspaces"><Guard allowed={researchRoles} name="Workspaces"><WorkspacesPage /></Guard></Route>
               <Route path="/analytics"><Guard allowed={governanceRoles} name="Analytics Hub"><AnalyticsPage /></Guard></Route>
               <Route path="/simulate"><Guard allowed={governanceRoles} name="Policy Simulator"><SimulatePage /></Guard></Route>
-              <Route path="/admin"><Guard allowed={governanceRoles} name="Admin Console"><AdminPage /></Guard></Route>
+              <Route path="/admin"><Guard allowed={adminRoles} name="Admin Console"><AdminPage /></Guard></Route>
               <Route path="/developers"><Guard allowed={governanceRoles} name="Developer API"><DevelopersPage /></Guard></Route>
               <Route component={NotFound} />
             </Switch>
