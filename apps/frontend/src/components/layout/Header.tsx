@@ -119,8 +119,10 @@ export function Header() {
     }
   };
 
+  const isSuperAdmin = Boolean(isAuthenticated && (user?.role === 'super_admin' || activeRole === 'Super Admin'));
+
   const visibleNavLinks = PLATFORM_NAV_ITEMS.filter((item) => {
-    if (activeRole === 'Super Admin') return true;
+    if (isSuperAdmin) return true;
     if (!isAuthenticated && !item.roles.includes('Public')) return false;
     return item.roles.includes(activeRole);
   });

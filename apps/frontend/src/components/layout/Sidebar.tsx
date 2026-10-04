@@ -40,6 +40,7 @@ const navItems: NavItem[] = [
 export function Sidebar() {
   const { activeRole } = useRole();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const user = useAuthStore((s) => s.user);
   const { isHindi, t } = useLanguage();
   const [location] = useLocation();
 
@@ -63,8 +64,10 @@ export function Sidebar() {
     });
   };
 
+  const isSuperAdmin = Boolean(isAuthenticated && (user?.role === 'super_admin' || activeRole === 'Super Admin'));
+
   const visible = navItems.filter((item) => {
-    if (activeRole === 'Super Admin') return true;
+    if (isSuperAdmin) return true;
     if (!isAuthenticated && !item.roles.includes('Public')) return false;
     return item.roles.includes(activeRole);
   });

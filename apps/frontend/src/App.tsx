@@ -123,6 +123,13 @@ function AccessDenied({ requested, reason }: { requested: string; reason?: 'unau
 function Guard({ allowed, name, children }: { allowed: Role[]; name: string; children: ReactNode }) {
   const { activeRole } = useRole();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+  const user = useAuthStore((s) => s.user);
+
+  // Super Admin has ALL ACCESS to every workspace and role
+  const isSuperAdmin = Boolean(isAuthenticated && (user?.role === 'super_admin' || activeRole === 'Super Admin'));
+  if (isSuperAdmin) {
+    return <>{children}</>;
+  }
 
   const isPublicAllowed = allowed.includes('Public');
 
@@ -132,7 +139,7 @@ function Guard({ allowed, name, children }: { allowed: Role[]; name: string; chi
   }
 
   // 2. If authenticated (or public), check if activeRole has permission
-  if (activeRole === 'Super Admin' || allowed.includes(activeRole)) {
+  if (allowed.includes(activeRole)) {
     return <>{children}</>;
   }
 
