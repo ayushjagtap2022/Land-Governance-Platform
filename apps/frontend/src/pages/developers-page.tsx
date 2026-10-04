@@ -275,9 +275,9 @@ export default function DevelopersPage() {
         </button>
       }
     >
-      <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+      <div className="grid gap-6 lg:grid-cols-1 xl:grid-cols-[1fr_360px] min-w-0">
         {/* API Documentation */}
-        <div className="space-y-6">
+        <div className="space-y-6 min-w-0">
           <Panel title="API Endpoints &amp; Testing">
             <div className="flex border-b border-slate-200 bg-slate-50 overflow-x-auto">
               {ENDPOINTS.map((ep, idx) => (
@@ -300,8 +300,8 @@ export default function DevelopersPage() {
 
               <div>
                 <p className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Parameters</p>
-                <div className="border border-slate-200">
-                  <table className="w-full text-left text-xs">
+                <div className="border border-slate-200 overflow-x-auto">
+                  <table className="w-full text-left text-xs min-w-[460px]">
                     <thead className="bg-[#F8FAFC] text-[10px] uppercase text-slate-500 border-b border-slate-200">
                       <tr>
                         <th className="px-4 py-2 font-bold border-r border-slate-200">Name</th>
@@ -345,7 +345,7 @@ export default function DevelopersPage() {
         </div>
 
         {/* Right Column: Key Management & Webhooks */}
-        <div className="space-y-6">
+        <div className="space-y-6 min-w-0">
           <Panel title="API Key Management" headerAction={<button className="text-[10px] font-bold text-slate-500 hover:text-[#1E293B]"><RefreshCcw className="h-3.5 w-3.5" /></button>}>
             <div className="p-5">
               <p className="text-xs font-bold text-[#1E293B] mb-2">Active State Token</p>

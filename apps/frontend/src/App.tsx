@@ -7,7 +7,6 @@ import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Header } from '@/components/layout/Header';
-import { Sidebar } from '@/components/layout/Sidebar';
 import { RoleProvider, useRole, type Role } from '@/context/RoleContext';
 import { useAuthStore } from '@/stores/authStore';
 import { useNotifications } from '@/hooks/use-notifications';
@@ -136,11 +135,10 @@ function Shell() {
   useNotifications();
 
   return (
-    <div className="min-h-[100dvh] bg-[#f4f6f8]">
+    <div className="min-h-[100dvh] bg-[#f4f6f8] overflow-x-hidden">
       <Header />
-      <div className="flex w-full flex-col md:flex-row">
-        {!isLandingPage && <Sidebar />}
-        <main id="main-content" className={`min-w-0 flex-1 ${isLandingPage ? 'w-full' : ''}`}>
+      <div className="w-full">
+        <main id="main-content" className="w-full min-w-0">
           <RoutedErrorBoundary>
             <Switch>
               <Route path="/" component={LandingPage} />

@@ -578,11 +578,11 @@ export function Header() {
         </div>
       </div>
 
-      {/* 4. Official Central Government Horizontal Navigation Bar (Only for authenticated users with role access) */}
-      {isAuthenticated && (
+      {/* 4. Official Central Government Horizontal Navigation Bar */}
+      {(isAuthenticated || evaluatorMode) && (
         <nav
           aria-label="National Portal Navigation"
-          className="hidden md:block bg-[#132f4c] border-b border-[#244562] text-white overflow-x-auto"
+          className="block bg-[#132f4c] border-b border-[#244562] text-white overflow-x-auto scrollbar-none"
         >
           <div className="flex w-full items-center px-4 md:px-8">
             <div className="flex items-center space-x-0.5 text-xs font-semibold py-1">
