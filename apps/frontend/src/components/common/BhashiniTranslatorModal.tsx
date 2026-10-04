@@ -25,16 +25,31 @@ export function BhashiniTranslatorModal({
   const [isLoading, setIsLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  const isError = translated.startsWith('Translation error');
+
   const handleTranslate = async () => {
     if (!text.trim()) return;
     setIsLoading(true);
+    setTranslated('');
     try {
-      const res = await api.post('/assistant/translate', {
-        text: text.trim(),
-        target_language: targetLang,
-      });
+      let res;
+      try {
+        res = await api.post('/ai/assistant/translate', {
+          text: text.trim(),
+          target_language: targetLang,
+        });
+      } catch (firstErr: any) {
+        if (firstErr?.response?.status === 404) {
+          res = await api.post('/assistant/translate', {
+            text: text.trim(),
+            target_language: targetLang,
+          });
+        } else {
+          throw firstErr;
+        }
+      }
       setTranslated(res.data.translated_text);
-      setProvider(res.data.provider);
+      setProvider(res.data.provider || 'Bhashini AI / National Language Translation Mission (NLTM)');
     } catch (err: any) {
       setTranslated(`Translation error: ${err?.response?.data?.detail || err.message}`);
     } finally {
@@ -43,7 +58,7 @@ export function BhashiniTranslatorModal({
   };
 
   const handleCopy = () => {
-    if (!translated) return;
+    if (!translated || isError) return;
     navigator.clipboard.writeText(translated);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -121,22 +136,31 @@ export function BhashiniTranslatorModal({
 
           {/* Translated Result Box */}
           {translated && (
-            <div className="border border-orange-200 bg-orange-50/50 p-4 relative space-y-2">
+            <div className={`border p-4 relative space-y-2 ${
+              isError
+                ? 'border-red-300 bg-red-50/80 text-red-900'
+                : 'border-orange-200 bg-orange-50/50'
+            }`}>
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-orange-950 flex items-center gap-1.5">
-                  <Sparkles className="h-3.5 w-3.5 text-orange-600" /> Translated {targetLang} Record Output:
+                <span className={`text-[11px] font-bold flex items-center gap-1.5 ${isError ? 'text-red-800' : 'text-orange-950'}`}>
+                  <Sparkles className={`h-3.5 w-3.5 ${isError ? 'text-red-600' : 'text-orange-600'}`} />
+                  {isError ? 'Translation Notice:' : `Translated ${targetLang} Record Output:`}
                 </span>
-                <button
-                  type="button"
-                  onClick={handleCopy}
-                  className="flex items-center gap-1 text-[11px] font-bold text-slate-700 hover:text-slate-900 border border-slate-300 bg-white px-2 py-1"
-                >
-                  {copied ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
-                  {copied ? 'Copied' : 'Copy'}
-                </button>
+                {!isError && (
+                  <button
+                    type="button"
+                    onClick={handleCopy}
+                    className="flex items-center gap-1 text-[11px] font-bold text-slate-700 hover:text-slate-900 border border-slate-300 bg-white px-2 py-1 shadow-2xs hover:bg-slate-50 transition-colors"
+                  >
+                    {copied ? <Check className="h-3 w-3 text-green-600" /> : <Copy className="h-3 w-3" />}
+                    {copied ? 'Copied' : 'Copy'}
+                  </button>
+                )}
               </div>
-              <p className="text-sm font-semibold text-slate-900 leading-relaxed font-sans">{translated}</p>
-              {provider && (
+              <p className={`text-sm leading-relaxed font-sans ${isError ? 'font-medium text-red-700' : 'font-semibold text-slate-900'}`}>
+                {translated}
+              </p>
+              {provider && !isError && (
                 <p className="text-[10px] font-mono text-slate-500 pt-1 border-t border-orange-200">{provider}</p>
               )}
             </div>

@@ -42,6 +42,7 @@ api_router.include_router(simulate.router, prefix="/simulate", tags=["simulate"]
 
 # Module 3: Conversational RAG & Policy Synthesis
 api_router.include_router(assistant.router, prefix="/ai", tags=["ai"])
+api_router.include_router(assistant.router, tags=["ai"]) # Alias for direct /assistant/... endpoints
 
 # Module 2: Central Knowledge Repository
 api_router.include_router(repository.router, prefix="/repository", tags=["repository"])
