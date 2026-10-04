@@ -591,28 +591,32 @@ export default function SimulatePage() {
                 <div
                   key={preset.id}
                   onClick={() => applyPreset(preset)}
-                  className={`cursor-pointer border p-3 transition-all hover:border-[#1E293B] hover:shadow-xs ${                    selectedPresetId === preset.id
+                  className={`cursor-pointer border p-3.5 transition-all hover:border-[#1E293B] hover:shadow-xs flex flex-col justify-between ${
+                    selectedPresetId === preset.id
                       ? 'border-[#1E293B] bg-slate-50 ring-1 ring-[#1E293B]'
                       : 'border-slate-200 bg-white'
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="rounded bg-slate-100 px-2 py-0.5 text-[9px] font-bold text-slate-700 uppercase">
-                      {preset.authority}
-                    </span>
-                    <span className="text-[9px] font-bold text-[#15803D] bg-emerald-50 px-1.5 py-0.5 rounded">
-                      {preset.badge}
-                    </span>
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className="rounded bg-slate-100 px-2 py-0.5 text-[9px] font-bold text-slate-700 uppercase">
+                        {preset.authority}
+                      </span>
+                      <span className="text-[9px] font-bold text-[#15803D] bg-emerald-50 px-1.5 py-0.5 rounded">
+                        {preset.badge}
+                      </span>
+                    </div>
+                    <h4 className="text-xs font-bold text-[#1E293B] mb-1.5">{preset.title}</h4>
+                    <p className="text-[11px] text-slate-600 leading-relaxed mb-3">
+                      {preset.description}
+                    </p>
                   </div>
-                  <h4 className="text-xs font-bold text-[#1E293B] mb-1">{preset.title}</h4>
-                  <p className="text-[11px] text-slate-600 line-clamp-2 leading-relaxed mb-2.5">
-                    {preset.description}
-                  </p>
-                  <div className="flex items-center justify-between border-t border-slate-100 pt-2 text-[10px] text-slate-500 font-mono">
+                  <div className="flex items-center justify-between border-t border-slate-100 pt-2 text-[10px] text-slate-500 font-mono mt-auto">
                     <span>Ceil: {preset.params.ceiling}ac</span>
                     <span>Tax: {preset.params.tax}%</span>
                     <span>Budg: ₹{preset.params.budget}Cr</span>
-                    <span className="text-[#1E293B] font-bold">Apply →</span>                  </div>
+                    <span className="text-[#1E293B] font-bold">Apply →</span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -628,7 +632,8 @@ export default function SimulatePage() {
 
           <div className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
             {/* Left Column: Input Controls */}
-            <div className="space-y-6">              <Panel title="Policy Variable Manipulation">
+            <div className="space-y-6 sticky top-6 self-start">
+              <Panel title="Policy Variable Manipulation">
                 <div className="p-5 space-y-6">
                   <div>
                     <label className="block text-xs font-semibold text-slate-700 mb-1">Baseline State Selector</label>
@@ -923,22 +928,16 @@ export default function SimulatePage() {
                     </ComposedChart>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="h-full flex flex-col items-center justify-center border-2 border-dashed border-slate-200 bg-slate-50/60 p-6 text-center">
-                    <div className="p-3 bg-white rounded-full border border-slate-200 shadow-2xs mb-2.5 text-slate-500">
+                  <div className="h-full flex flex-col items-center justify-center border-2 border-dashed border-slate-200 bg-slate-50/60 p-8 text-center rounded-xs">
+                    <div className="p-3 bg-white rounded-full border border-slate-200 shadow-2xs mb-3 text-slate-500">
                       <Sliders className="h-6 w-6 text-[#1E293B]" />
                     </div>
-                    <h4 className="text-sm font-bold text-[#1E293B] mb-1">
+                    <h4 className="text-sm font-bold text-[#1E293B] mb-1.5">
                       Ready for Policy Simulation
                     </h4>
-                    <p className="text-xs text-slate-500 max-w-md mb-3">
-                      Adjust policy levers on the left and click &apos;Run Policy Simulation&apos; to view 5-year projections, or choose a 1-click reform preset above.
+                    <p className="text-xs text-slate-500 max-w-md leading-relaxed">
+                      Adjust levers and click &apos;Run Policy Simulation&apos; to view projections, or choose a 1-click reform preset above.
                     </p>
-                    <button
-                      onClick={runSimulation}
-                      className="px-3.5 py-1.5 text-xs font-bold text-white bg-[#1E293B] hover:bg-slate-800 transition-colors flex items-center gap-1.5 shadow-2xs"
-                    >
-                      <Play className="h-3.5 w-3.5" /> Run Policy Simulation
-                    </button>
                   </div>
                 )}
               </div>
