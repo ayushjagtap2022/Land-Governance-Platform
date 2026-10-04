@@ -42,8 +42,8 @@ Official Python Client Library for DoLR Officers, Data Scientists, Policy Analys
 ## 🚀 Installation
 
 ```bash
-# Direct Installation from Git branch nirmal
-pip install "git+https://github.com/ayushjagtap2022/Land-Governance-Platform.git@nirmal#subdirectory=apps/python-sdk"
+# Direct Installation from Git (main branch)
+pip install "git+https://github.com/ayushjagtap2022/Land-Governance-Platform.git@main#subdirectory=apps/python-sdk"
 
 # Basic Installation (PyPI)
 pip install land-governance-sdk

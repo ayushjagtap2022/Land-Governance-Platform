@@ -5,8 +5,8 @@
 **Stakeholder**: Department of Land Resources (DoLR), Ministry of Rural Development, Government of India  
 **Lead Contributor & Scope**: Nirmal (Modules 2, 3, and 7)  
 **Active Project Path**: `C:\Nirmal\Projects\Land-Governance-Platform`  
-**Active Git Branch**: `nirmal`  
-**Generated At**: 2026-09-30 00:00 IST  
+**Active Git Branch**: `main`  
+**Generated At**: 2026-10-04 IST  
 
 ---
 
@@ -79,7 +79,7 @@ flowchart LR
     subgraph Engine ["Simulation Core (simulation_service.py)"]
         M1["Multivariate Regression Matrix<br/>β_budget = -0.42, β_digitize = -0.31<br/>β_drone = -0.28, β_grievance = +0.19"]
         M2["Dynamic Sensitivity Engine<br/>Elasticity e = (%Δ Output) / (%Δ Input)"]
-        M3["Gaussian Confidence Interval Generator<br/>CI_95 = ŷ ± 1.96 * σ_residuals"]
+        M3["Ensemble Spread Generator<br/>RF 120-Tree Empirical Dispersion"]
     end
 
     subgraph Outputs ["8-Year Trajectory (2020 - 2027)"]
@@ -182,7 +182,7 @@ erDiagram
 
 | Module | Core File Path | Key Functions / Responsibilities | Status |
 | :--- | :--- | :--- | :--- |
-| **Module 7: Simulation Engine** | `apps/api/app/services/simulation_service.py`<br/>`apps/api/app/api/routes/simulate.py`<br/>`apps/frontend/src/pages/simulate-page.tsx` | • Multivariate Regression with $\pm 95\%$ CI<br/>• 8-Year Trajectory (2020–2027)<br/>• Dynamic Elasticity & Driver Attribution<br/>• Recharts SVG Visualization with live slider state | ✅ **Verified Live** |
+| **Module 7: Simulation Engine** | `apps/api/app/services/simulation_service.py`<br/>`apps/api/app/api/routes/simulate.py`<br/>`apps/frontend/src/pages/simulate-page.tsx` | • Hybrid Econometric & 120-Tree Random Forest Engine (`v1.2_hybrid_rf_linear`)<br/>• 8-Year Trajectory (2020–2027)<br/>• RF 120-Tree Empirical Ensemble Spread<br/>• Recharts SVG Visualization with live slider state | ✅ **Verified Live** |
 | **Module 3: RAG Assistant & Synthesis** | `apps/api/app/services/rag_service.py`<br/>`apps/api/app/services/synthesis_service.py`<br/>`apps/api/app/api/routes/assistant.py`<br/>`apps/frontend/src/pages/assistant-page.tsx`<br/>`apps/frontend/src/pages/synthesis-page.tsx` | • Grounded RAG with exact statutory page citations<br/>• `gemini-3-flash-preview` async streaming<br/>• Cross-act statutory conflict detection matrix<br/>• Emerging research trend detection | ✅ **Verified Live** |
 | **Module 2: Knowledge Repository** | `apps/api/app/services/ocr_service.py`<br/>`apps/api/app/models/document.py`<br/>`apps/api/app/api/routes/repository.py`<br/>`apps/frontend/src/pages/repository-page.tsx` | • Gemini 3 Flash Multimodal Vision OCR<br/>• Neon PostgreSQL `pgvector(1024)` + PostGIS<br/>• Alembic database migration management<br/>• Dynamic document catalog fetching & seeding | ✅ **Verified Live** |
 
@@ -195,4 +195,4 @@ erDiagram
 * **Security & Git Hygiene**:
   * `.gitignore` updated with strict exclusion rules for `.env`, `apps/api/.env`, `apps/frontend/.env`, datasets (`*.csv`, `*.parquet`), and compiled artifacts.
   * Git index purged of cached `.env` files via `git rm --cached`.
-  * Committed and pushed cleanly to remote branch `nirmal`.
+  * Committed and pushed cleanly to remote branch `main`.

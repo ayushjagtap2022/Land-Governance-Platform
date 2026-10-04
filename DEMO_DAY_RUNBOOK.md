@@ -21,12 +21,12 @@ Ensure the FastAPI backend and Vite frontend are live:
 curl http://127.0.0.1:8000/healthz
 
 # Check Frontend:
-curl http://localhost:3001
+curl http://localhost:3000
 ```
 
 ### 3. Pre-Open Browser Tabs
-1. **Tab 1**: `http://localhost:3001/map` (Platform Home / GIS Map)
-2. **Tab 2**: `http://localhost:3001/simulate` (Policy Simulation Engine)
+1. **Tab 1**: `http://localhost:3000/map` (Platform Home / GIS Map)
+2. **Tab 2**: `http://localhost:3000/simulate` (Policy Simulation Engine)
 3. **Tab 3**: `http://localhost:8000/docs` (FastAPI Swagger UI — Module 9)
 4. **Tab 4**: Split Terminal ready for the 30-second Python SDK demo.
 
@@ -44,7 +44,7 @@ python -c "import json, sys; sys.path.insert(0, 'apps/api'); from app.main impor
 ### Minute 0–1: Problem Statement & National GIS Spatial Layer
 - **Action**: Open **Tab 1 (`/map`)**.
 - **What to Say**:
-  > *"Across India, land boundary disputes tie up ₹1.4 lakh crore in court litigation and delay major infrastructure projects by an average of 28 months. We built the National Land Governance Platform as an end-to-end operational operating system for the Department of Land Resources."*
+  > *"Across India, land boundary disputes account for 66% of all civil litigation (Daksh Access to Justice Survey, 2016), locking up judicial capacity and stalling vital infrastructure. We built the National Land Governance Platform as an end-to-end operational operating system for the Department of Land Resources."*
 - **Click Path**:
   1. Pan across the map showing **all 640 Indian districts** loaded natively.
   2. Toggle the **LULC Layer** (displaying the 1,313-feature GeoJSON).
@@ -56,7 +56,7 @@ python -c "import json, sys; sys.path.insert(0, 'apps/api'); from app.main impor
 ### Minute 1–2: Central Gazette Repository & Zero-Hallucination RAG
 - **Action**: Click **Repository (`/repository`)** $\to$ **AI Assistant (`/assistant`)**.
 - **What to Say**:
-  > *"Officers and citizens often struggle with conflicting state tenancy codes and central circulars. Our platform indexes over 400 authentic statutory acts and uses a hybrid BM25 + Gemini pipeline with strict ungrounded inquiry refusal."*
+  > *"Officers and citizens often struggle with conflicting state tenancy codes and central circulars. Our platform indexes 23 authentic statutory acts and circulars and uses a hybrid BM25 + Gemini pipeline with strict ungrounded inquiry refusal."*
 - **Click Path**:
   1. Search for *"Model Land Leasing Act"* in the Repository. Show the instant filter by category (`Tenancy & Agriculture`).
   2. Switch to the **Assistant** tab. Type:

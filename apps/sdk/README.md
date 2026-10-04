@@ -43,17 +43,11 @@ A robust, enterprise-grade, fully typed client library designed for developers, 
 ## Installation
 
 ```bash
-# npm (Local Monorepo Path)
-npm install ./apps/sdk
-
-# npm (Pre-built Release Tarball)
-npm install ./apps/sdk/land-governance-sdk-1.0.1.tgz
-
-# npm (GitHub Release Asset)
-npm install https://github.com/ayushjagtap2022/Land-Governance-Platform/releases/download/v1.0.1/land-governance-sdk-1.0.1.tgz
-
-# npm (NPM Registry)
+# npm (NPM Registry / Workspace)
 npm install land-governance-sdk
+
+# Or reference local directory in monorepo
+npm install ./apps/sdk
 
 # pnpm / yarn / bun
 pnpm add ./apps/sdk
