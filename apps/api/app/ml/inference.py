@@ -14,7 +14,8 @@ import numpy as np
 import pandas as pd
 import joblib
 
-MODEL_DIR = Path(__file__).resolve().parent / "models"
+_PRIMARY_DIR = Path(__file__).resolve().parent.parent / "ml_models"
+MODEL_DIR = _PRIMARY_DIR if _PRIMARY_DIR.exists() else Path(__file__).resolve().parent / "models"
 
 class LandGovernanceMLInference:
     _instance = None
