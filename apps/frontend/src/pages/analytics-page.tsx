@@ -487,7 +487,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Navigation Tabs with Lucide Icons - Clean horizontal scrolling with no wrap */}
-      <div className="mb-6 flex items-center overflow-x-auto whitespace-nowrap scrollbar-none border-b border-slate-300 bg-white rounded-t-sm shadow-2xs">
+      <div className="mb-6 flex items-center overflow-x-auto whitespace-nowrap scrollbar-none pr-6 border-b border-slate-300 bg-white rounded-t-sm shadow-2xs">
         {tabs.map((tab, idx) => {
           const Icon = tab.icon;
           const isActive = activeTab === idx;
@@ -546,9 +546,21 @@ export default function AnalyticsPage() {
                 title={`Research Output & Citation Velocity (2014–2024)`}
                 headerAction={<span className="text-[11px] text-slate-500 font-mono">National Repository Telemetry</span>}
               >
-                <div className="p-4 bg-slate-50 border-b border-slate-200 text-xs text-slate-600 flex items-center justify-between">
-                  <span>Growth in statutory gazette analyses, legal tenure studies, and drone survey whitepapers.</span>
-                  <span className="font-semibold text-emerald-700">CAG & DoLR Library Index</span>
+                <div className="p-3 bg-slate-50 border-b border-slate-200 text-xs text-slate-600 flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px]">
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-xs bg-[#132f4c]" />
+                      <span className="font-semibold text-slate-800">Left Axis:</span>
+                      <span className="text-slate-600">Statutory Acts &amp; Research Papers Volume (0–220)</span>
+                    </span>
+                    <span className="text-slate-300 hidden sm:inline">|</span>
+                    <span className="inline-flex items-center gap-1.5">
+                      <span className="h-2 w-2 rounded-full bg-[#B91C1C]" />
+                      <span className="font-semibold text-[#B91C1C]">Right Axis:</span>
+                      <span className="text-slate-600">Policy Citations Index (0–3200)</span>
+                    </span>
+                  </div>
+                  <span className="font-semibold text-emerald-700 font-mono text-[11px]">CAG &amp; DoLR Library Index</span>
                 </div>                <div className="h-[340px] p-4">
                   <ResponsiveContainer width="100%" height="100%">
                     <ComposedChart data={dashboardData?.timeline ?? [
@@ -590,22 +602,23 @@ export default function AnalyticsPage() {
                     </div>
                   </div>
 
-                  <div className="pt-2 border-t border-slate-200">
-                    <p className="font-bold text-[#1E293B] mb-2 uppercase text-[10px] tracking-wider text-slate-500">Thematic Focus Areas</p>
-                    <div className="space-y-2">
+                  <div className="pt-3 border-t border-slate-200">
+                    <p className="font-bold text-[#1E293B] mb-2.5 uppercase text-[10px] tracking-wider text-slate-500">Thematic Focus Areas</p>
+                    <div className="space-y-3">
                       {(dashboardData?.thematic_distribution ?? [
                         { theme: "Drone Cadastre & SVAMITVA", share: 32 },
                         { theme: "Agricultural Tenancy Reform", share: 24 },
                         { theme: "Dispute Fast-Tracking", share: 20 },
                         { theme: "Forest Rights (FRA)", share: 14 },
                       ]).map((th: any, i: number) => (
-                        <div key={i}>
-                          <div className="flex justify-between text-[11px] font-medium text-slate-700 mb-1">
+                        <div key={i} className="py-1">
+                          <div className="flex justify-between items-center text-[11px] font-medium text-slate-700 mb-1.5">
                             <span>{th.theme}</span>
-                            <span className="font-mono font-bold">{th.share}%</span>
+                            <span className="font-mono font-bold text-slate-800">{th.share}%</span>
                           </div>
-                          <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                            <div className="h-full bg-blue-600" style={{ width: `${th.share}%` }} />                          </div>
+                          <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                            <div className="h-full bg-blue-600 rounded-full transition-all duration-500" style={{ width: `${th.share}%` }} />
+                          </div>
                         </div>
                       ))}
                     </div>
