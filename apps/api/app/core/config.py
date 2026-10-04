@@ -37,8 +37,15 @@ class Settings(BaseSettings):
     # Datasets directory (defaults to relative repo root for Docker/local portability)
     DATASETS_DIR: Path = Path(os.getenv("DATASETS_DIR", Path(__file__).resolve().parent.parent.parent.parent / "Land Governance Platform Datasets"))
     
+    _API_DIR: Path = Path(__file__).resolve().parent.parent.parent
+    _REPO_DIR: Path = _API_DIR.parent
+
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=[
+            Path(__file__).resolve().parent.parent.parent / ".env",
+            Path(__file__).resolve().parent.parent.parent.parent / ".env",
+            ".env"
+        ],
         env_file_encoding="utf-8",
         extra="ignore"
     )

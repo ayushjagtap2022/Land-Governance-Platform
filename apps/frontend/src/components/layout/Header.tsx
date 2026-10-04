@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Bell, ChevronDown, Search, ShieldCheck, UserRound, LogIn, LogOut, Languages, Play, Pause } from 'lucide-react';
+import { useState, useRef, useMemo, useEffect } from 'react';
+import { Bell, ChevronDown, Search, ShieldCheck, UserRound, LogIn, LogOut, Languages, Play, Pause, X } from 'lucide-react';
 import { useRole, type Role } from '@/context/RoleContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuthStore } from '@/stores/authStore';
@@ -14,11 +14,56 @@ import { DigitalIndiaLogo, AzadiMahotsavLogo } from '@/components/common/GovLogo
 
 const roles: Role[] = ['Researcher', 'Official', 'Institution Admin', 'Public', 'Super Admin'];
 
+const POPULAR_SEARCH_TARGETS = [
+  { title: 'SVAMITVA Scheme Guidelines & Drone Survey', query: 'SVAMITVA', category: 'Scheme Protocol', ref: 'SVAMITVA-2024-014' },
+  { title: 'DILRMP Cadastral Maps Modernization Framework', query: 'DILRMP', category: 'Core Framework', ref: 'DILRMP-2024-001' },
+  { title: 'Model Agricultural Land Leasing Act (NITI Aayog)', query: 'Model Land Leasing', category: 'Tenancy Reform', ref: 'NITI-LEASING-2016' },
+  { title: 'RFCTLARR Land Acquisition Act, 2013', query: 'RFCTLARR', category: 'Statutory Act', ref: 'RFCTLARR-2013-SEC26' },
+  { title: 'ULPIN 14-Digit Bhu-Aadhaar Technical Standard', query: 'ULPIN', category: 'Cadastral Standard', ref: 'ULPIN-STD-2024' },
+  { title: 'Pune e-Chawdi Modern Record Room Integration', query: 'Pune', category: 'District Case Study', ref: 'CASE-2024-ECHAWDI-PUNE' },
+  { title: 'Maharashtra Land Revenue Code & Tenancy', query: 'Maharashtra', category: 'State Code', ref: 'MAH-LRC-1966' },
+  { title: 'Forest Rights Act (FRA) Title Claims Framework', query: 'Forest Rights', category: 'Statutory Act', ref: 'FRA-2006-SEC3' },
+];
+
 export function Header() {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const { activeRole, setActiveRole, evaluatorMode, toggleEvaluatorMode } = useRole();
   const { language, setLanguage, isHindi, t } = useLanguage();
   const [search, setSearch] = useState('');
+  const [showSearchSuggestions, setShowSearchSuggestions] = useState(false);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setShowSearchSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleGlobalSearch = (e?: React.FormEvent, customQuery?: string) => {
+    if (e) e.preventDefault();
+    const q = (customQuery ?? search).trim();
+    if (!q) return;
+
+    setShowSearchSuggestions(false);
+    window.dispatchEvent(new CustomEvent('platform-search', { detail: { query: q } }));
+    setLocation(`/repository?search=${encodeURIComponent(q)}`);
+  };
+
+  const matchingSuggestions = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return POPULAR_SEARCH_TARGETS.slice(0, 4);
+    return POPULAR_SEARCH_TARGETS.filter(
+      (item) =>
+        item.title.toLowerCase().includes(q) ||
+        item.query.toLowerCase().includes(q) ||
+        item.category.toLowerCase().includes(q) ||
+        item.ref.toLowerCase().includes(q)
+    );
+  }, [search]);
   const [notifsOpen, setNotifsOpen] = useState(false);
   const [showNotifSettings, setShowNotifSettings] = useState(false);
   const [notifsTab, setNotifsTab] = useState('Ministry');
@@ -187,24 +232,104 @@ export function Header() {
               <AzadiMahotsavLogo className="h-10 w-auto object-contain" />
             </div>
 
-            {/* Header Search Box */}
-            <div className="relative hidden lg:block">
-              <label htmlFor="global-search" className="sr-only">
-                {t('search_platform')}
-              </label>
-              <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-              <input
-                id="global-search"
-                className="focus-ring h-9 w-60 xl:w-72 border border-white/30 bg-white/10 pl-9 pr-3 text-xs text-white placeholder:text-slate-300 backdrop-blur-xs transition-all focus:bg-white focus:text-slate-800 focus:placeholder:text-slate-400"
-                data-testid="input-global-search"
-                placeholder={
-                  isHindi
-                    ? 'नीतियां, राजपत्र, भू-आधार ULPIN खोजें...'
-                    : 'Search gazettes, land acts, ULPIN...'
-                }
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-              />
+            {/* Header Search Box with Form Submit and Instant Suggestions */}
+            <div ref={searchContainerRef} className="relative hidden lg:block">
+              <form onSubmit={handleGlobalSearch} className="relative" role="search">
+                <label htmlFor="global-search" className="sr-only">
+                  {t('search_platform')}
+                </label>
+                <button
+                  type="submit"
+                  className="absolute left-2.5 top-2.5 text-slate-300 hover:text-[#f2b134] transition-colors cursor-pointer"
+                  title="Search repository"
+                  aria-label="Submit search"
+                >
+                  <Search className="h-4 w-4" />
+                </button>
+                <input
+                  id="global-search"
+                  type="search"
+                  autoComplete="off"
+                  className="focus-ring h-9 w-60 xl:w-72 border border-white/30 bg-white/10 pl-9 pr-7 text-xs text-white placeholder:text-slate-300 backdrop-blur-xs transition-all focus:bg-white focus:text-slate-800 focus:placeholder:text-slate-400 rounded-[2px]"
+                  data-testid="input-global-search"
+                  placeholder={
+                    isHindi
+                      ? 'राजपत्र, अधिनियम, ULPIN खोजें... (Enter)'
+                      : 'Search gazettes, acts, ULPIN... (Enter)'
+                  }
+                  value={search}
+                  onChange={(event) => {
+                    setSearch(event.target.value);
+                    setShowSearchSuggestions(true);
+                  }}
+                  onFocus={() => setShowSearchSuggestions(true)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Escape') setShowSearchSuggestions(false);
+                  }}
+                />
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearch('');
+                      setShowSearchSuggestions(false);
+                    }}
+                    className="absolute right-2 top-2.5 text-slate-300 hover:text-white transition-colors"
+                    title="Clear search"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </form>
+
+              {/* Instant Search Suggestions Dropdown */}
+              {showSearchSuggestions && search.trim().length > 0 && (
+                <div className="absolute left-0 top-11 z-50 w-full min-w-[310px] border border-slate-300 bg-white text-slate-800 shadow-2xl rounded-sm overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150">
+                  <div className="bg-slate-50 px-3 py-2 border-b border-slate-200 flex items-center justify-between text-[11px] font-bold text-slate-600">
+                    <span>{isHindi ? 'त्वरित सुझाव' : 'Quick Suggestions'}</span>
+                    <span className="text-[10px] text-slate-400 font-normal">{isHindi ? 'Enter दबाएं' : 'Press Enter'}</span>
+                  </div>
+                  <div className="max-h-60 overflow-y-auto divide-y divide-slate-100 text-xs">
+                    {matchingSuggestions.length > 0 ? (
+                      matchingSuggestions.map((item, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          className="w-full px-3 py-2 text-left hover:bg-amber-50/70 transition-colors flex items-start gap-2.5 cursor-pointer group"
+                          onClick={() => {
+                            setSearch(item.query);
+                            handleGlobalSearch(undefined, item.query);
+                          }}
+                        >
+                          <Search className="h-3.5 w-3.5 text-slate-400 mt-0.5 group-hover:text-amber-600 shrink-0" />
+                          <div>
+                            <p className="font-semibold text-[#132f4c] group-hover:text-amber-800 leading-tight">{item.title}</p>
+                            <p className="text-[10px] text-slate-500 mt-0.5">{item.category} • {item.ref}</p>
+                          </div>
+                        </button>
+                      ))
+                    ) : (
+                      <button
+                        type="button"
+                        className="w-full px-3 py-2 text-left hover:bg-slate-50 text-xs text-slate-700 flex items-center gap-2 cursor-pointer"
+                        onClick={() => handleGlobalSearch()}
+                      >
+                        <Search className="h-3.5 w-3.5 text-slate-400" />
+                        <span>Search repository for <strong>"{search}"</strong></span>
+                      </button>
+                    )}
+                  </div>
+                  <div className="bg-slate-100 px-3 py-1.5 border-t border-slate-200 text-right">
+                    <button
+                      type="button"
+                      onClick={() => handleGlobalSearch()}
+                      className="text-[11px] font-bold text-[#132f4c] hover:underline cursor-pointer"
+                    >
+                      {isHindi ? 'भंडार में सभी परिणाम देखें →' : 'View all results in Repository →'}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
               <div className="relative flex items-center gap-2">
                 <button

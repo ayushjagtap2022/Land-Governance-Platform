@@ -26,6 +26,7 @@ import {
 import { useRole } from '@/context/RoleContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { CitationModal } from '@/components/common/CitationModal';
+import { useSearch } from 'wouter';
 import { toast } from 'sonner';
 import {
   DropdownMenu,
@@ -755,14 +756,29 @@ export default function RepositoryPage() {
       .catch(() => {});
   }, [activeRole]);
 
+  const searchParamsStr = useSearch();
+
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const search = params.get('search');
+    const params = new URLSearchParams(searchParamsStr);
+    const searchParam = params.get('search');
     const stateParam = params.get('state');
-    if (search) setQuery(search);
+    if (searchParam !== null) {
+      setQuery(searchParam);
+    }
     if (stateParam && states.includes(stateParam)) {
       setState(stateParam);
     }
+  }, [searchParamsStr]);
+
+  useEffect(() => {
+    const handlePlatformSearch = (e: any) => {
+      const q = e?.detail?.query;
+      if (typeof q === 'string') {
+        setQuery(q);
+      }
+    };
+    window.addEventListener('platform-search', handlePlatformSearch);
+    return () => window.removeEventListener('platform-search', handlePlatformSearch);
   }, []);
 
   useEffect(() => {
