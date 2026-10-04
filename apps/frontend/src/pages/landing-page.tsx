@@ -33,7 +33,7 @@ export default function LandingPage() {
   const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState('');
   const { activeRole } = useRole();
-  const { isHindi, t } = useLanguage();
+  const { language, isHindi, t } = useLanguage();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
 
   const handleHeroSearch = (e: React.FormEvent) => {
@@ -405,21 +405,21 @@ export default function LandingPage() {
                 className="focus-ring flex items-center gap-2 border border-[#f2b134] bg-[#f2b134] px-5 py-3 text-xs md:text-sm font-bold text-[#132f4c] hover:bg-[#e0a22a] transition-all shadow-lg"
               >
                 <Layers className="h-4 w-4" />
-                {t('explore_maps')}
+                <span>{t('explore_maps')}</span>
               </Link>
               <Link
                 href="/repository"
                 className="focus-ring flex items-center gap-2 border border-white/40 bg-white/10 px-5 py-3 text-xs md:text-sm font-bold text-white hover:bg-white/20 backdrop-blur-xs transition-all"
               >
                 <BookOpen className="h-4 w-4" />
-                {t('browse_docs')}
+                <span>{t('browse_docs')}</span>
               </Link>
               <Link
                 href="/assistant"
                 className="focus-ring flex items-center gap-2 border border-white/20 bg-slate-800/60 px-5 py-3 text-xs md:text-sm font-semibold text-slate-200 hover:text-white hover:bg-slate-800 transition-all"
               >
                 <Sparkles className="h-4 w-4 text-[#f2b134]" />
-                {t('ask_ai')}
+                <span>{t('ask_ai')}</span>
               </Link>
             </div>
           </div>
@@ -483,20 +483,20 @@ export default function LandingPage() {
                       {scheme.code}
                     </span>
                     <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 border border-emerald-200">
-                      {scheme.stat}
+                      {t(scheme.stat)}
                     </span>
                   </div>
                   <h3 className="mt-3 text-sm font-bold text-[#132f4c] group-hover:text-[#244562]">
-                    {isHindi ? scheme.hindiName : scheme.name}
+                    {t(scheme.name)}
                   </h3>
                   <p className="text-[11px] font-semibold text-slate-400">
-                    {isHindi ? scheme.name : scheme.hindiName}
+                    {language === 'en' ? scheme.hindiName : scheme.name}
                   </p>
                   <p className="mt-1 text-[10px] font-semibold text-slate-500">
-                    {isHindi ? scheme.hindiMinistry : scheme.ministry}
+                    {t(scheme.ministry)}
                   </p>
                   <p className="mt-2.5 text-xs leading-relaxed text-slate-600">
-                    {isHindi ? scheme.hindiDesc : scheme.desc}
+                    {t(scheme.desc)}
                   </p>
                 </div>
                 <div className="mt-4 pt-3 border-t border-slate-200">
@@ -541,25 +541,25 @@ export default function LandingPage() {
                         <Icon className="h-6 w-6" />
                       </div>
                       <span className="text-[10px] font-bold text-[#244562] border border-[#b9cce0] bg-[#eef4fa] px-2.5 py-1">
-                        {pillar.badge}
+                        {t(pillar.badge)}
                       </span>
                     </div>
 
                     <h3 className="mt-4 font-serif text-lg font-bold text-[#132f4c]">
-                      {isHindi ? pillar.hindi : pillar.title}
+                      {t(pillar.title)}
                     </h3>
                     <p className="text-[11px] font-semibold text-slate-400">
-                      {isHindi ? pillar.title : pillar.hindi}
+                      {language === 'en' ? pillar.hindi : pillar.title}
                     </p>
                     <p className="mt-3 text-xs leading-relaxed text-slate-600">
-                      {pillar.desc}
+                      {t(pillar.desc)}
                     </p>
 
                     <div className="mt-4 space-y-2 border-t border-slate-100 pt-3">
                       {pillar.points.map((pt, idx) => (
                         <div key={idx} className="flex items-start gap-2 text-xs text-slate-600">
                           <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 text-emerald-600 shrink-0" />
-                          <span>{pt}</span>
+                          <span>{t(pt)}</span>
                         </div>
                       ))}
                     </div>
@@ -622,7 +622,7 @@ export default function LandingPage() {
                         title={`Status: ${status.label} (${d.risk} Risk Profile)`}
                       >
                         <span className={`h-1.5 w-1.5 rounded-full ${status.dotClass}`} />
-                        <span>{isHindi ? status.hindiLabel : status.label}</span>
+                        <span>{t(status.label)}</span>
                       </span>
                     </div>
 
@@ -693,14 +693,14 @@ export default function LandingPage() {
                     >
                       <div className="flex items-center justify-between">
                         <p className={`text-xs font-bold ${isSelected ? 'text-[#f2b134]' : 'text-white'}`}>
-                          {isHindi ? r.hindiName : r.name}
+                          {t(r.name)}
                         </p>
                         {isSelected && (
                           <span className="h-2 w-2 rounded-full bg-[#f2b134] animate-pulse" />
                         )}
                       </div>
                       <p className="mt-1 text-[10px] text-slate-300">
-                        {isHindi ? r.hindiSubtitle : r.subtitle}
+                        {t(r.subtitle)}
                       </p>
                     </button>
                   );
@@ -713,17 +713,17 @@ export default function LandingPage() {
               <div>
                 <div className="flex items-center justify-between gap-2 border-b border-white/15 pb-3">
                   <p className="text-xs font-bold uppercase tracking-wider text-[#f2b134]">
-                    {isHindi ? currentProfile.hindiBadge : currentProfile.badge}
+                    {t(currentProfile.badge)}
                   </p>
                   <span className="text-[10px] font-mono px-2 py-0.5 bg-white/15 text-slate-200 border border-white/20">
-                    {isHindi ? currentProfile.hindiName : currentProfile.name}
+                    {t(currentProfile.name)}
                   </span>
                 </div>
                 <h3 className="mt-3.5 text-lg font-bold text-white leading-snug">
-                  {isHindi ? currentProfile.hindiTitle : currentProfile.title}
+                  {t(currentProfile.title)}
                 </h3>
                 <p className="mt-2.5 text-xs leading-relaxed text-slate-300">
-                  {isHindi ? currentProfile.hindiDesc : currentProfile.description}
+                  {t(currentProfile.description)}
                 </p>
               </div>
 
@@ -732,14 +732,14 @@ export default function LandingPage() {
                   href={currentProfile.primaryBtn.href}
                   className="flex w-full items-center justify-center gap-2 bg-[#f2b134] px-4 py-2.5 text-xs font-bold text-[#132f4c] hover:bg-[#e0a22a] transition-colors shadow-md"
                 >
-                  <span>{isHindi ? currentProfile.primaryBtn.hindiText : currentProfile.primaryBtn.text}</span>
+                  <span>{t(currentProfile.primaryBtn.text)}</span>
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
                 <Link
                   href={currentProfile.secondaryBtn.href}
                   className="flex w-full items-center justify-center gap-2 border border-white/40 bg-white/10 px-4 py-2.5 text-xs font-bold text-white hover:bg-white/20 transition-colors"
                 >
-                  <span>{isHindi ? currentProfile.secondaryBtn.hindiText : currentProfile.secondaryBtn.text}</span>
+                  <span>{t(currentProfile.secondaryBtn.text)}</span>
                 </Link>
               </div>
             </div>
@@ -756,14 +756,10 @@ export default function LandingPage() {
               <StateEmblem variant="dark" className="h-14 w-auto shrink-0" />
               <div>
                 <p className="text-xs font-bold text-[#132f4c] uppercase font-serif">
-                  {isHindi
-                    ? 'भू-संसाधन विभाग (भू-सं.वि.) • ग्रामीण विकास मंत्रालय • भारत सरकार'
-                    : 'Department of Land Resources (DoLR) • Ministry of Rural Development'}
+                  {t('Department of Land Resources (DoLR)')} • {t('Ministry of Rural Development')}
                 </p>
                 <p className="text-[11px] text-slate-600">
-                  {isHindi
-                    ? 'राष्ट्रीय डिजिटल भूमि शासन मंच • SIH PS 26019'
-                    : 'Government of India • National Land Governance Platform (SIH PS 26019)'}
+                  {t('Government of India')} • {t('National Land Governance Platform')} (SIH PS 26019)
                 </p>
               </div>
             </div>
@@ -789,56 +785,56 @@ export default function LandingPage() {
             {/* Column 1: Platform Modules */}
             <div>
               <p className="font-bold text-[#132f4c] uppercase tracking-wider text-[11px] mb-3.5 border-b border-slate-200 pb-1.5">
-                {isHindi ? 'राष्ट्रीय मंच मॉड्यूल' : 'Platform Modules'}
+                {t('Platform Modules')}
               </p>
               <ul className="space-y-2.5 text-slate-600">
-                <li><Link href="/repository" className="hover:text-[#132f4c] hover:underline transition-colors">{isHindi ? 'दस्तावेज़ एवं राजपत्र भंडार' : 'Statutory Land Repository'}</Link></li>
-                <li><Link href="/map" className="hover:text-[#132f4c] hover:underline transition-colors">{isHindi ? 'राष्ट्रीय जीआईएस भू-मानचित्र' : 'National GIS Cadastral Map'}</Link></li>
-                <li><Link href="/assistant" className="hover:text-[#132f4c] hover:underline transition-colors">{isHindi ? 'एआई नीति परामर्श सहायक' : 'AI Policy Assistant'}</Link></li>
-                <li><Link href="/synthesis" className="hover:text-[#132f4c] hover:underline transition-colors">{isHindi ? 'नीतिगत विश्लेषण व संश्लेषण' : 'Policy Synthesis Engine'}</Link></li>
-                <li><Link href="/simulate" className="hover:text-[#132f4c] hover:underline transition-colors">{isHindi ? 'भूमि सुधार नीति सिम्युलेटर' : 'Land Reform Policy Simulator'}</Link></li>
+                <li><Link href="/repository" className="hover:text-[#132f4c] hover:underline transition-colors">{t('Statutory Land Repository')}</Link></li>
+                <li><Link href="/map" className="hover:text-[#132f4c] hover:underline transition-colors">{t('National GIS Cadastral Map')}</Link></li>
+                <li><Link href="/assistant" className="hover:text-[#132f4c] hover:underline transition-colors">{t('AI Policy Assistant')}</Link></li>
+                <li><Link href="/synthesis" className="hover:text-[#132f4c] hover:underline transition-colors">{t('Policy Synthesis Engine')}</Link></li>
+                <li><Link href="/simulate" className="hover:text-[#132f4c] hover:underline transition-colors">{t('Land Reform Policy Simulator')}</Link></li>
               </ul>
             </div>
 
             {/* Column 2: Flagship Schemes */}
             <div>
               <p className="font-bold text-[#132f4c] uppercase tracking-wider text-[11px] mb-3.5 border-b border-slate-200 pb-1.5">
-                {isHindi ? 'प्रमुख राष्ट्रीय योजनाएं' : 'Flagship Schemes'}
+                {t('Flagship Schemes')}
               </p>
               <ul className="space-y-2.5 text-slate-600">
-                <li><Link href="/repository?search=SVAMITVA" className="hover:text-[#132f4c] hover:underline transition-colors">{isHindi ? 'स्वामित्व योजना (SVAMITVA)' : 'SVAMITVA Scheme'}</Link></li>
-                <li><Link href="/repository?search=DILRMP" className="hover:text-[#132f4c] hover:underline transition-colors">{isHindi ? 'डीआईएलआरएमपी आधुनिकीकरण' : 'DILRMP Modernization'}</Link></li>
-                <li><Link href="/repository?search=ULPIN" className="hover:text-[#132f4c] hover:underline transition-colors">{isHindi ? 'भू-आधार पहचान (ULPIN)' : 'Bhu-Aadhaar (ULPIN)'}</Link></li>
-                <li><Link href="/repository?search=RFCTLARR" className="hover:text-[#132f4c] hover:underline transition-colors">{isHindi ? 'आरएफसीटीएलएआरआर अधिनियम 2013' : 'RFCTLARR Act, 2013'}</Link></li>
-                <li><Link href="/repository?search=Leasing" className="hover:text-[#132f4c] hover:underline transition-colors">{isHindi ? 'मॉडल भूमि पट्टा कानून' : 'Model Land Leasing Act'}</Link></li>
+                <li><Link href="/repository?search=SVAMITVA" className="hover:text-[#132f4c] hover:underline transition-colors">{t('SVAMITVA Scheme')}</Link></li>
+                <li><Link href="/repository?search=DILRMP" className="hover:text-[#132f4c] hover:underline transition-colors">{t('DILRMP Modernization')}</Link></li>
+                <li><Link href="/repository?search=ULPIN" className="hover:text-[#132f4c] hover:underline transition-colors">{t('Bhu-Aadhaar (ULPIN)')}</Link></li>
+                <li><Link href="/repository?search=RFCTLARR" className="hover:text-[#132f4c] hover:underline transition-colors">{t('RFCTLARR Act, 2013')}</Link></li>
+                <li><Link href="/repository?search=Leasing" className="hover:text-[#132f4c] hover:underline transition-colors">{t('Model Land Leasing Act')}</Link></li>
               </ul>
             </div>
 
             {/* Column 3: Citizen & Research */}
             <div>
               <p className="font-bold text-[#132f4c] uppercase tracking-wider text-[11px] mb-3.5 border-b border-slate-200 pb-1.5">
-                {isHindi ? 'नागरिक व शोधकर्ता' : 'Citizen & Research'}
+                {t('Citizen & Research')}
               </p>
               <ul className="space-y-2.5 text-slate-600">
-                <li><Link href="/innovation" className="hover:text-[#132f4c] hover:underline transition-colors">{isHindi ? 'नवाचार व अनुसंधान मंच' : 'Innovation & Sandbox Portal'}</Link></li>
-                <li><Link href="/analytics" className="hover:text-[#132f4c] hover:underline transition-colors">{isHindi ? 'राष्ट्रीय भूमि विश्लेषण केंद्र' : 'National Analytics Hub'}</Link></li>
-                <li><Link href="/developers" className="hover:text-[#132f4c] hover:underline transition-colors">{isHindi ? 'ओपन डेवलपर एपीआई' : 'Open Developer API'}</Link></li>
-                <li><Link href="/login" className="hover:text-[#132f4c] hover:underline transition-colors">{isHindi ? 'शासकीय एसएसओ (मेरी पहचान)' : 'Official SSO (MeriPehchan)'}</Link></li>
-                <li><a href="https://pgportal.gov.in" target="_blank" rel="noopener noreferrer" className="hover:text-[#132f4c] hover:underline transition-colors">{isHindi ? 'लोक शिकायत निवारण (CPGRAMS)' : 'Public Grievance (CPGRAMS)'}</a></li>
+                <li><Link href="/innovation" className="hover:text-[#132f4c] hover:underline transition-colors">{t('Innovation & Sandbox Portal')}</Link></li>
+                <li><Link href="/analytics" className="hover:text-[#132f4c] hover:underline transition-colors">{t('National Analytics Hub')}</Link></li>
+                <li><Link href="/developers" className="hover:text-[#132f4c] hover:underline transition-colors">{t('Open Developer API')}</Link></li>
+                <li><Link href="/login" className="hover:text-[#132f4c] hover:underline transition-colors">{t('Official SSO (MeriPehchan)')}</Link></li>
+                <li><a href="https://pgportal.gov.in" target="_blank" rel="noopener noreferrer" className="hover:text-[#132f4c] hover:underline transition-colors">{t('Public Grievance (CPGRAMS)')}</a></li>
               </ul>
             </div>
 
             {/* Column 4: Government Policies */}
             <div>
               <p className="font-bold text-[#132f4c] uppercase tracking-wider text-[11px] mb-3.5 border-b border-slate-200 pb-1.5">
-                {isHindi ? 'सरकारी नीतियां एवं सहायता' : 'Government Policies'}
+                {t('Government Policies')}
               </p>
               <ul className="space-y-2.5 text-slate-600">
-                <li><a href="#main-content" className="hover:text-[#132f4c] hover:underline transition-colors">{isHindi ? 'वेबसाइट नीतियां' : 'Website Policies'}</a></li>
-                <li><a href="#main-content" className="hover:text-[#132f4c] hover:underline transition-colors">{isHindi ? 'हाइपरलिंकिंग नीति' : 'Hyperlinking Policy'}</a></li>
-                <li><a href="#main-content" className="hover:text-[#132f4c] hover:underline transition-colors">{isHindi ? 'गोपनीयता नीति' : 'Privacy Policy'}</a></li>
-                <li><a href="#main-content" className="hover:text-[#132f4c] hover:underline transition-colors">{isHindi ? 'नियम और शर्तें' : 'Terms & Conditions'}</a></li>
-                <li><a href="#main-content" className="hover:text-[#132f4c] hover:underline transition-colors">{isHindi ? 'वेब सूचना प्रबंधक' : 'Web Information Manager'}</a></li>
+                <li><a href="#main-content" className="hover:text-[#132f4c] hover:underline transition-colors">{t('Website Policies')}</a></li>
+                <li><a href="#main-content" className="hover:text-[#132f4c] hover:underline transition-colors">{t('Hyperlinking Policy')}</a></li>
+                <li><a href="#main-content" className="hover:text-[#132f4c] hover:underline transition-colors">{t('Privacy Policy')}</a></li>
+                <li><a href="#main-content" className="hover:text-[#132f4c] hover:underline transition-colors">{t('Terms & Conditions')}</a></li>
+                <li><a href="#main-content" className="hover:text-[#132f4c] hover:underline transition-colors">{t('Web Information Manager')}</a></li>
               </ul>
             </div>
           </div>
@@ -849,14 +845,10 @@ export default function LandingPage() {
               <NICLogo className="h-8 w-auto hidden sm:block shrink-0" />
               <div>
                 <p className="font-semibold text-slate-900 leading-snug">
-                  {isHindi
-                    ? 'सामग्री स्वामित्व एवं अनुरक्षण: भू-संसाधन विभाग (भू-सं.वि.), ग्रामीण विकास मंत्रालय, भारत सरकार।'
-                    : 'Website owned, designed and maintained by Department of Land Resources (DoLR), Ministry of Rural Development, Government of India.'}
+                  {t('Website owned, designed and maintained by Department of Land Resources (DoLR), Ministry of Rural Development, Government of India.')}
                 </p>
                 <p className="mt-1 text-[11px] text-slate-700 leading-snug">
-                  {isHindi
-                    ? 'प्लेटफॉर्म अभिकल्पित, विकसित एवं राष्ट्रीय सूचना विज्ञान केंद्र (NIC), इलेक्ट्रॉनिकी और सूचना प्रौद्योगिकी मंत्रालय द्वारा होस्ट किया गया।'
-                    : 'Platform designed, developed and hosted by National Informatics Centre (NIC), Ministry of Electronics & IT.'}
+                  {t('Platform designed, developed and hosted by National Informatics Centre (NIC), Ministry of Electronics & IT.')}
                 </p>
               </div>
             </div>
@@ -864,7 +856,7 @@ export default function LandingPage() {
             <div className="flex items-center shrink-0 self-center md:self-auto">
               <div className="inline-flex items-center gap-1.5 border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-700 rounded-[2px] shadow-2xs">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 shrink-0"></span>
-                <span>{isHindi ? 'अंतिम अद्यतन: 02 अक्टूबर 2026' : 'Last Updated: 02 October 2026'}</span>
+                <span>{t('Last Updated: 02 October 2026')}</span>
               </div>
             </div>
           </div>

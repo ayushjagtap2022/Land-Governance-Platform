@@ -1,9 +1,10 @@
-# 🏛️ National Digital Platform for Land Governance
+# 🏛️ STRATA — From Land Data to Policy Intelligence
+### National Digital Platform for Land Governance
 ### Smart India Hackathon (SIH) 2024 — Problem Statement 26019
 **Ministry of Rural Development | Department of Land Resources (DoLR)**
 
 <p align="center">
-  <img src="docs/youtube_thumbnail.jpg" alt="National Land Governance Platform Overview" width="850" style="border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);" />
+  <img src="docs/youtube_thumbnail.jpg" alt="STRATA — From Land Data to Policy Intelligence" width="850" style="border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.15);" />
 </p>
 
 <p align="center">
@@ -17,7 +18,7 @@
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" /></a>
 </p>
 
-> **Executive Framing**: Across India, land boundary disputes account for **66% of all civil litigation** (*Daksh Access to Justice Survey, 2016*), locking up judicial capacity and stalling vital infrastructure. The **National Digital Platform for Land Governance** is an operational research-and-policy operating system designed to turn siloed land records into actionable predictive foresight for policymakers, researchers, and citizens. Built specifically for **SIH Problem Statement 26019**, the platform unites geospatial intelligence across 640 districts, grounded statutory RAG, macroeconomic policy simulation, collaborative research workspaces, and dual client SDKs.
+> **Executive Framing**: Across India, land boundary disputes account for **66% of all civil litigation** (*Daksh Access to Justice Survey, 2016*), locking up judicial capacity and stalling vital infrastructure. **STRATA** (**National Digital Platform for Land Governance — From Land Data to Policy Intelligence**) is an operational research-and-policy operating system designed to turn siloed land records into actionable predictive foresight for policymakers, researchers, and citizens. Built specifically for **SIH Problem Statement 26019**, the platform unites geospatial intelligence across 640 districts, grounded statutory RAG, macroeconomic policy simulation, collaborative research workspaces, and dual client SDKs.
 
 ---
 

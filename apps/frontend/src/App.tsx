@@ -158,6 +158,7 @@ function RoutedErrorBoundary({ children }: { children: ReactNode }) {
 }
 
 function Shell() {
+  const { language } = useLanguage();
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const [location] = useLocation();
   const isLandingPage = location === '/';
@@ -169,7 +170,7 @@ function Shell() {
   useNotifications();
 
   return (
-    <div className="min-h-[100dvh] bg-[#f4f6f8] overflow-x-hidden flex flex-col">
+    <div key={language} className="min-h-[100dvh] bg-[#f4f6f8] overflow-x-hidden flex flex-col">
       <Header />
       <div className="flex w-full flex-1 flex-col md:flex-row">
         {showSidebar && <Sidebar />}

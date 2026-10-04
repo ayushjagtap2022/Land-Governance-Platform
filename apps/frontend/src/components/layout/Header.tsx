@@ -315,7 +315,7 @@ export function Header() {
           </button>
 
           {/* Official Website Language Switcher: English | हिन्दी (Bhashini AI) with clean neutral borders */}
-          <div ref={langContainerRef} className="relative flex items-center shrink-0">
+          <div ref={langContainerRef} className="notranslate relative flex items-center shrink-0" data-no-translate>
             <div className="flex h-6 items-center border border-slate-300 bg-white rounded-xs overflow-hidden shadow-2xs">
               <button
                 type="button"

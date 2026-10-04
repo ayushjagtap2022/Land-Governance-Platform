@@ -1,5 +1,15 @@
 import { createContext, useContext, useEffect, useState, useMemo, type ReactNode } from 'react';
-import { translateString, translateSubtree, translateNode, restoreDOM, IGNORED_TAGS } from './translations-dict';
+import {
+  translateString,
+  reverseTranslateString,
+  translateSubtree,
+  translateNode,
+  restoreNode,
+  restoreDOM,
+  registerReverseTranslations,
+  INDIC_REGEX,
+  IGNORED_TAGS,
+} from './translations-dict';
 
 export type Language = 'en' | 'hi' | 'mr' | 'ta' | 'te' | 'bn' | 'gu';
 
@@ -527,14 +537,38 @@ const translations: Record<string, Record<string, string>> = {
   'explore_maps': {
     en: 'Explore Land Maps',
     hi: 'भू-मानचित्र देखें',
+    mr: 'जमीन नकाशे पहा',
+    ta: 'நில வரைபடங்களை ஆராயுங்கள்',
+    te: 'భూ పటాలను అన్వేషించండి',
+    bn: 'ভূমির মানচিত্র অন্বেষণ করুন',
+    gu: 'જમીન નકશા જુઓ',
   },
   'browse_docs': {
     en: 'Browse Documents',
     hi: 'दस्तावेज़ ब्राउज़ करें',
+    mr: 'दस्तऐवज ब्राउझ करा',
+    ta: 'ஆவணங்களை உலாவுக',
+    te: 'పత్రాలను బ్రౌజ్ చేయండి',
+    bn: 'নথি ব্রাউজ করুন',
+    gu: 'દસ્તાવેજો બ્રાઉઝ કરો',
   },
   'ask_ai': {
     en: 'Ask AI Assistant',
     hi: 'एआई सहायक से पूछें',
+    mr: 'एआय सहाय्यकाला विचारा',
+    ta: 'ஏஐ உதவியாளரிடம் கேளுங்கள்',
+    te: 'ఏఐ సహాయకుడిని అడగండి',
+    bn: 'এআই সহকারীকে জিজ্ঞাসা করুন',
+    gu: 'એઆઈ સહાયકને પૂછો',
+  },
+  'Ask AI Assistant': {
+    en: 'Ask AI Assistant',
+    hi: 'एआई सहायक से पूछें',
+    mr: 'एआय सहाय्यकाला विचारा',
+    ta: 'ஏஐ உதவியாளரிடம் கேளுங்கள்',
+    te: 'ఏఐ సహాయకుడిని అడగండి',
+    bn: 'এআই সহকারীকে জিজ্ঞাসা করুন',
+    gu: 'એઆઈ સહાયકને પૂછો',
   },
 
   // Stats
@@ -670,6 +704,9 @@ const translations: Record<string, Record<string, string>> = {
   },
 };
 
+// Register all component-level translations into the reverse translation engine
+registerReverseTranslations(translations);
+
 const LanguageContext = createContext<LanguageContextValue | undefined>(undefined);
 
 const STORAGE_KEY = 'nlgp_language';
@@ -678,7 +715,15 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved === 'hi' || saved === 'en') {
+      if (
+        saved === 'en' ||
+        saved === 'hi' ||
+        saved === 'mr' ||
+        saved === 'ta' ||
+        saved === 'te' ||
+        saved === 'bn' ||
+        saved === 'gu'
+      ) {
         return saved;
       }
     } catch {
@@ -710,14 +755,94 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
     if (typeof document === 'undefined') return;
 
-    if (language === 'en') {
-      restoreDOM(document.body);
-      return;
-    }
-
     let isTranslating = false;
 
-    // Run initial full translation pass on the document body
+    // --- CASE 1: Language switched to English ---
+    if (language === 'en') {
+      // 1. Immediately restore all DOM nodes to English
+      isTranslating = true;
+      try {
+        restoreDOM(document.body);
+      } finally {
+        isTranslating = false;
+      }
+
+      // 2. Schedule follow-up passes for React asynchronous reconciliations
+      const raf = requestAnimationFrame(() => {
+        isTranslating = true;
+        try {
+          restoreDOM(document.body);
+        } finally {
+          isTranslating = false;
+        }
+      });
+      const timer = setTimeout(() => {
+        isTranslating = true;
+        try {
+          restoreDOM(document.body);
+        } finally {
+          isTranslating = false;
+        }
+      }, 100);
+
+      // 3. Keep MutationObserver active in English to ensure any added Indic text nodes are immediately restored
+      const observer = new MutationObserver((mutations) => {
+        if (isTranslating) return;
+        isTranslating = true;
+        try {
+          for (const mutation of mutations) {
+            if (mutation.type === 'childList') {
+              mutation.addedNodes.forEach((node) => {
+                if (node.nodeType === Node.TEXT_NODE) {
+                  const parent = node.parentElement;
+                  if (
+                    parent &&
+                    !IGNORED_TAGS.has(parent.tagName) &&
+                    !parent.closest('.notranslate, [data-no-translate]')
+                  ) {
+                    restoreNode(node);
+                  }
+                } else if (node.nodeType === Node.ELEMENT_NODE) {
+                  const el = node as Element;
+                  if (
+                    !IGNORED_TAGS.has(el.tagName) &&
+                    !el.closest('.notranslate, [data-no-translate]')
+                  ) {
+                    restoreDOM(el);
+                  }
+                }
+              });
+            } else if (mutation.type === 'characterData') {
+              const node = mutation.target;
+              const parent = node.parentElement;
+              if (
+                parent &&
+                !IGNORED_TAGS.has(parent.tagName) &&
+                !parent.closest('.notranslate, [data-no-translate]')
+              ) {
+                restoreNode(node);
+              }
+            }
+          }
+        } finally {
+          isTranslating = false;
+        }
+      });
+
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+      });
+
+      return () => {
+        cancelAnimationFrame(raf);
+        clearTimeout(timer);
+        observer.disconnect();
+      };
+    }
+
+    // --- CASE 2: Indic language translation ---
     isTranslating = true;
     try {
       translateSubtree(document.body, language);
@@ -725,7 +850,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       isTranslating = false;
     }
 
-    // Set up MutationObserver to react to React page navigation, state updates, modal openings
+    // Set up MutationObserver to translate any newly added or updated nodes
     const observer = new MutationObserver((mutations) => {
       if (isTranslating) return;
       isTranslating = true;
@@ -784,24 +909,40 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   const isIndic = language !== 'en';
 
   const t = (key: string, fallback?: string): string => {
+    if (!key) return fallback ?? key;
+
+    // English mode: return English translation or reverse-translate if key is Indic
+    if (language === 'en') {
+      const item = translations[key];
+      if (item && item['en']) {
+        return item['en'];
+      }
+      if (INDIC_REGEX.test(key)) {
+        const en = reverseTranslateString(key);
+        if (en && en !== key) return en;
+      }
+      return fallback ?? key;
+    }
+
+    // Indic languages
     const item = translations[key];
     if (item) {
       if (item[language]) {
         return item[language];
       }
-      if (language !== 'en' && item['hi']) {
+      if (item['en']) {
+        const translated = translateString(item['en'], language);
+        if (translated && translated !== item['en']) return translated;
+      }
+      if (item['hi']) {
         return item['hi'];
       }
-      if (item['en']) {
-        return item['en'];
-      }
     }
+
     // Check comprehensive dictionary
-    if (language !== 'en') {
-      const translated = translateString(key, language);
-      if (translated && translated !== key) {
-        return translated;
-      }
+    const translated = translateString(key, language);
+    if (translated && translated !== key) {
+      return translated;
     }
     return fallback ?? key;
   };
