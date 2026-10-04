@@ -56,19 +56,31 @@ export function useNotifications() {
         ws.onmessage = (event) => {
           try {
             const raw = JSON.parse(event.data);
+
+            // Ignore control frames, errors, or empty messages
+            if (raw.error || raw.status === 'error' || raw.type === 'ping' || raw.type === 'pong' || raw.type === 'handshake') {
+              return;
+            }
+
             const notif = raw.data || raw;
-            const title = notif.title || raw.title || 'Notification';
+            const title = notif.title || raw.title;
             const description = notif.content || notif.message || raw.content;
+
+            // Only trigger a toast if this is an actual notification with title or description
+            if (!title && !description) {
+              return;
+            }
+
             const type = (notif.type || 'info').toLowerCase();
 
             if (type === 'success') {
-              toast.success(title, { description });
+              toast.success(title || 'Notification', { description });
             } else if (type === 'warning') {
-              toast.warning(title, { description });
+              toast.warning(title || 'Notification', { description });
             } else if (type === 'error') {
-              toast.error(title, { description });
+              toast.error(title || 'Notification', { description });
             } else {
-              toast.info(title, { description });
+              toast.info(title || 'Notification', { description });
             }
 
             // Immediately refresh notification count and list in Header
@@ -79,11 +91,14 @@ export function useNotifications() {
         };
 
         ws.onclose = (event) => {
-          // Normal closures or unmounts shouldn't trigger auto-reconnect
-          if (isMounted && isAuthenticated && event.code !== 1000) {
+          // Normal closures, unmounts, or unauthorized closes shouldn't trigger auto-reconnect
+          if (event.code === 1000 || event.code === 4001 || event.code === 4003) {
+            return;
+          }
+          if (isMounted && isAuthenticated) {
             reconnectTimeoutRef.current = window.setTimeout(() => {
               connect();
-            }, 4000);
+            }, 6000);
           }
         };
 
