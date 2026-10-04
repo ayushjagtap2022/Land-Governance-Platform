@@ -411,23 +411,27 @@ export default function LandingPage() {
               </Link>
               <Link
                 href="/repository"
-                className="focus-ring flex items-center gap-2 border border-white/40 bg-white/10 px-5 py-3 text-xs md:text-sm font-bold text-white hover:bg-white/20 backdrop-blur-xs transition-all"
+                className="focus-ring flex items-center gap-2 border border-slate-700 bg-slate-900/60 hover:bg-slate-800 hover:border-slate-600 px-5 py-3 text-xs md:text-sm font-semibold text-slate-200 hover:text-white backdrop-blur-xs transition-all shadow-sm"
               >
-                <BookOpen className="h-4 w-4" />
+                <BookOpen className="h-4 w-4 text-slate-300" />
                 <span>{t('browse_docs')}</span>
               </Link>
               <Link
                 href="/assistant"
-                className="focus-ring flex items-center gap-2 border border-white/20 bg-slate-800/60 px-5 py-3 text-xs md:text-sm font-semibold text-slate-200 hover:text-white hover:bg-slate-800 transition-all"
+                className="focus-ring flex items-center gap-2 border border-slate-700 bg-slate-900/60 hover:bg-slate-800 hover:border-slate-600 px-5 py-3 text-xs md:text-sm font-semibold text-slate-200 hover:text-white backdrop-blur-xs transition-all shadow-sm"
               >
-                <Sparkles className="h-4 w-4 text-[#f2b134]" />
+                <Sparkles className="h-4 w-4 text-slate-300" />
                 <span>{t('ask_ai')}</span>
               </Link>
               <a
                 href="#demo-video"
-                className="focus-ring flex items-center gap-2 border border-[#f2b134]/40 bg-[#f2b134]/15 px-5 py-3 text-xs md:text-sm font-bold text-[#f2b134] hover:bg-[#f2b134]/25 hover:border-[#f2b134] transition-all shadow-md backdrop-blur-xs"
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById('demo-video')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="focus-ring flex items-center gap-2 border border-slate-700 bg-slate-900/60 hover:bg-slate-800 hover:border-slate-600 px-5 py-3 text-xs md:text-sm font-semibold text-slate-200 hover:text-white backdrop-blur-xs transition-all shadow-sm cursor-pointer"
               >
-                <Play className="h-4 w-4 fill-[#f2b134]" />
+                <Play className="h-4 w-4 fill-slate-300 text-slate-300" />
                 <span>{t('Watch Platform Demo')}</span>
               </a>
             </div>
@@ -605,7 +609,7 @@ export default function LandingPage() {
               <span>{t('Official Platform Demonstration · SIH PS 26019')}</span>
             </div>
             <h2 className="font-serif text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-white">
-              {t('Experience STRATA in Action')}
+              {t('Experience the Platform in Action')}
             </h2>
             <p className="mt-3 text-xs sm:text-sm md:text-base leading-relaxed text-slate-300">
               {t(
@@ -616,9 +620,9 @@ export default function LandingPage() {
 
           {/* Video Player Container */}
           <div className="mx-auto max-w-5xl">
-            <div className="relative rounded-lg overflow-hidden border-2 border-white/20 bg-black/60 shadow-2xl backdrop-blur-md p-1.5 sm:p-3">
+            <div className="relative rounded-xl overflow-hidden border border-blue-500/20 bg-slate-950/80 shadow-2xl shadow-blue-950/50 backdrop-blur-md p-2 sm:p-4">
               {/* Responsive 16:9 Aspect Ratio Frame */}
-              <div className="relative w-full aspect-video rounded overflow-hidden bg-slate-950 shadow-inner">
+              <div className="relative w-full aspect-video rounded-lg overflow-hidden bg-slate-950 shadow-inner">
                 <iframe
                   className="w-full h-full border-0"
                   src="https://www.youtube-nocookie.com/embed/wa0qeyrvMbM?rel=0&modestbranding=1"
@@ -629,18 +633,18 @@ export default function LandingPage() {
               </div>
 
               {/* Bottom Quick Feature Strips & YouTube Direct Link */}
-              <div className="mt-3 flex flex-wrap items-center justify-between gap-3 px-2 py-1.5 text-[11px] text-slate-300 border-t border-white/10">
-                <div className="flex items-center gap-4 flex-wrap">
-                  <span className="inline-flex items-center gap-1.5 font-medium text-slate-200">
-                    <span className="h-2 w-2 rounded-full bg-emerald-400" />
+              <div className="mt-4 pt-3.5 pb-1 px-1 sm:px-2 flex flex-wrap items-center justify-between gap-4 border-t border-white/10 text-xs sm:text-sm text-slate-200">
+                <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
+                  <span className="inline-flex items-center gap-2 font-medium text-slate-200">
+                    <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 ring-2 ring-emerald-400/20" />
                     {t('Pan-India 640 District GIS')}
                   </span>
-                  <span className="inline-flex items-center gap-1.5 font-medium text-slate-200">
-                    <span className="h-2 w-2 rounded-full bg-[#f2b134]" />
+                  <span className="inline-flex items-center gap-2 font-medium text-slate-200">
+                    <span className="h-2.5 w-2.5 rounded-full bg-[#f2b134] ring-2 ring-[#f2b134]/20" />
                     {t('Grounded Statutory AI')}
                   </span>
-                  <span className="inline-flex items-center gap-1.5 font-medium text-slate-200">
-                    <span className="h-2 w-2 rounded-full bg-sky-400" />
+                  <span className="inline-flex items-center gap-2 font-medium text-slate-200">
+                    <span className="h-2.5 w-2.5 rounded-full bg-sky-400 ring-2 ring-sky-400/20" />
                     {t('Macroeconomic Policy Simulator')}
                   </span>
                 </div>
@@ -649,10 +653,10 @@ export default function LandingPage() {
                   href="https://youtu.be/wa0qeyrvMbM"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 text-xs font-bold text-[#f2b134] hover:text-[#ffd276] hover:underline transition-colors shrink-0"
+                  className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#f2b134] hover:text-[#ffd276] hover:underline transition-colors shrink-0 py-0.5"
                 >
                   <span>{t('Open in YouTube')}</span>
-                  <ExternalLink className="h-3.5 w-3.5" />
+                  <ExternalLink className="h-4 w-4" />
                 </a>
               </div>
             </div>
