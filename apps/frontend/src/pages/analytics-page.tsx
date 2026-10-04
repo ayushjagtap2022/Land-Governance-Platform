@@ -1,7 +1,8 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   AlertCircle,
   Award,
+  ChevronLeft,
   ChevronRight,
   ChevronDown,
   Download,
@@ -254,6 +255,65 @@ export default function AnalyticsPage() {
     { label: 'NLGI State Leaderboard', icon: Trophy, badge: '35 States' },
   ];
 
+  const tabsContainerRef = useRef<HTMLDivElement>(null);
+  const tabButtonRefs = useRef<(HTMLButtonElement | null)[]>([]);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const checkTabScroll = useCallback(() => {
+    const el = tabsContainerRef.current;
+    if (!el) return;
+    const { scrollLeft, scrollWidth, clientWidth } = el;
+    setCanScrollLeft(scrollLeft > 4);
+    setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 4);
+  }, []);
+
+  useEffect(() => {
+    const el = tabsContainerRef.current;
+    if (!el) return;
+    checkTabScroll();
+    const timer = setTimeout(checkTabScroll, 150);
+    el.addEventListener('scroll', checkTabScroll, { passive: true });
+    window.addEventListener('resize', checkTabScroll);
+
+    let observer: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      observer = new ResizeObserver(() => {
+        checkTabScroll();
+      });
+      observer.observe(el);
+    }
+
+    return () => {
+      clearTimeout(timer);
+      el.removeEventListener('scroll', checkTabScroll);
+      window.removeEventListener('resize', checkTabScroll);
+      observer?.disconnect();
+    };
+  }, [checkTabScroll]);
+
+  useEffect(() => {
+    const btn = tabButtonRefs.current[activeTab];
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    if (btn) {
+      btn.scrollIntoView({ behavior: 'smooth', inline: 'nearest', block: 'nearest' });
+      timer = setTimeout(checkTabScroll, 300);
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [activeTab, checkTabScroll]);
+
+  const scrollTabs = (direction: 'left' | 'right') => {
+    const el = tabsContainerRef.current;
+    if (!el) return;
+    const scrollAmount = 260;
+    el.scrollBy({
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      behavior: 'smooth',
+    });
+  };
+
   const presets = [
     { a: 'Maharashtra', b: 'Madhya Pradesh' },
     { a: 'Punjab', b: 'Haryana' },
@@ -486,33 +546,76 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* Navigation Tabs with Lucide Icons - Clean horizontal scrolling with no wrap */}
-      <div className="mb-6 flex items-center overflow-x-auto whitespace-nowrap scrollbar-none pr-6 border-b border-slate-300 bg-white rounded-t-sm shadow-2xs">
-        {tabs.map((tab, idx) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === idx;
-          return (
-            <button
-              key={tab.label}
-              onClick={() => setActiveTab(idx)}
-              className={`shrink-0 flex items-center gap-2 px-4 py-3 text-xs font-bold focus-ring border-b-2 transition-all ${
-                isActive
-                  ? 'border-[#132f4c] text-[#132f4c] bg-slate-50/80 font-extrabold'
-                  : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-              }`}
-            >
-              <Icon className={`h-4 w-4 ${isActive ? 'text-[#132f4c]' : 'text-slate-400'}`} />
-              <span>{tab.label}</span>
-              {tab.badge && (
-                <span className={`ml-1 text-[9px] px-1.5 py-0.5 rounded-sm font-bold uppercase border ${
-                  isActive ? 'bg-emerald-100 text-emerald-900 border-emerald-300' : 'bg-slate-100 text-slate-700 border-slate-200'
-                }`}>
-                  {tab.badge}
-                </span>
-              )}
-            </button>
-          );
-        })}
+      {/* Navigation Tabs with Lucide Icons - Responsive with smooth scroll navigation */}
+      <div className="relative mb-6 border-b border-slate-300 bg-white rounded-t-sm shadow-2xs">
+        {/* Left Scroll Navigation Chevron */}
+        {canScrollLeft && (
+          <button
+            type="button"
+            onClick={() => scrollTabs('left')}
+            className="absolute left-0 top-0 bottom-0 z-20 flex items-center justify-center w-8 bg-gradient-to-r from-white via-white/95 to-transparent text-slate-700 hover:text-[#132f4c] transition-all cursor-pointer"
+            aria-label="Scroll tabs left"
+            title="Scroll left"
+          >
+            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-xs border border-slate-300 text-slate-700 hover:bg-slate-50">
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </div>
+          </button>
+        )}
+
+        {/* Scrollable Tabs Container */}
+        <div
+          ref={tabsContainerRef}
+          className="flex items-center overflow-x-auto whitespace-nowrap scroll-smooth scrollbar-none"
+        >
+          {tabs.map((tab, idx) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === idx;
+            return (
+              <button
+                key={tab.label}
+                ref={(el) => { tabButtonRefs.current[idx] = el; }}
+                onClick={() => setActiveTab(idx)}
+                className={`shrink-0 flex items-center gap-1.5 sm:gap-2 px-3 sm:px-3.5 py-2.5 sm:py-3 text-xs font-bold focus-ring border-b-2 transition-all cursor-pointer ${
+                  isActive
+                    ? 'border-[#132f4c] text-[#132f4c] bg-slate-50/80 font-extrabold'
+                    : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+                }`}
+              >
+                <Icon className={`h-4 w-4 shrink-0 ${isActive ? 'text-[#132f4c]' : 'text-slate-400'}`} />
+                <span className="shrink-0 whitespace-nowrap">{tab.label}</span>
+                {tab.badge && (
+                  <span
+                    className={`shrink-0 whitespace-nowrap ml-1 text-[9px] px-1.5 py-0.5 rounded-sm font-bold uppercase border tracking-tight ${
+                      isActive
+                        ? 'bg-emerald-100 text-emerald-900 border-emerald-300'
+                        : 'bg-slate-100 text-slate-700 border-slate-200'
+                    }`}
+                  >
+                    {tab.badge}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+          {/* Trailing spacer to prevent WebKit/Blink right-padding clipping bug */}
+          <div className="shrink-0 w-8 pointer-events-none" aria-hidden="true" />
+        </div>
+
+        {/* Right Scroll Navigation Chevron */}
+        {canScrollRight && (
+          <button
+            type="button"
+            onClick={() => scrollTabs('right')}
+            className="absolute right-0 top-0 bottom-0 z-20 flex items-center justify-center w-8 bg-gradient-to-l from-white via-white/95 to-transparent text-slate-700 hover:text-[#132f4c] transition-all cursor-pointer"
+            aria-label="Scroll tabs right"
+            title="Scroll right"
+          >
+            <div className="flex h-6 w-6 items-center justify-center rounded-full bg-white shadow-xs border border-slate-300 text-slate-700 hover:bg-slate-50">
+              <ChevronRight className="h-3.5 w-3.5" />
+            </div>
+          </button>
+        )}
       </div>
 
       <div className="min-h-[400px]">
