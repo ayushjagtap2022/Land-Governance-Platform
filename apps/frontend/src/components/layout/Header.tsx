@@ -89,8 +89,9 @@ export function Header() {
 
   const { data: notifications = [] } = useQuery<any[]>({
     queryKey: ['notifications'],
-    queryFn: () => api.get('/notifications/').then((res) => res.data),
+    queryFn: () => api.get('/notifications/').then((res) => res.data).catch(() => []),
     enabled: isAuthenticated,
+    retry: false,
   });
 
   const unreadCount = useMemo(() => {
