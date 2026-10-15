@@ -50,7 +50,8 @@ export default function LoginPage() {
       toast.success('National Single Sign-On Verified (MeriPehchan / Jan Parichay)', {
         description: 'Level-3 High Assurance Token granted by NIC Identity Federation Gateway.'
       });
-      setLocation('/analytics');    }, 600);
+      setLocation('/analytics');
+    }, 600);
   };
 
   const {
@@ -86,11 +87,9 @@ export default function LoginPage() {
             <ShieldCheck className="h-7 w-7 text-amber-400" />
           </div>
         </div>
-        <h1 className="font-serif text-3xl font-semibold text-[#132f4c]">
-          National Land Governance Platform
-        </h1>
         <p className="mt-1 text-xs text-slate-500 font-medium">
-          Department of Land Resources • Ministry of Rural Development, Government of India        </p>
+          Department of Land Resources • Ministry of Rural Development, Government of India
+        </p>
         <h1 className="mt-1 font-serif text-2xl sm:text-3xl font-bold text-[#132f4c]">
           National Land Governance Platform
         </h1>
@@ -124,19 +123,19 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => setAuthTab('standard')}
-            className={`py-3 px-4 border-b-2 transition-colors ${              authTab === 'standard'
-                ? 'border-[#132f4c] bg-white text-[#132f4c]'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
+            className={`py-3 px-4 border-b-2 transition-colors ${authTab === 'standard'
+              ? 'border-[#132f4c] bg-white text-[#132f4c]'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+              }`}
           >
             Institutional Account          </button>
           <button
             type="button"
             onClick={() => setAuthTab('janparichay')}
-            className={`py-3 px-4 border-b-2 transition-colors flex items-center justify-center gap-2 ${              authTab === 'janparichay'
-                ? 'border-orange-500 bg-white text-orange-950 font-bold'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
+            className={`py-3 px-4 border-b-2 transition-colors flex items-center justify-center gap-2 ${authTab === 'janparichay'
+              ? 'border-orange-500 bg-white text-orange-950 font-bold'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+              }`}
           >
             <span className="flex h-4 w-4 items-center justify-center rounded-full bg-orange-500 text-[9px] text-white font-bold">🇮🇳</span>
             <span>MeriPehchan / Jan Parichay</span>          </button>
@@ -233,7 +232,7 @@ export default function LoginPage() {
                   type="text"
                   value={ssoOfficerId}
                   onChange={(e) => setSsoOfficerId(e.target.value)}
-                  className="w-full border border-slate-300 px-3 py-1.5 text-xs font-mono focus-ring bg-white"                />
+                  className="w-full border border-slate-300 px-3 py-1.5 text-xs font-mono focus-ring bg-white" />
               </div>
 
               <div>
@@ -262,7 +261,7 @@ export default function LoginPage() {
                   placeholder={ssoOtpSent ? "Enter 6-digit OTP (Simulated: 849201)" : "Click 'Send OTP' above"}
                   value={ssoOtp}
                   onChange={(e) => setSsoOtp(e.target.value)}
-                  className="w-full border border-slate-300 px-3 py-1.5 text-xs font-mono focus-ring bg-white"                />
+                  className="w-full border border-slate-300 px-3 py-1.5 text-xs font-mono focus-ring bg-white" />
               </div>
 
               <label className="flex items-start gap-2 pt-1 text-xs text-slate-600 cursor-pointer">
